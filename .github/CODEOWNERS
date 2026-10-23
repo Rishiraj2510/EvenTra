@@ -1,0 +1,6 @@
+# Replace usernames with real GitHub usernames
+/backend/     @backend-dev
+/frontend/    @frontend-dev
+/database/    @database-dev
+/ai-agent/    @ai-dev
+/evaluation/  @backend-dev @ai-dev
