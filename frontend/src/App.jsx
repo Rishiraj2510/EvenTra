@@ -3,6 +3,7 @@ import AppLayout from './components/layout/AppLayout'
 import ProtectedRoute from './components/layout/ProtectedRoute'
 import LoginPage from './pages/LoginPage'
 import EventsPage from './pages/EventsPage'
+import TasksPage from './pages/TasksPage'
 import PlaceholderPage from './pages/PlaceholderPage'
 
 export default function App() {
@@ -19,7 +20,7 @@ export default function App() {
 
           {/* Organiser routes */}
           <Route path="/dashboard" element={<PlaceholderPage title="Dashboard" />} />
-          <Route path="/tasks" element={<PlaceholderPage title="Tasks" />} />
+          <Route path="/tasks" element={<TasksPage />} />
           <Route path="/volunteers" element={<PlaceholderPage title="Volunteers" />} />
           <Route path="/assignment-plan" element={<PlaceholderPage title="Assignment Plan" />} />
           <Route path="/ai-assistant" element={<PlaceholderPage title="AI Assistant" />} />

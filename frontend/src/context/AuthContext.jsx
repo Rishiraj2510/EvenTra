@@ -5,6 +5,7 @@ const AuthContext = createContext(null)
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null) // null when logged out
   const [role, setRole] = useState('organiser') // 'organiser' | 'volunteer'
+  const [selectedEventId, setSelectedEventId] = useState('') // selected event id for topbar picker
 
   const loginUser = (userData) => {
     const assignedRole = userData?.role || role || 'organiser'
@@ -19,6 +20,7 @@ export function AuthProvider({ children }) {
 
   const logoutUser = () => {
     setUser(null)
+    setSelectedEventId('')
   }
 
   const toggleRole = () => {
@@ -41,6 +43,8 @@ export function AuthProvider({ children }) {
       value={{
         user,
         role: user?.role || role,
+        selectedEventId,
+        setSelectedEventId,
         setUser,
         loginUser,
         logoutUser,
