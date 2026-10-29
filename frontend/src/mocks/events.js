@@ -1,0 +1,38 @@
+export const initialEvents = [
+  {
+    id: 'evt-1',
+    name: 'TechnoSphere 2025',
+    category: 'technical',
+    startDate: '2025-03-15',
+    endDate: '2025-03-17',
+    description: 'Annual inter-collegiate technical festival featuring hackathons, robotics, and coding arenas.',
+    status: 'live',
+  },
+  {
+    id: 'evt-2',
+    name: 'Sanskriti Cultural Fest',
+    category: 'cultural',
+    startDate: '2025-04-02',
+    endDate: '2025-04-04',
+    description: 'State-level music, dance, and fine arts symposium across collegiate departments.',
+    status: 'planning',
+  },
+  {
+    id: 'evt-3',
+    name: 'Inter-College Sports Meet',
+    category: 'sports',
+    startDate: '2025-02-10',
+    endDate: '2025-02-12',
+    description: 'Track and field tournaments, football league, and basketball championships.',
+    status: 'done',
+  },
+  {
+    id: 'evt-4',
+    name: 'National Research Symposium',
+    category: 'academic',
+    startDate: '2025-05-20',
+    endDate: '2025-05-21',
+    description: 'Peer-reviewed paper presentations and guest keynotes from industry pioneers.',
+    status: 'draft',
+  },
+]
