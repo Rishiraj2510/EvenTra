@@ -4,6 +4,7 @@ import ProtectedRoute from './components/layout/ProtectedRoute'
 import LoginPage from './pages/LoginPage'
 import EventsPage from './pages/EventsPage'
 import TasksPage from './pages/TasksPage'
+import VolunteersPage from './pages/VolunteersPage'
 import PlaceholderPage from './pages/PlaceholderPage'
 
 export default function App() {
@@ -21,7 +22,8 @@ export default function App() {
           {/* Organiser routes */}
           <Route path="/dashboard" element={<PlaceholderPage title="Dashboard" />} />
           <Route path="/tasks" element={<TasksPage />} />
-          <Route path="/volunteers" element={<PlaceholderPage title="Volunteers" />} />
+          <Route path="/volunteers" element={<VolunteersPage />} />
+          <Route path="/volunteers/:id" element={<PlaceholderPage title="Volunteer Profile" />} />
           <Route path="/assignment-plan" element={<PlaceholderPage title="Assignment Plan" />} />
           <Route path="/ai-assistant" element={<PlaceholderPage title="AI Assistant" />} />
           <Route path="/feedback" element={<PlaceholderPage title="Feedback" />} />

@@ -1,12 +1,14 @@
 import { initialEvents } from '../mocks/events.js'
 import { demoUser } from '../mocks/users.js'
 import { initialTasks } from '../mocks/tasks.js'
+import { initialVolunteers } from '../mocks/volunteers.js'
 
 export const USE_MOCKS = true
 
 // In-memory store for mocks during session
 let mockEventsStore = [...initialEvents]
 let mockTasksStore = [...initialTasks]
+let mockVolunteersStore = [...initialVolunteers]
 
 export async function login(email, password) {
   if (!email || !email.trim()) {
@@ -183,3 +185,21 @@ export async function deleteTask(id) {
   }
   return response.json()
 }
+
+export async function getVolunteers(eventId) {
+  if (USE_MOCKS) {
+    await new Promise((resolve) => setTimeout(resolve, 200))
+    if (!eventId) {
+      return [...mockVolunteersStore]
+    }
+    return mockVolunteersStore.filter((v) => v.eventId === eventId)
+  }
+
+  const url = eventId ? `/api/volunteers?eventId=${encodeURIComponent(eventId)}` : '/api/volunteers'
+  const response = await fetch(url)
+  if (!response.ok) {
+    throw new Error(`Failed to fetch volunteers: ${response.statusText}`)
+  }
+  return response.json()
+}
+
