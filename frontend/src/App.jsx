@@ -5,6 +5,7 @@ import LoginPage from './pages/LoginPage'
 import EventsPage from './pages/EventsPage'
 import TasksPage from './pages/TasksPage'
 import VolunteersPage from './pages/VolunteersPage'
+import DashboardPage from './pages/DashboardPage'
 import PlaceholderPage from './pages/PlaceholderPage'
 
 export default function App() {
@@ -20,7 +21,7 @@ export default function App() {
           <Route path="/events" element={<EventsPage />} />
 
           {/* Organiser routes */}
-          <Route path="/dashboard" element={<PlaceholderPage title="Dashboard" />} />
+          <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/tasks" element={<TasksPage />} />
           <Route path="/volunteers" element={<VolunteersPage />} />
           <Route path="/volunteers/:id" element={<PlaceholderPage title="Volunteer Profile" />} />

@@ -1,11 +1,10 @@
 import { useState, useRef, useEffect } from 'react'
 import { useAuth } from '../../context/AuthContext'
-import { getEvents } from '../../services/api'
-import { useFetch } from '../../hooks/useFetch'
+import { useEvent } from '../../context/EventContext'
 
 export default function Topbar() {
-  const { user, role, toggleRole, selectedEventId, setSelectedEventId } = useAuth()
-  const { data: events } = useFetch(getEvents)
+  const { user, role, toggleRole } = useAuth()
+  const { events, selectedEventId, setSelectedEventId, selectedEvent } = useEvent()
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
   const dropdownRef = useRef(null)
 
@@ -19,8 +18,6 @@ export default function Topbar() {
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
-
-  const selectedEvent = events?.find((e) => e.id === selectedEventId)
 
   return (
     <header className="fixed top-0 left-64 right-0 h-16 bg-surface-container-lowest/90 backdrop-blur-xl border-b border-slate-200 shadow-[0_1px_8px_rgba(0,0,0,0.04)] z-40 flex items-center justify-between px-gutter-lg">

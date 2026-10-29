@@ -2,6 +2,7 @@ import { initialEvents } from '../mocks/events.js'
 import { demoUser } from '../mocks/users.js'
 import { initialTasks } from '../mocks/tasks.js'
 import { initialVolunteers } from '../mocks/volunteers.js'
+import { createEmptyDashboardSummary } from '../mocks/dashboard.js'
 
 export const USE_MOCKS = true
 
@@ -199,6 +200,65 @@ export async function getVolunteers(eventId) {
   const response = await fetch(url)
   if (!response.ok) {
     throw new Error(`Failed to fetch volunteers: ${response.statusText}`)
+  }
+  return response.json()
+}
+
+export async function updateEventFormLink(eventId, registrationFormUrl) {
+  if (USE_MOCKS) {
+    await new Promise((resolve) => setTimeout(resolve, 250))
+    const index = mockEventsStore.findIndex((e) => e.id === eventId)
+    if (index === -1) {
+      throw new Error(`Event with ID ${eventId} not found`)
+    }
+    const updated = {
+      ...mockEventsStore[index],
+      registrationFormUrl: registrationFormUrl || '',
+    }
+    mockEventsStore[index] = updated
+    return updated
+  }
+
+  const response = await fetch(`/api/events/${eventId}`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ registrationFormUrl }),
+  })
+  if (!response.ok) {
+    throw new Error(`Failed to update registration form link: ${response.statusText}`)
+  }
+  return response.json()
+}
+
+export async function getDashboardSummary(eventId) {
+  if (USE_MOCKS) {
+    await new Promise((resolve) => setTimeout(resolve, 200))
+    const summary = createEmptyDashboardSummary()
+    if (!eventId) {
+      return summary
+    }
+
+    const volunteers = mockVolunteersStore.filter((v) => v.eventId === eventId)
+    const tasks = mockTasksStore.filter((t) => t.eventId === eventId)
+
+    return {
+      ...summary,
+      volunteersRegistered: volunteers.length,
+      activeTasks: tasks.length,
+      headcountFilled: null,
+      headcountRequired: null,
+      openSkillGaps: null,
+      alerts: [],
+      planStatus: 'none',
+      workloadPerVolunteer: [],
+    }
+  }
+
+  const response = await fetch(`/api/events/${encodeURIComponent(eventId)}/dashboard`)
+  if (!response.ok) {
+    throw new Error(`Failed to fetch dashboard summary: ${response.statusText}`)
   }
   return response.json()
 }

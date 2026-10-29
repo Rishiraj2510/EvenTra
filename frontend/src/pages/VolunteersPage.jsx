@@ -1,15 +1,12 @@
 import { useState, useMemo, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useAuth } from '../context/AuthContext'
-import { getVolunteers, getEvents } from '../services/api'
+import { useEvent } from '../context/EventContext'
+import { getVolunteers } from '../services/api'
 import { useFetch } from '../hooks/useFetch'
 
 export default function VolunteersPage() {
-  const { selectedEventId, setSelectedEventId } = useAuth()
+  const { events, selectedEventId, setSelectedEventId, selectedEvent } = useEvent()
   const navigate = useNavigate()
-
-  // Fetch events for context & quick selector
-  const { data: events } = useFetch(getEvents)
 
   // Fetch volunteers matching the selected event
   const fetchVolunteersCallback = useCallback(() => {
@@ -23,8 +20,6 @@ export default function VolunteersPage() {
   const [selectedSkill, setSelectedSkill] = useState('')
   const [selectedStatus, setSelectedStatus] = useState('')
   const [copiedLink, setCopiedLink] = useState(false)
-
-  const selectedEvent = events?.find((e) => e.id === selectedEventId)
 
   // Extract distinct skill names for dropdown
   const availableSkills = useMemo(() => {
@@ -63,7 +58,7 @@ export default function VolunteersPage() {
 
   // Copy registration form link
   const handleCopyLink = () => {
-    const link = `${window.location.origin}/register?eventId=${selectedEventId || ''}`
+    const link = selectedEvent?.registrationFormUrl || `${window.location.origin}/register?eventId=${selectedEventId || ''}`
     navigator.clipboard?.writeText(link).then(() => {
       setCopiedLink(true)
       setTimeout(() => setCopiedLink(false), 2000)
