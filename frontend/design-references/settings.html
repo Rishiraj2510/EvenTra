@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <meta content="web_dashboard" name="shell-type" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"
+        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com" rel="preconnect" />
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <style>
+        @layer base {
+
+            html,
+            body {
+                margin: 0;
+                padding: 0;
+            }
+
+            body {
+                overscroll-behavior: none;
+            }
+
+            main>:first-child {
+                margin-top: 0 !important;
+            }
+
+            main>:last-child {
+                margin-bottom: 0 !important;
+            }
+        }
+
+        ::-webkit-scrollbar {
+            display: none;
+        }
+    </style>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script
+        id="tailwind-config">tailwind.config = { "darkMode": "class", "theme": { "extend": { "colors": { "on-primary-fixed": "#0f0069", "surface": "#f8f9ff", "on-tertiary-fixed-variant": "#653e00", "on-surface-variant": "#464555", "surface-tint": "#4d44e3", "surface-container-high": "#dce9ff", "surface-container-highest": "#d3e4fe", "on-error": "#ffffff", "inverse-surface": "#213145", "secondary-fixed-dim": "#4edea3", "primary-fixed-dim": "#c3c0ff", "error": "#ba1a1a", "on-secondary-fixed-variant": "#005236", "on-secondary-container": "#00714d", "tertiary": "#684000", "tertiary-fixed": "#ffddb8", "on-error-container": "#93000a", "primary-fixed": "#e2dfff", "tertiary-fixed-dim": "#ffb95f", "on-surface": "#0b1c30", "surface-dim": "#cbdbf5", "outline-variant": "#c7c4d8", "secondary-container": "#6cf8bb", "on-secondary-fixed": "#002113", "tertiary-container": "#885500", "surface-container-low": "#eff4ff", "outline": "#777587", "secondary": "#006c49", "inverse-primary": "#c3c0ff", "surface-bright": "#f8f9ff", "on-primary-container": "#dad7ff", "on-background": "#0b1c30", "surface-container": "#e5eeff", "on-primary-fixed-variant": "#3323cc", "primary-container": "#4f46e5", "secondary-fixed": "#6ffbbe", "inverse-on-surface": "#eaf1ff", "background": "#f8f9ff", "error-container": "#ffdad6", "primary": "#3525cd", "on-tertiary": "#ffffff", "on-secondary": "#ffffff", "surface-variant": "#d3e4fe", "on-tertiary-container": "#ffd4a4", "on-primary": "#ffffff", "surface-container-lowest": "#ffffff" }, "borderRadius": { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" }, "spacing": { "margin-md": "1.5rem", "space-xs": "0.25rem", "space-md": "0.75rem", "margin-lg": "2rem", "space-sm": "0.5rem", "gutter-lg": "1.5rem", "space-xl": "1.5rem", "gutter": "1rem", "margin": "1rem", "space-lg": "1rem" }, "fontFamily": { "label-sm": ["Inter"], "headline-xl": ["Inter"], "headline-md": ["Inter"], "body-sm": ["Inter"], "headline-xl-mobile": ["Inter"], "label-lg": ["Inter"], "headline-sm": ["Inter"], "headline-lg": ["Inter"], "label-md": ["Inter"], "body-lg": ["Inter"], "body-md": ["Inter"] }, "fontSize": { "label-sm": ["11px", { "lineHeight": "14px", "letterSpacing": "0.04em", "fontWeight": "600" }], "headline-xl": ["36px", { "lineHeight": "44px", "letterSpacing": "-0.02em", "fontWeight": "700" }], "headline-md": ["20px", { "lineHeight": "28px", "letterSpacing": "-0.01em", "fontWeight": "600" }], "body-sm": ["12px", { "lineHeight": "16px", "fontWeight": "400" }], "headline-xl-mobile": ["28px", { "lineHeight": "36px", "letterSpacing": "-0.02em", "fontWeight": "700" }], "label-lg": ["14px", { "lineHeight": "20px", "fontWeight": "500" }], "headline-sm": ["16px", { "lineHeight": "24px", "letterSpacing": "0em", "fontWeight": "600" }], "headline-lg": ["28px", { "lineHeight": "36px", "letterSpacing": "-0.015em", "fontWeight": "600" }], "label-md": ["12px", { "lineHeight": "16px", "fontWeight": "500" }], "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }], "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }] } } } };</script>
+</head>
+
+<body class="bg-surface font-body-md text-body-md text-on-surface">
+    <aside
+        class="fixed left-0 top-0 h-full w-64 bg-surface-container-lowest shadow-[0_1px_8px_rgba(0,0,0,0.04)] z-50 flex flex-col justify-between py-space-xl">
+        <div class="flex flex-col gap-space-lg">
+            <div class="flex items-center gap-space-md px-space-xl">
+                <div
+                    class="w-9 h-9 rounded-lg bg-primary-container flex items-center justify-center text-on-primary shadow-sm">
+                    <span class="material-symbols-outlined text-[20px]">grid_view</span></div><span
+                    class="font-headline-md text-headline-md tracking-tight text-on-surface">Eventra</span>
+            </div>
+            <nav class="flex flex-col gap-space-xs px-space-md"
+                data-active-classes="bg-primary-container text-on-primary font-label-lg text-label-lg shadow-sm"><a
+                    class="flex items-center gap-space-md px-space-md py-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors"
+                    data-path="dashboard" href="#"><span
+                        class="material-symbols-outlined text-[20px]">space_dashboard</span><span
+                        class="font-label-lg text-label-lg">Dashboard</span></a><a
+                    class="flex items-center gap-space-md px-space-md py-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors"
+                    data-path="events" href="#"><span
+                        class="material-symbols-outlined text-[20px]">calendar_month</span><span
+                        class="font-label-lg text-label-lg">Events</span></a><a
+                    class="flex items-center gap-space-md px-space-md py-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors"
+                    data-path="tasks" href="#"><span
+                        class="material-symbols-outlined text-[20px]">check_circle</span><span
+                        class="font-label-lg text-label-lg">Tasks</span></a><a
+                    class="flex items-center gap-space-md px-space-md py-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors"
+                    data-path="volunteers" href="#"><span
+                        class="material-symbols-outlined text-[20px]">group</span><span
+                        class="font-label-lg text-label-lg">Volunteers</span></a><a
+                    class="flex items-center gap-space-md px-space-md py-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors"
+                    data-path="assignment-plan" href="#"><span
+                        class="material-symbols-outlined text-[20px]">assignment_turned_in</span><span
+                        class="font-label-lg text-label-lg">Assignment Plan</span></a><a
+                    class="flex items-center gap-space-md px-space-md py-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors"
+                    data-path="ai-assistant" href="#"><span
+                        class="material-symbols-outlined text-[20px]">auto_awesome</span><span
+                        class="font-label-lg text-label-lg">AI Assistant</span></a><a
+                    class="flex items-center gap-space-md px-space-md py-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors"
+                    data-path="feedback" href="#"><span class="material-symbols-outlined text-[20px]">chat</span><span
+                        class="font-label-lg text-label-lg">Feedback</span></a><a
+                    class="flex items-center gap-space-md px-space-md py-space-sm rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors"
+                    data-path="certificates" href="#"><span
+                        class="material-symbols-outlined text-[20px]">workspace_premium</span><span
+                        class="font-label-lg text-label-lg">Certificates</span></a><a aria-current="page"
+                    class="flex items-center gap-space-md px-space-md py-space-sm rounded-lg transition-colors bg-primary-container text-on-primary font-label-lg text-label-lg shadow-sm"
+                    data-path="settings" href="#"><span
+                        class="material-symbols-outlined text-[20px]">settings</span><span
+                        class="font-label-lg text-label-lg">Settings</span></a></nav>
+        </div>
+        <div class="px-space-md">
+            <div class="bg-surface-container-low rounded-xl p-space-md flex items-center justify-between">
+                <div class="flex items-center gap-space-sm"><span
+                        class="material-symbols-outlined text-primary text-[20px]">verified</span>
+                    <div>
+                        <p class="font-label-md text-label-md text-on-surface">Eventra Pro</p>
+                        <p class="font-body-sm text-body-sm text-on-surface-variant">Campus Plan</p>
+                    </div>
+                </div><span class="material-symbols-outlined text-on-surface-variant text-[18px]">info</span>
+            </div>
+        </div>
+    </aside>
+    <div class="pl-64 min-h-screen flex flex-col">
+        <header
+            class="fixed top-0 left-64 right-0 h-16 bg-surface/85 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)] z-40 flex items-center justify-between px-space-xl">
+            <div class="flex items-center gap-space-xl">
+                <div class="relative flex items-center">
+                    <div
+                        class="flex items-center gap-space-sm bg-surface-container-lowest px-space-md py-space-xs rounded-lg shadow-sm cursor-pointer">
+                        <span class="material-symbols-outlined text-on-surface-variant text-[18px]">event</span><span
+                            class="font-label-lg text-label-lg text-on-surface">Select event</span><span
+                            class="material-symbols-outlined text-on-surface-variant text-[18px]">expand_more</span>
+                    </div>
+                </div>
+                <div class="flex items-center gap-space-xs text-on-surface-variant"><span
+                        class="font-body-md text-body-md">Events</span><span
+                        class="material-symbols-outlined text-[16px]">chevron_right</span><span
+                        class="font-body-md text-body-md text-on-surface-variant/80">No event selected</span></div>
+            </div>
+            <div class="flex items-center gap-space-lg"><a
+                    class="flex items-center gap-space-xs bg-surface-container-highest px-space-md py-1.5 rounded-full text-on-surface hover:bg-surface-container-high transition-colors"
+                    data-path="ai-assistant" href="#"><span
+                        class="material-symbols-outlined text-primary text-[18px]">auto_awesome</span><span
+                        class="font-label-sm text-label-sm">AI Assistant</span></a><button aria-label="Notifications"
+                    class="relative p-space-xs rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors"><span
+                        class="material-symbols-outlined text-[22px]">notifications</span><span
+                        class="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-primary-container ring-2 ring-surface"></span></button>
+                <div class="flex items-center gap-space-md pl-space-sm">
+                    <div class="text-right">
+                        <p class="font-label-lg text-label-lg text-on-surface leading-tight">User name</p>
+                        <p class="font-body-sm text-body-sm text-on-surface-variant leading-tight">Role</p>
+                    </div>
+                    <div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span
+                            class="material-symbols-outlined text-on-primary text-[18px]">person</span></div>
+                </div>
+            </div>
+        </header>
+        <main class="w-full pt-16 flex-1 bg-surface px-space-xl">
+            <div class="flex flex-col w-full pb-24">
+                <!-- Top Settings Header -->
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-space-md py-space-xl">
+                    <div>
+                        <div class="flex items-center gap-space-sm mb-1">
+                            <span class="font-headline-lg text-headline-lg text-on-surface">Settings</span>
+                            <span
+                                class="font-label-sm text-label-sm bg-surface-container-high text-primary px-2 py-0.5 rounded-full">v2.4</span>
+                        </div>
+                        <p class="font-body-md text-body-md text-on-surface-variant">Manage your profile, notifications
+                            and allocation rules</p>
+                    </div>
+                    <!-- Status Preview Switcher & Live Indicator -->
+                    <div class="flex items-center gap-space-md">
+                        <div class="hidden sm:flex items-center bg-surface-container-low p-1 rounded-xl shadow-sm">
+                            <button
+                                class="state-pill px-2.5 py-1 rounded-lg font-label-sm text-label-sm text-on-surface-variant hover:text-on-surface transition-all active:scale-95"
+                                data-state="default" onclick="setSyncState('default')" type="button">Demo:
+                                Default</button>
+                            <button
+                                class="state-pill px-2.5 py-1 rounded-lg font-label-sm text-label-sm text-on-surface-variant hover:text-on-surface transition-all active:scale-95"
+                                data-state="saving" onclick="setSyncState('saving')" type="button">Saving</button>
+                            <button
+                                class="state-pill px-2.5 py-1 rounded-lg font-label-sm text-label-sm text-on-surface-variant hover:text-on-surface transition-all active:scale-95"
+                                data-state="saved" onclick="setSyncState('saved')" type="button">Saved</button>
+                            <button
+                                class="state-pill px-2.5 py-1 rounded-lg font-label-sm text-label-sm text-on-surface-variant hover:text-on-surface transition-all active:scale-95"
+                                data-state="error" onclick="setSyncState('error')" type="button">Error</button>
+                        </div>
+                        <div class="flex items-center gap-1.5 px-3 py-1 rounded-full bg-surface-container text-on-surface-variant shadow-sm transition-all duration-300"
+                            id="header-status-badge">
+                            <span class="w-2 h-2 rounded-full bg-outline"></span>
+                            <span class="font-label-sm text-label-sm font-medium" id="header-status-text">All changes
+                                synced</span>
+                        </div>
+                    </div>
+                </div>
+                <!-- Tab Navigation Bar -->
+                <div
+                    class="bg-surface-container-lowest rounded-xl p-1.5 shadow-sm mb-space-xl flex items-center gap-1 overflow-x-auto">
+                    <button
+                        class="tab-trigger flex items-center gap-2 px-4 py-2.5 rounded-lg font-label-lg text-label-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low transition-all"
+                        id="tab-btn-profile" onclick="switchTab('profile')" type="button">
+                        <span class="material-symbols-outlined text-[18px]">account_circle</span>
+                        <span>Profile</span>
+                    </button>
+                    <button
+                        class="tab-trigger flex items-center gap-2 px-4 py-2.5 rounded-lg font-label-lg text-label-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low transition-all"
+                        id="tab-btn-notifications" onclick="switchTab('notifications')" type="button">
+                        <span class="material-symbols-outlined text-[18px]">notifications_active</span>
+                        <span>Notifications</span>
+                    </button>
+                    <button
+                        class="tab-trigger flex items-center gap-2 px-4 py-2.5 rounded-lg font-label-lg text-label-lg bg-primary text-on-primary shadow-sm transition-all"
+                        id="tab-btn-allocation" onclick="switchTab('allocation')" type="button">
+                        <span class="material-symbols-outlined text-[18px]">tune</span>
+                        <span>Allocation rules</span>
+                        <span class="w-1.5 h-1.5 rounded-full bg-secondary-container"></span>
+                    </button>
+                </div>
+                <!-- TAB PANES -->
+                <!-- 1. PROFILE SECTION -->
+                <div class="tab-panel hidden flex flex-col gap-space-lg" id="tab-panel-profile">
+                    <div class="bg-surface-container-lowest rounded-xl p-space-xl shadow-sm">
+                        <div class="pb-space-md mb-space-lg flex items-center justify-between">
+                            <div>
+                                <h2 class="font-headline-sm text-headline-sm text-on-surface">Personal Information</h2>
+                                <p class="font-body-sm text-body-sm text-on-surface-variant">Update identity and campus
+                                    departmental details</p>
+                            </div>
+                            <div
+                                class="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center text-on-surface-variant">
+                                <span class="material-symbols-outlined text-[22px]">badge</span>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-space-lg">
+                            <div class="flex flex-col gap-1.5">
+                                <label class="font-label-md text-label-md text-on-surface">Full name</label>
+                                <div class="relative flex items-center">
+                                    <input
+                                        class="w-full h-10 px-3 rounded-lg bg-surface-container-lowest text-on-surface font-body-md text-body-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/20 placeholder:text-outline"
+                                        id="input-fullname" oninput="markUnsaved()" placeholder="Enter full name"
+                                        type="text" />
+                                </div>
+                                <span class="font-body-sm text-body-sm text-on-surface-variant">Your legal name
+                                    displayed on published event shift sheets</span>
+                            </div>
+                            <div class="flex flex-col gap-1.5">
+                                <div class="flex items-center justify-between">
+                                    <label class="font-label-md text-label-md text-on-surface">Email address</label>
+                                    <span
+                                        class="font-label-sm text-label-sm bg-surface-container px-2 py-0.5 rounded-full text-on-surface-variant flex items-center gap-1">
+                                        <span class="material-symbols-outlined text-[12px]">lock</span> Read-only
+                                    </span>
+                                </div>
+                                <input
+                                    class="w-full h-10 px-3 rounded-lg bg-surface-container-low text-on-surface-variant font-body-md text-body-md cursor-not-allowed placeholder:text-outline"
+                                    placeholder="name@university.edu" readonly="" type="email" value="" />
+                                <span class="font-body-sm text-body-sm text-on-surface-variant">Email is managed by
+                                    institution directory (read-only)</span>
+                            </div>
+                            <div class="flex flex-col gap-1.5 md:col-span-2">
+                                <label class="font-label-md text-label-md text-on-surface">Department</label>
+                                <input
+                                    class="w-full h-10 px-3 rounded-lg bg-surface-container-lowest text-on-surface font-body-md text-body-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/20 placeholder:text-outline"
+                                    id="input-dept" oninput="markUnsaved()"
+                                    placeholder="e.g. Student Affairs / Engineering" type="text" />
+                                <span class="font-body-sm text-body-sm text-on-surface-variant">Used for
+                                    inter-departmental roster routing and budget allocation tags</span>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Security Sub-card -->
+                    <div class="bg-surface-container-lowest rounded-xl p-space-xl shadow-sm">
+                        <div class="pb-space-md mb-space-md">
+                            <h2 class="font-headline-sm text-headline-sm text-on-surface">Authentication &amp;
+                                Credentials</h2>
+                            <p class="font-body-sm text-body-sm text-on-surface-variant">Manage sign-in secrets and
+                                linked single sign-on sessions</p>
+                        </div>
+                        <div
+                            class="flex flex-col sm:flex-row sm:items-center justify-between gap-space-md py-space-md px-space-md rounded-lg bg-surface-container-low">
+                            <div class="flex items-center gap-space-md">
+                                <div
+                                    class="w-9 h-9 rounded-lg bg-surface-container flex items-center justify-center text-on-surface">
+                                    <span class="material-symbols-outlined text-[20px]">key</span>
+                                </div>
+                                <div>
+                                    <div class="font-label-lg text-label-lg text-on-surface">Password</div>
+                                    <div
+                                        class="font-body-md text-body-md text-on-surface-variant tracking-widest leading-none mt-1">
+                                        ••••••••••••</div>
+                                </div>
+                            </div>
+                            <button
+                                class="h-9 px-4 rounded-lg bg-surface-container-lowest text-on-surface font-label-md text-label-md hover:bg-surface-container transition-colors shadow-sm self-start sm:self-auto"
+                                type="button">
+                                Change password
+                            </button>
+                        </div>
+                        <div
+                            class="mt-space-md flex items-start gap-space-sm p-space-md rounded-lg bg-surface-container-low">
+                            <span class="material-symbols-outlined text-[18px] text-primary mt-0.5">verified_user</span>
+                            <div class="font-body-sm text-body-sm text-on-surface-variant">
+                                Administrative role level: <span
+                                    class="font-label-sm text-label-sm text-on-surface font-semibold">Campus
+                                    Coordinator</span>. To request elevated cross-campus superuser permissions, contact
+                                your university portal administrator.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- 2. NOTIFICATIONS SECTION -->
+                <div class="tab-panel hidden flex flex-col gap-space-lg" id="tab-panel-notifications">
+                    <div class="bg-surface-container-lowest rounded-xl p-space-xl shadow-sm">
+                        <div class="pb-space-md mb-space-lg">
+                            <h2 class="font-headline-sm text-headline-sm text-on-surface">Notification Channels</h2>
+                            <p class="font-body-sm text-body-sm text-on-surface-variant">Define how urgent dispatch
+                                notices and roster changes are delivered to you</p>
+                        </div>
+                        <div class="flex flex-col divide-y-0 gap-space-lg">
+                            <!-- Toggle 1: Email -->
+                            <div
+                                class="flex items-start justify-between gap-space-md p-space-md rounded-xl bg-surface-container-low">
+                                <div class="flex items-start gap-space-md">
+                                    <div
+                                        class="w-9 h-9 rounded-lg bg-surface-container flex items-center justify-center text-primary mt-0.5">
+                                        <span class="material-symbols-outlined text-[20px]">mail</span>
+                                    </div>
+                                    <div>
+                                        <div class="font-label-lg text-label-lg text-on-surface">Email notifications
+                                        </div>
+                                        <p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">Receive
+                                            system digests and assignment updates via university email.</p>
+                                    </div>
+                                </div>
+                                <label class="relative inline-flex items-center cursor-pointer select-none">
+                                    <input class="sr-only peer" id="toggle-email" onchange="markUnsaved()"
+                                        type="checkbox" />
+                                    <div
+                                        class="w-11 h-6 bg-surface-container-high peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-surface-container-lowest after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-surface-container-lowest after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary">
+                                    </div>
+                                </label>
+                            </div>
+                            <!-- Toggle 2: WhatsApp -->
+                            <div class="flex flex-col gap-space-md p-space-md rounded-xl bg-surface-container-low">
+                                <div class="flex items-start justify-between gap-space-md">
+                                    <div class="flex items-start gap-space-md">
+                                        <div
+                                            class="w-9 h-9 rounded-lg bg-surface-container flex items-center justify-center text-secondary mt-0.5">
+                                            <span class="material-symbols-outlined text-[20px]">chat</span>
+                                        </div>
+                                        <div>
+                                            <div class="font-label-lg text-label-lg text-on-surface">WhatsApp
+                                                notifications</div>
+                                            <p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">Receive
+                                                urgent shift escalations on WhatsApp.</p>
+                                        </div>
+                                    </div>
+                                    <label class="relative inline-flex items-center cursor-pointer select-none">
+                                        <input class="sr-only peer" id="toggle-whatsapp"
+                                            onchange="handleWhatsappToggle(); markUnsaved();" type="checkbox" />
+                                        <div
+                                            class="w-11 h-6 bg-surface-container-high peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-surface-container-lowest after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-surface-container-lowest after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary">
+                                        </div>
+                                    </label>
+                                </div>
+                                <!-- Conditional WhatsApp Phone Input Field -->
+                                <div class="hidden pt-space-sm pl-12 flex flex-col gap-1.5 transition-all"
+                                    id="whatsapp-field-container">
+                                    <label class="font-label-md text-label-md text-on-surface">Phone number (appears
+                                        when WhatsApp notifications enabled)</label>
+                                    <div class="relative max-w-md">
+                                        <span
+                                            class="absolute left-3 top-2.5 text-on-surface-variant material-symbols-outlined text-[18px]">call</span>
+                                        <input
+                                            class="w-full h-10 pl-9 pr-3 rounded-lg bg-surface-container-lowest text-on-surface font-body-md text-body-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/20 placeholder:text-outline"
+                                            id="input-phone" oninput="markUnsaved()" placeholder="+1 (___) ___-____"
+                                            type="tel" />
+                                    </div>
+                                    <span class="font-body-sm text-body-sm text-on-surface-variant">Include
+                                        international country code prefix for reliable dispatch</span>
+                                </div>
+                            </div>
+                            <!-- Safety Notice Banner -->
+                            <div
+                                class="flex items-center gap-space-md p-space-md rounded-xl bg-surface-container text-on-surface-variant shadow-sm">
+                                <span class="material-symbols-outlined text-primary text-[20px]">info</span>
+                                <span class="font-body-sm text-body-sm">Volunteers are only notified after you approve a
+                                    plan. No draft notifications will be triggered automatically.</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- 3. ALLOCATION RULES SECTION (DEFAULT VISIBLE CORE SECTION) -->
+                <div class="tab-panel flex flex-col gap-space-lg" id="tab-panel-allocation">
+                    <!-- Constraints Card -->
+                    <div class="bg-surface-container-lowest rounded-xl p-space-xl shadow-sm">
+                        <div class="pb-space-md mb-space-lg">
+                            <h2 class="font-headline-sm text-headline-sm text-on-surface">Volunteer Limits &amp;
+                                First-Timer Policy</h2>
+                            <p class="font-body-sm text-body-sm text-on-surface-variant">Global constraints governing
+                                the automated dispatch solver</p>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-space-lg">
+                            <!-- Maximum Hours Input -->
+                            <div class="flex flex-col gap-1.5 p-space-md rounded-xl bg-surface-container-low">
+                                <div class="flex items-center justify-between">
+                                    <label class="font-label-md text-label-md text-on-surface">Maximum hours per person
+                                        per event</label>
+                                    <span
+                                        class="material-symbols-outlined text-[18px] text-on-surface-variant">timelapse</span>
+                                </div>
+                                <div class="relative max-w-xs mt-1">
+                                    <input
+                                        class="w-full h-10 px-3 rounded-lg bg-surface-container-lowest text-on-surface font-body-md text-body-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/20 placeholder:text-outline"
+                                        id="input-max-hours" max="100" min="1" oninput="markUnsaved()" placeholder="--"
+                                        type="number" />
+                                    <span
+                                        class="absolute right-3 top-2.5 font-label-sm text-label-sm text-on-surface-variant">hours</span>
+                                </div>
+                                <span class="font-body-sm text-body-sm text-on-surface-variant mt-1">Volunteers will not
+                                    be assigned beyond this limit.</span>
+                            </div>
+                            <!-- First Timers Toggle -->
+                            <div class="flex flex-col justify-between p-space-md rounded-xl bg-surface-container-low">
+                                <div class="flex items-start justify-between gap-space-sm">
+                                    <div>
+                                        <div class="font-label-md text-label-md text-on-surface">Give first-timers a
+                                            chance on non-critical tasks</div>
+                                        <p class="font-body-sm text-body-sm text-on-surface-variant mt-1">Prioritizes
+                                            unassigned first-year or new volunteers for orientation and low-complexity
+                                            tasks.</p>
+                                    </div>
+                                    <label
+                                        class="relative inline-flex items-center cursor-pointer select-none shrink-0 mt-0.5">
+                                        <input class="sr-only peer" id="toggle-firsttimers" onchange="markUnsaved()"
+                                            type="checkbox" />
+                                        <div
+                                            class="w-11 h-6 bg-surface-container-high peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-surface-container-lowest after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-surface-container-lowest after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary">
+                                        </div>
+                                    </label>
+                                </div>
+                                <div
+                                    class="mt-3 flex items-center gap-1.5 text-on-surface-variant font-label-sm text-label-sm">
+                                    <span
+                                        class="material-symbols-outlined text-[15px] text-secondary">check_circle</span>
+                                    <span>Prevents roster monopolies by senior crew</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Scoring Weights Card -->
+                    <div class="bg-surface-container-lowest rounded-xl p-space-xl shadow-sm">
+                        <!-- Section Header with Total Pill -->
+                        <div
+                            class="flex flex-col sm:flex-row sm:items-center justify-between gap-space-md pb-space-md mb-space-lg">
+                            <div>
+                                <div class="flex items-center gap-2">
+                                    <h2 class="font-headline-sm text-headline-sm text-on-surface">Scoring weights</h2>
+                                    <span class="material-symbols-outlined text-[18px] text-primary">auto_awesome</span>
+                                </div>
+                                <p class="font-body-sm text-body-sm text-on-surface-variant">Calibrate multi-objective
+                                    matching optimization across individual parameters</p>
+                            </div>
+                            <!-- Dynamic Total Pill & Validation Badge -->
+                            <div class="flex items-center gap-space-sm self-start sm:self-auto">
+                                <div class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-secondary/10 text-secondary transition-all"
+                                    id="weights-total-badge">
+                                    <span class="material-symbols-outlined text-[18px]"
+                                        id="weights-total-icon">check_circle</span>
+                                    <span class="font-label-md text-label-md font-semibold"
+                                        id="weights-total-label">Total: 100%</span>
+                                </div>
+                                <button
+                                    class="px-3 py-1.5 rounded-lg bg-surface-container-low hover:bg-surface-container text-on-surface font-label-sm text-label-sm transition-all flex items-center gap-1 active:scale-95 shadow-sm"
+                                    onclick="resetWeights()" type="button">
+                                    <span class="material-symbols-outlined text-[16px]">restart_alt</span>
+                                    <span>Reset to defaults</span>
+                                </button>
+                            </div>
+                        </div>
+                        <!-- Warning Alert (Hidden by default, shown when sum != 100) -->
+                        <div class="hidden mb-space-lg p-space-md rounded-xl bg-error-container text-on-error-container flex items-center justify-between gap-space-md shadow-sm"
+                            id="weights-error-banner">
+                            <div class="flex items-center gap-space-sm">
+                                <span class="material-symbols-outlined text-[20px] text-error">error</span>
+                                <span class="font-label-md text-label-md font-semibold" id="weights-error-text">Weights
+                                    must add up to 100%</span>
+                            </div>
+                            <span class="font-body-sm text-body-sm opacity-90">Solver execution paused until
+                                balanced</span>
+                        </div>
+                        <!-- Sliders List -->
+                        <div class="flex flex-col gap-space-xl">
+                            <!-- 1. Skill -->
+                            <div class="flex flex-col gap-2 p-space-md rounded-xl bg-surface-container-low">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center gap-2">
+                                        <span
+                                            class="w-7 h-7 rounded-lg bg-primary/10 text-primary flex items-center justify-center font-label-sm text-label-sm font-bold">1</span>
+                                        <span
+                                            class="font-label-lg text-label-lg text-on-surface font-semibold">Skill</span>
+                                    </div>
+                                    <span
+                                        class="px-2.5 py-0.5 rounded-full bg-primary text-on-primary font-label-md text-label-md font-semibold shadow-sm"
+                                        id="val-skill">45%</span>
+                                </div>
+                                <input
+                                    class="w-full h-2 bg-surface-container-highest rounded-lg appearance-none cursor-pointer accent-primary focus:outline-none"
+                                    id="slider-skill" max="100" min="0" oninput="updateWeights()" type="range"
+                                    value="45" />
+                                <p class="font-body-sm text-body-sm text-on-surface-variant">Skill: how closely a
+                                    volunteer's skill level matches what the task requires.</p>
+                            </div>
+                            <!-- 2. Experience -->
+                            <div class="flex flex-col gap-2 p-space-md rounded-xl bg-surface-container-low">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center gap-2">
+                                        <span
+                                            class="w-7 h-7 rounded-lg bg-primary/10 text-primary flex items-center justify-center font-label-sm text-label-sm font-bold">2</span>
+                                        <span
+                                            class="font-label-lg text-label-lg text-on-surface font-semibold">Experience</span>
+                                    </div>
+                                    <span
+                                        class="px-2.5 py-0.5 rounded-full bg-surface-container-highest text-on-surface font-label-md text-label-md font-semibold"
+                                        id="val-experience">15%</span>
+                                </div>
+                                <input
+                                    class="w-full h-2 bg-surface-container-highest rounded-lg appearance-none cursor-pointer accent-primary focus:outline-none"
+                                    id="slider-experience" max="100" min="0" oninput="updateWeights()" type="range"
+                                    value="15" />
+                                <p class="font-body-sm text-body-sm text-on-surface-variant">Experience: prior event
+                                    hours logged and track record in similar event domains.</p>
+                            </div>
+                            <!-- 3. Performance -->
+                            <div class="flex flex-col gap-2 p-space-md rounded-xl bg-surface-container-low">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center gap-2">
+                                        <span
+                                            class="w-7 h-7 rounded-lg bg-primary/10 text-primary flex items-center justify-center font-label-sm text-label-sm font-bold">3</span>
+                                        <span
+                                            class="font-label-lg text-label-lg text-on-surface font-semibold">Performance</span>
+                                    </div>
+                                    <span
+                                        class="px-2.5 py-0.5 rounded-full bg-surface-container-highest text-on-surface font-label-md text-label-md font-semibold"
+                                        id="val-performance">15%</span>
+                                </div>
+                                <input
+                                    class="w-full h-2 bg-surface-container-highest rounded-lg appearance-none cursor-pointer accent-primary focus:outline-none"
+                                    id="slider-performance" max="100" min="0" oninput="updateWeights()" type="range"
+                                    value="15" />
+                                <p class="font-body-sm text-body-sm text-on-surface-variant">Performance: average
+                                    coordinator rating and shift feedback scores.</p>
+                            </div>
+                            <!-- 4. Load -->
+                            <div class="flex flex-col gap-2 p-space-md rounded-xl bg-surface-container-low">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center gap-2">
+                                        <span
+                                            class="w-7 h-7 rounded-lg bg-primary/10 text-primary flex items-center justify-center font-label-sm text-label-sm font-bold">4</span>
+                                        <span
+                                            class="font-label-lg text-label-lg text-on-surface font-semibold">Load</span>
+                                    </div>
+                                    <span
+                                        class="px-2.5 py-0.5 rounded-full bg-surface-container-highest text-on-surface font-label-md text-label-md font-semibold"
+                                        id="val-load">15%</span>
+                                </div>
+                                <input
+                                    class="w-full h-2 bg-surface-container-highest rounded-lg appearance-none cursor-pointer accent-primary focus:outline-none"
+                                    id="slider-load" max="100" min="0" oninput="updateWeights()" type="range"
+                                    value="15" />
+                                <p class="font-body-sm text-body-sm text-on-surface-variant">Load: balancing shift
+                                    distribution across active registered volunteers.</p>
+                            </div>
+                            <!-- 5. Interest -->
+                            <div class="flex flex-col gap-2 p-space-md rounded-xl bg-surface-container-low">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center gap-2">
+                                        <span
+                                            class="w-7 h-7 rounded-lg bg-primary/10 text-primary flex items-center justify-center font-label-sm text-label-sm font-bold">5</span>
+                                        <span
+                                            class="font-label-lg text-label-lg text-on-surface font-semibold">Interest</span>
+                                    </div>
+                                    <span
+                                        class="px-2.5 py-0.5 rounded-full bg-surface-container-highest text-on-surface font-label-md text-label-md font-semibold"
+                                        id="val-interest">10%</span>
+                                </div>
+                                <input
+                                    class="w-full h-2 bg-surface-container-highest rounded-lg appearance-none cursor-pointer accent-primary focus:outline-none"
+                                    id="slider-interest" max="100" min="0" oninput="updateWeights()" type="range"
+                                    value="10" />
+                                <p class="font-body-sm text-body-sm text-on-surface-variant">Interest: volunteer
+                                    preferences and role track choices.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Bottom Sticky Action Bar -->
+                <div
+                    class="fixed bottom-0 left-64 right-0 bg-surface-container-lowest/90 backdrop-blur-md px-space-xl py-space-md shadow-xl z-30 flex items-center justify-between">
+                    <!-- Unsaved status info -->
+                    <div class="flex items-center gap-space-sm">
+                        <span class="w-2.5 h-2.5 rounded-full bg-outline" id="footer-status-dot"></span>
+                        <span class="font-label-md text-label-md text-on-surface-variant" id="footer-status-text">All
+                            changes synced</span>
+                    </div>
+                    <!-- Actions -->
+                    <div class="flex items-center gap-space-md">
+                        <button
+                            class="h-10 px-4 rounded-lg bg-surface-container-low hover:bg-surface-container text-on-surface font-label-lg text-label-lg transition-colors"
+                            onclick="cancelChanges()" type="button">
+                            Cancel
+                        </button>
+                        <button
+                            class="h-10 px-5 rounded-lg bg-primary hover:bg-on-primary-fixed-variant text-on-primary font-label-lg text-label-lg shadow-sm transition-all flex items-center gap-2 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100"
+                            id="btn-save-changes" onclick="saveChanges()" type="button">
+                            <span class="material-symbols-outlined text-[18px]">check</span>
+                            <span>Save changes</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <script>
+                let hasUnsavedChanges = false;
+                let isWeightsValid = true;
+
+                function switchTab(tabKey) {
+                    const panels = {
+                        profile: document.getElementById('tab-panel-profile'),
+                        notifications: document.getElementById('tab-panel-notifications'),
+                        allocation: document.getElementById('tab-panel-allocation')
+                    };
+
+                    const buttons = {
+                        profile: document.getElementById('tab-btn-profile'),
+                        notifications: document.getElementById('tab-btn-notifications'),
+                        allocation: document.getElementById('tab-btn-allocation')
+                    };
+
+                    Object.keys(panels).forEach(key => {
+                        if (key === tabKey) {
+                            panels[key].classList.remove('hidden');
+                            buttons[key].className = 'tab-trigger flex items-center gap-2 px-4 py-2.5 rounded-lg font-label-lg text-label-lg bg-primary text-on-primary shadow-sm transition-all';
+                        } else {
+                            panels[key].classList.add('hidden');
+                            buttons[key].className = 'tab-trigger flex items-center gap-2 px-4 py-2.5 rounded-lg font-label-lg text-label-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low transition-all';
+                        }
+                    });
+                }
+
+                function handleWhatsappToggle() {
+                    const toggle = document.getElementById('toggle-whatsapp');
+                    const container = document.getElementById('whatsapp-field-container');
+                    if (toggle.checked) {
+                        container.classList.remove('hidden');
+                    } else {
+                        container.classList.add('hidden');
+                    }
+                }
+
+                function markUnsaved() {
+                    hasUnsavedChanges = true;
+                    updateSyncUI('unsaved');
+                }
+
+                function updateSyncUI(state) {
+                    const headerBadge = document.getElementById('header-status-badge');
+                    const headerText = document.getElementById('header-status-text');
+                    const footerDot = document.getElementById('footer-status-dot');
+                    const footerText = document.getElementById('footer-status-text');
+                    const saveBtn = document.getElementById('btn-save-changes');
+
+                    // Reset base classes
+                    headerBadge.className = 'flex items-center gap-1.5 px-3 py-1 rounded-full shadow-sm transition-all duration-300 ';
+
+                    switch (state) {
+                        case 'unsaved':
+                            headerBadge.className += 'bg-tertiary-fixed text-on-tertiary-fixed';
+                            headerBadge.innerHTML = '<span class="w-2 h-2 rounded-full bg-tertiary"></span><span class="font-label-sm text-label-sm font-medium">Unsaved changes</span>';
+                            footerDot.className = 'w-2.5 h-2.5 rounded-full bg-tertiary animate-pulse';
+                            footerText.textContent = '• You have unsaved changes';
+                            footerText.className = 'font-label-md text-label-md text-tertiary font-medium';
+                            break;
+                        case 'saving':
+                            headerBadge.className += 'bg-primary-fixed text-on-primary-fixed';
+                            headerBadge.innerHTML = '<span class="material-symbols-outlined text-[14px] animate-spin">sync</span><span class="font-label-sm text-label-sm font-medium">Saving...</span>';
+                            footerDot.className = 'w-2.5 h-2.5 rounded-full bg-primary animate-ping';
+                            footerText.textContent = 'Saving changes...';
+                            footerText.className = 'font-label-md text-label-md text-primary font-medium';
+                            break;
+                        case 'saved':
+                            headerBadge.className += 'bg-secondary-container text-on-secondary-container';
+                            headerBadge.innerHTML = '<span class="material-symbols-outlined text-[14px]">check_circle</span><span class="font-label-sm text-label-sm font-medium">All changes saved</span>';
+                            footerDot.className = 'w-2.5 h-2.5 rounded-full bg-secondary';
+                            footerText.textContent = 'All changes synced';
+                            footerText.className = 'font-label-md text-label-md text-on-surface-variant';
+                            hasUnsavedChanges = false;
+                            break;
+                        case 'error':
+                            headerBadge.className += 'bg-error-container text-on-error-container';
+                            headerBadge.innerHTML = '<span class="material-symbols-outlined text-[14px]">error</span><span class="font-label-sm text-label-sm font-medium">Save failed</span>';
+                            footerDot.className = 'w-2.5 h-2.5 rounded-full bg-error';
+                            footerText.textContent = 'Failed to persist allocation configuration';
+                            footerText.className = 'font-label-md text-label-md text-error font-medium';
+                            break;
+                        default:
+                            headerBadge.className += 'bg-surface-container text-on-surface-variant';
+                            headerBadge.innerHTML = '<span class="w-2 h-2 rounded-full bg-outline"></span><span class="font-label-sm text-label-sm font-medium">All changes synced</span>';
+                            footerDot.className = 'w-2.5 h-2.5 rounded-full bg-outline';
+                            footerText.textContent = 'All changes synced';
+                            footerText.className = 'font-label-md text-label-md text-on-surface-variant';
+                            break;
+                    }
+
+                    if (!isWeightsValid) {
+                        saveBtn.disabled = true;
+                    } else {
+                        saveBtn.disabled = false;
+                    }
+                }
+
+                function setSyncState(stateName) {
+                    // Highlight demo pill
+                    document.querySelectorAll('.state-pill').forEach(btn => {
+                        if (btn.getAttribute('data-state') === stateName) {
+                            btn.className = 'state-pill px-2.5 py-1 rounded-lg font-label-sm text-label-sm bg-surface-container-lowest text-on-surface shadow-sm font-semibold';
+                        } else {
+                            btn.className = 'state-pill px-2.5 py-1 rounded-lg font-label-sm text-label-sm text-on-surface-variant hover:text-on-surface transition-all';
+                        }
+                    });
+                    updateSyncUI(stateName);
+                }
+
+                function updateWeights() {
+                    markUnsaved();
+                    const skill = parseInt(document.getElementById('slider-skill').value) || 0;
+                    const exp = parseInt(document.getElementById('slider-experience').value) || 0;
+                    const perf = parseInt(document.getElementById('slider-performance').value) || 0;
+                    const load = parseInt(document.getElementById('slider-load').value) || 0;
+                    const interest = parseInt(document.getElementById('slider-interest').value) || 0;
+
+                    document.getElementById('val-skill').innerText = skill + '%';
+                    document.getElementById('val-experience').innerText = exp + '%';
+                    document.getElementById('val-performance').innerText = perf + '%';
+                    document.getElementById('val-load').innerText = load + '%';
+                    document.getElementById('val-interest').innerText = interest + '%';
+
+                    const sum = skill + exp + perf + load + interest;
+                    const badge = document.getElementById('weights-total-badge');
+                    const label = document.getElementById('weights-total-label');
+                    const icon = document.getElementById('weights-total-icon');
+                    const errorBanner = document.getElementById('weights-error-banner');
+                    const errorText = document.getElementById('weights-error-text');
+                    const saveBtn = document.getElementById('btn-save-changes');
+
+                    label.innerText = 'Total: ' + sum + '%';
+
+                    if (sum === 100) {
+                        isWeightsValid = true;
+                        badge.className = 'flex items-center gap-2 px-3 py-1.5 rounded-full bg-secondary-container text-on-secondary-container transition-all';
+                        icon.innerText = 'check_circle';
+                        errorBanner.classList.add('hidden');
+                        saveBtn.disabled = false;
+                    } else {
+                        isWeightsValid = false;
+                        badge.className = 'flex items-center gap-2 px-3 py-1.5 rounded-full bg-error-container text-on-error-container transition-all';
+                        icon.innerText = 'warning';
+                        errorBanner.classList.remove('hidden');
+                        errorText.innerText = 'Weights must add up to 100% (currently ' + sum + '%)';
+                        saveBtn.disabled = true;
+                    }
+                }
+
+                function resetWeights() {
+                    document.getElementById('slider-skill').value = 45;
+                    document.getElementById('slider-experience').value = 15;
+                    document.getElementById('slider-performance').value = 15;
+                    document.getElementById('slider-load').value = 15;
+                    document.getElementById('slider-interest').value = 10;
+                    updateWeights();
+                }
+
+                function saveChanges() {
+                    if (!isWeightsValid) return;
+                    updateSyncUI('saving');
+                    setTimeout(() => {
+                        updateSyncUI('saved');
+                    }, 600);
+                }
+
+                function cancelChanges() {
+                    resetWeights();
+                    document.getElementById('input-fullname').value = '';
+                    document.getElementById('input-dept').value = '';
+                    document.getElementById('input-max-hours').value = '';
+                    document.getElementById('toggle-email').checked = false;
+                    document.getElementById('toggle-whatsapp').checked = false;
+                    document.getElementById('toggle-firsttimers').checked = false;
+                    document.getElementById('input-phone').value = '';
+                    handleWhatsappToggle();
+                    updateSyncUI('default');
+                }
+
+                // Initialize
+                document.addEventListener('DOMContentLoaded', () => {
+                    updateWeights();
+                });
+            </script>
+        </main>
+    </div>
+</body>
+
+</html>

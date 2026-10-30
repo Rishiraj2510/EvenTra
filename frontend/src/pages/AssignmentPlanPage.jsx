@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import { useEvent } from '../context/EventContext'
 import { getPlan, runSolver, approvePlan, swapAssignment, getVolunteers } from '../services/api'
 import { useFetch } from '../hooks/useFetch'
-import { DEFAULT_WEIGHTS } from '../utils/scoring'
+import { getCurrentWeights } from '../utils/scoring'
 
 export default function AssignmentPlanPage() {
   const { role } = useAuth()
@@ -688,97 +688,102 @@ export default function AssignmentPlanPage() {
                       </div>
 
                       {/* 5 Factors Breakdown */}
-                      <div className="flex flex-col gap-2.5">
-                        {/* Factor 1: Skill */}
-                        <div className="p-3 rounded-xl bg-surface-container-low flex flex-col gap-1.5">
-                          <div className="flex items-center justify-between">
-                            <span className="font-label-md text-label-md text-on-surface">
-                              Skill match ({Math.round(DEFAULT_WEIGHTS.skill * 100)}%)
-                            </span>
-                            <span className="font-label-sm text-label-sm font-bold text-on-surface">
-                              {Math.round(selectedAssignmentForDrawer.breakdown.skill * 100)}%
-                            </span>
-                          </div>
-                          <div className="w-full bg-surface-container h-1.5 rounded-full overflow-hidden">
-                            <div
-                              className="bg-primary h-full"
-                              style={{ width: `${selectedAssignmentForDrawer.breakdown.skill * 100}%` }}
-                            />
-                          </div>
-                        </div>
+                      {(() => {
+                        const activeWeights = getCurrentWeights()
+                        return (
+                          <div className="flex flex-col gap-2.5">
+                            {/* Factor 1: Skill */}
+                            <div className="p-3 rounded-xl bg-surface-container-low flex flex-col gap-1.5">
+                              <div className="flex items-center justify-between">
+                                <span className="font-label-md text-label-md text-on-surface">
+                                  Skill match ({Math.round(activeWeights.skill)}%)
+                                </span>
+                                <span className="font-label-sm text-label-sm font-bold text-on-surface">
+                                  {Math.round(selectedAssignmentForDrawer.breakdown.skill * 100)}%
+                                </span>
+                              </div>
+                              <div className="w-full bg-surface-container h-1.5 rounded-full overflow-hidden">
+                                <div
+                                  className="bg-primary h-full"
+                                  style={{ width: `${selectedAssignmentForDrawer.breakdown.skill * 100}%` }}
+                                />
+                              </div>
+                            </div>
 
-                        {/* Factor 2: Experience */}
-                        <div className="p-3 rounded-xl bg-surface-container-low flex flex-col gap-1.5">
-                          <div className="flex items-center justify-between">
-                            <span className="font-label-md text-label-md text-on-surface">
-                              Experience ({Math.round(DEFAULT_WEIGHTS.experience * 100)}%)
-                            </span>
-                            <span className="font-label-sm text-label-sm font-bold text-on-surface">
-                              {Math.round(selectedAssignmentForDrawer.breakdown.experience * 100)}%
-                            </span>
-                          </div>
-                          <div className="w-full bg-surface-container h-1.5 rounded-full overflow-hidden">
-                            <div
-                              className="bg-primary h-full"
-                              style={{ width: `${selectedAssignmentForDrawer.breakdown.experience * 100}%` }}
-                            />
-                          </div>
-                        </div>
+                            {/* Factor 2: Experience */}
+                            <div className="p-3 rounded-xl bg-surface-container-low flex flex-col gap-1.5">
+                              <div className="flex items-center justify-between">
+                                <span className="font-label-md text-label-md text-on-surface">
+                                  Experience ({Math.round(activeWeights.experience)}%)
+                                </span>
+                                <span className="font-label-sm text-label-sm font-bold text-on-surface">
+                                  {Math.round(selectedAssignmentForDrawer.breakdown.experience * 100)}%
+                                </span>
+                              </div>
+                              <div className="w-full bg-surface-container h-1.5 rounded-full overflow-hidden">
+                                <div
+                                  className="bg-primary h-full"
+                                  style={{ width: `${selectedAssignmentForDrawer.breakdown.experience * 100}%` }}
+                                />
+                              </div>
+                            </div>
 
-                        {/* Factor 3: Performance */}
-                        <div className="p-3 rounded-xl bg-surface-container-low flex flex-col gap-1.5">
-                          <div className="flex items-center justify-between">
-                            <span className="font-label-md text-label-md text-on-surface">
-                              Past performance ({Math.round(DEFAULT_WEIGHTS.performance * 100)}%)
-                            </span>
-                            <span className="font-label-sm text-label-sm font-bold text-on-surface">
-                              {Math.round(selectedAssignmentForDrawer.breakdown.performance * 100)}%
-                            </span>
-                          </div>
-                          <div className="w-full bg-surface-container h-1.5 rounded-full overflow-hidden">
-                            <div
-                              className="bg-primary h-full"
-                              style={{ width: `${selectedAssignmentForDrawer.breakdown.performance * 100}%` }}
-                            />
-                          </div>
-                        </div>
+                            {/* Factor 3: Performance */}
+                            <div className="p-3 rounded-xl bg-surface-container-low flex flex-col gap-1.5">
+                              <div className="flex items-center justify-between">
+                                <span className="font-label-md text-label-md text-on-surface">
+                                  Past performance ({Math.round(activeWeights.performance)}%)
+                                </span>
+                                <span className="font-label-sm text-label-sm font-bold text-on-surface">
+                                  {Math.round(selectedAssignmentForDrawer.breakdown.performance * 100)}%
+                                </span>
+                              </div>
+                              <div className="w-full bg-surface-container h-1.5 rounded-full overflow-hidden">
+                                <div
+                                  className="bg-primary h-full"
+                                  style={{ width: `${selectedAssignmentForDrawer.breakdown.performance * 100}%` }}
+                                />
+                              </div>
+                            </div>
 
-                        {/* Factor 4: Load */}
-                        <div className="p-3 rounded-xl bg-surface-container-low flex flex-col gap-1.5">
-                          <div className="flex items-center justify-between">
-                            <span className="font-label-md text-label-md text-on-surface">
-                              Workload balance ({Math.round(DEFAULT_WEIGHTS.load * 100)}%)
-                            </span>
-                            <span className="font-label-sm text-label-sm font-bold text-on-surface">
-                              {Math.round(selectedAssignmentForDrawer.breakdown.load * 100)}%
-                            </span>
-                          </div>
-                          <div className="w-full bg-surface-container h-1.5 rounded-full overflow-hidden">
-                            <div
-                              className="bg-primary h-full"
-                              style={{ width: `${selectedAssignmentForDrawer.breakdown.load * 100}%` }}
-                            />
-                          </div>
-                        </div>
+                            {/* Factor 4: Load */}
+                            <div className="p-3 rounded-xl bg-surface-container-low flex flex-col gap-1.5">
+                              <div className="flex items-center justify-between">
+                                <span className="font-label-md text-label-md text-on-surface">
+                                  Workload balance ({Math.round(activeWeights.load)}%)
+                                </span>
+                                <span className="font-label-sm text-label-sm font-bold text-on-surface">
+                                  {Math.round(selectedAssignmentForDrawer.breakdown.load * 100)}%
+                                </span>
+                              </div>
+                              <div className="w-full bg-surface-container h-1.5 rounded-full overflow-hidden">
+                                <div
+                                  className="bg-primary h-full"
+                                  style={{ width: `${selectedAssignmentForDrawer.breakdown.load * 100}%` }}
+                                />
+                              </div>
+                            </div>
 
-                        {/* Factor 5: Interest */}
-                        <div className="p-3 rounded-xl bg-surface-container-low flex flex-col gap-1.5">
-                          <div className="flex items-center justify-between">
-                            <span className="font-label-md text-label-md text-on-surface">
-                              Role interest ({Math.round(DEFAULT_WEIGHTS.interest * 100)}%)
-                            </span>
-                            <span className="font-label-sm text-label-sm font-bold text-on-surface">
-                              {Math.round(selectedAssignmentForDrawer.breakdown.interest * 100)}%
-                            </span>
+                            {/* Factor 5: Interest */}
+                            <div className="p-3 rounded-xl bg-surface-container-low flex flex-col gap-1.5">
+                              <div className="flex items-center justify-between">
+                                <span className="font-label-md text-label-md text-on-surface">
+                                  Role interest ({Math.round(activeWeights.interest)}%)
+                                </span>
+                                <span className="font-label-sm text-label-sm font-bold text-on-surface">
+                                  {Math.round(selectedAssignmentForDrawer.breakdown.interest * 100)}%
+                                </span>
+                              </div>
+                              <div className="w-full bg-surface-container h-1.5 rounded-full overflow-hidden">
+                                <div
+                                  className="bg-primary h-full"
+                                  style={{ width: `${selectedAssignmentForDrawer.breakdown.interest * 100}%` }}
+                                />
+                              </div>
+                            </div>
                           </div>
-                          <div className="w-full bg-surface-container h-1.5 rounded-full overflow-hidden">
-                            <div
-                              className="bg-primary h-full"
-                              style={{ width: `${selectedAssignmentForDrawer.breakdown.interest * 100}%` }}
-                            />
-                          </div>
-                        </div>
-                      </div>
+                        )
+                      })()}
 
                       {/* Rationale explanation */}
                       {selectedAssignmentForDrawer.reason && (

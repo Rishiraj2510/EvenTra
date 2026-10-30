@@ -7,6 +7,8 @@ import { initialPlans, createEmptyPlan, computePlanSummary } from '../mocks/plan
 import { calculateFitScore } from '../utils/scoring.js'
 import { createMessage, createToolCall, createApproval, createAuditEntry } from '../mocks/agent.js'
 import { mockVolunteerHistory } from '../mocks/volunteerHistory.js'
+import { defaultSettings } from '../mocks/settings.js'
+import { setCurrentWeights } from '../utils/scoring.js'
 
 export const USE_MOCKS = true
 
@@ -21,6 +23,11 @@ let mockPlansStore = initialPlans.map((p) => ({
 }))
 let mockAgentHistoryStore = {} // eventId -> Array<Message>
 let mockAuditLogsStore = {} // eventId -> Array<AuditEntry>
+let mockSettingsStore = {
+  weights: { ...defaultSettings.weights },
+  firstTimerBonus: defaultSettings.firstTimerBonus,
+  defaultMaxHours: defaultSettings.defaultMaxHours,
+}
 
 export async function login(email, password) {
   if (!email || !email.trim()) {
@@ -781,6 +788,58 @@ export async function resolveApproval(approvalId, decision) {
     throw new Error(`Failed to resolve approval: ${response.statusText}`)
   }
   return response.json()
+}
+
+export async function getSettings() {
+  if (USE_MOCKS) {
+    await new Promise((resolve) => setTimeout(resolve, 200))
+    return {
+      weights: { ...mockSettingsStore.weights },
+      firstTimerBonus: mockSettingsStore.firstTimerBonus,
+      defaultMaxHours: mockSettingsStore.defaultMaxHours,
+    }
+  }
+
+  const response = await fetch('/api/settings')
+  if (!response.ok) {
+    throw new Error(`Failed to fetch settings: ${response.statusText}`)
+  }
+  const data = await response.json()
+  if (data?.weights) {
+    setCurrentWeights(data.weights)
+  }
+  return data
+}
+
+export async function saveSettings(settings) {
+  if (USE_MOCKS) {
+    await new Promise((resolve) => setTimeout(resolve, 300))
+    mockSettingsStore = {
+      weights: { ...settings.weights },
+      firstTimerBonus: Number(settings.firstTimerBonus),
+      defaultMaxHours: Number(settings.defaultMaxHours),
+    }
+    setCurrentWeights(mockSettingsStore.weights)
+    return {
+      weights: { ...mockSettingsStore.weights },
+      firstTimerBonus: mockSettingsStore.firstTimerBonus,
+      defaultMaxHours: mockSettingsStore.defaultMaxHours,
+    }
+  }
+
+  const response = await fetch('/api/settings', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(settings),
+  })
+  if (!response.ok) {
+    throw new Error(`Failed to save settings: ${response.statusText}`)
+  }
+  const data = await response.json()
+  if (data?.weights) {
+    setCurrentWeights(data.weights)
+  }
+  return data
 }
 
 
