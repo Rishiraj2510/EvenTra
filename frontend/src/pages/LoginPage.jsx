@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { useNavigate, Navigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { login } from '../services/api'
+import { login, USE_MOCKS } from '../services/api'
+import { demoUser, demoVolunteerUser } from '../mocks/users'
 import logo from '../assets/logo.png'
 
 export default function LoginPage() {
@@ -291,6 +292,62 @@ export default function LoginPage() {
                 </button>
               </div>
             </form>
+
+            {/* Demo accounts note (shown only when USE_MOCKS is true) */}
+            {USE_MOCKS && (
+              <div className="mt-6 pt-5 border-t border-slate-200 text-left">
+                <div className="flex items-center gap-1.5 mb-2 text-on-surface-variant">
+                  <span className="material-symbols-outlined text-[16px] text-outline">badge</span>
+                  <span className="font-label-sm text-label-sm font-semibold uppercase tracking-wider">
+                    Demo accounts
+                  </span>
+                  <span className="text-outline text-label-sm">· Use any password</span>
+                </div>
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEmail(demoUser.email)
+                      if (fieldErrors.email) setFieldErrors((prev) => ({ ...prev, email: '' }))
+                    }}
+                    className="flex-1 p-2.5 rounded-lg bg-surface-container-low hover:bg-surface-container text-left transition-colors border border-outline-variant/30 cursor-pointer group"
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="font-label-sm text-label-sm font-medium text-on-surface">
+                        Organiser
+                      </span>
+                      <span className="material-symbols-outlined text-[14px] text-outline group-hover:text-primary transition-colors">
+                        north_east
+                      </span>
+                    </div>
+                    <p className="font-body-sm text-body-sm text-primary font-mono truncate mt-0.5">
+                      {demoUser.email}
+                    </p>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEmail(demoVolunteerUser.email)
+                      if (fieldErrors.email) setFieldErrors((prev) => ({ ...prev, email: '' }))
+                    }}
+                    className="flex-1 p-2.5 rounded-lg bg-surface-container-low hover:bg-surface-container text-left transition-colors border border-outline-variant/30 cursor-pointer group"
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="font-label-sm text-label-sm font-medium text-on-surface">
+                        Volunteer
+                      </span>
+                      <span className="material-symbols-outlined text-[14px] text-outline group-hover:text-primary transition-colors">
+                        north_east
+                      </span>
+                    </div>
+                    <p className="font-body-sm text-body-sm text-primary font-mono truncate mt-0.5">
+                      {demoVolunteerUser.email}
+                    </p>
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>

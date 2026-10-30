@@ -250,6 +250,34 @@ export async function getVolunteer(id) {
   return response.json()
 }
 
+export async function updateVolunteer(id, data) {
+  if (USE_MOCKS) {
+    await new Promise((resolve) => setTimeout(resolve, 250))
+    const index = mockVolunteersStore.findIndex((v) => v.id === id)
+    if (index === -1) {
+      throw new Error(`Volunteer with ID ${id} not found`)
+    }
+    const current = mockVolunteersStore[index]
+    const updated = {
+      ...current,
+      ...data,
+      id: current.id, // keep immutable id
+    }
+    mockVolunteersStore[index] = updated
+    return { ...updated }
+  }
+
+  const response = await fetch(`/api/volunteers/${encodeURIComponent(id)}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  })
+  if (!response.ok) {
+    throw new Error(`Failed to update volunteer: ${response.statusText}`)
+  }
+  return response.json()
+}
+
 export async function getVolunteerHistory(id) {
   if (USE_MOCKS) {
     await new Promise((resolve) => setTimeout(resolve, 200))
