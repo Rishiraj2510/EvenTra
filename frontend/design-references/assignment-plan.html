@@ -1,0 +1,1011 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <meta content="web_dashboard" name="shell-type" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"
+        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com" rel="preconnect" />
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <style>
+        @layer base {
+
+            html,
+            body {
+                margin: 0;
+                padding: 0;
+            }
+
+            body {
+                overscroll-behavior: none;
+            }
+
+            main>:first-child {
+                margin-top: 0 !important;
+            }
+
+            main>:last-child {
+                margin-bottom: 0 !important;
+            }
+        }
+
+        ::-webkit-scrollbar {
+            display: none;
+        }
+    </style>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script id="tailwind-config">tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-error": "#ffffff",
+                        "on-primary-fixed": "#0f0069",
+                        "on-tertiary-container": "#ffd4a4",
+                        "error": "#ba1a1a",
+                        "surface-container-highest": "#d3e4fe",
+                        "on-secondary-fixed": "#002113",
+                        "surface-container-high": "#dce9ff",
+                        "on-surface-variant": "#464555",
+                        "background": "#f8f9ff",
+                        "on-error-container": "#93000a",
+                        "primary": "#3525cd",
+                        "secondary-container": "#6cf8bb",
+                        "error-container": "#ffdad6",
+                        "outline-variant": "#c7c4d8",
+                        "on-tertiary-fixed": "#2a1700",
+                        "surface": "#f8f9ff",
+                        "surface-dim": "#cbdbf5",
+                        "on-tertiary-fixed-variant": "#653e00",
+                        "tertiary-fixed-dim": "#ffb95f",
+                        "on-secondary": "#ffffff",
+                        "on-primary": "#ffffff",
+                        "on-background": "#0b1c30",
+                        "primary-fixed": "#e2dfff",
+                        "primary-fixed-dim": "#c3c0ff",
+                        "inverse-on-surface": "#eaf1ff",
+                        "secondary-fixed": "#6ffbbe",
+                        "on-secondary-container": "00714d",
+                        "on-surface": "#0b1c30",
+                        "surface-container-lowest": "#ffffff",
+                        "on-primary-fixed-variant": "#3323cc",
+                        "surface-bright": "#f8f9ff",
+                        "surface-container": "#e5eeff",
+                        "secondary-fixed-dim": "#4edea3",
+                        "tertiary-container": "#885500",
+                        "on-secondary-fixed-variant": "#005236",
+                        "inverse-surface": "#213145",
+                        "surface-container-low": "#eff4ff",
+                        "outline": "#777587",
+                        "on-tertiary": "#ffffff",
+                        "surface-variant": "#d3e4fe",
+                        "inverse-primary": "#c3c0ff",
+                        "tertiary": "#684000",
+                        "tertiary-fixed": "#ffddb8",
+                        "on-primary-container": "#dad7ff",
+                        "secondary": "#006c49",
+                        "primary-container": "#4f46e5",
+                        "surface-tint": "#4d44e3"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "space-md": "0.75rem",
+                        "space-xs": "0.25rem",
+                        "space-lg": "1rem",
+                        "margin-lg": "2rem",
+                        "gutter": "1rem",
+                        "margin-md": "1.5rem",
+                        "margin": "1rem",
+                        "gutter-lg": "1.5rem",
+                        "space-sm": "0.5rem",
+                        "space-xl": "1.5rem"
+                    },
+                    "fontFamily": {
+                        "label-md": ["Inter"],
+                        "body-sm": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "label-sm": ["Inter"],
+                        "headline-sm": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "headline-xl-mobile": ["Inter"],
+                        "label-lg": ["Inter"],
+                        "headline-xl": ["Inter"],
+                        "body-md": ["Inter"]
+                    },
+                    "fontSize": {
+                        "label-md": ["12px", { "lineHeight": "16px", "fontWeight": "500" }],
+                        "body-sm": ["12px", { "lineHeight": "16px", "fontWeight": "400" }],
+                        "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "label-sm": ["11px", { "lineHeight": "14px", "letterSpacing": "0.04em", "fontWeight": "600" }],
+                        "headline-sm": ["16px", { "lineHeight": "24px", "letterSpacing": "0em", "fontWeight": "600" }],
+                        "headline-lg": ["28px", { "lineHeight": "36px", "letterSpacing": "-0.015em", "fontWeight": "600" }],
+                        "headline-md": ["20px", { "lineHeight": "28px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "headline-xl-mobile": ["28px", { "lineHeight": "36px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "label-lg": ["14px", { "lineHeight": "20px", "fontWeight": "500" }],
+                        "headline-xl": ["36px", { "lineHeight": "44px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }]
+                    }
+                }
+            }
+        }</script>
+</head>
+
+<body class="bg-background font-body-md text-body-md text-on-surface antialiased">
+    <aside
+        class="fixed left-0 top-0 h-full w-64 bg-surface-container-lowest shadow-[0_1px_8px_rgba(0,0,0,0.04)] z-50 flex flex-col justify-between">
+        <div class="flex flex-col">
+            <div class="h-16 px-space-xl flex items-center gap-space-sm">
+                <div
+                    class="w-8 h-8 rounded-lg bg-primary-container flex items-center justify-center text-on-primary font-headline-sm text-headline-sm">
+                    E</div><span
+                    class="font-headline-md text-headline-md text-on-surface tracking-tight font-bold">Eventra</span>
+            </div>
+            <nav class="flex flex-col gap-space-xs px-space-md py-space-sm"
+                data-active-classes="bg-primary-container text-on-primary font-label-lg text-label-lg shadow-sm"><a
+                    class="flex items-center gap-space-md px-space-md py-2.5 rounded-lg text-on-surface-variant font-label-lg text-label-lg hover:bg-surface-container-high hover:text-on-surface transition-colors"
+                    data-path="dashboard" href="#"><span
+                        class="material-symbols-outlined text-[20px]">grid_view</span><span>Dashboard</span></a><a
+                    class="flex items-center gap-space-md px-space-md py-2.5 rounded-lg text-on-surface-variant font-label-lg text-label-lg hover:bg-surface-container-high hover:text-on-surface transition-colors"
+                    data-path="events" href="#"><span
+                        class="material-symbols-outlined text-[20px]">event</span><span>Events</span></a><a
+                    class="flex items-center gap-space-md px-space-md py-2.5 rounded-lg text-on-surface-variant font-label-lg text-label-lg hover:bg-surface-container-high hover:text-on-surface transition-colors"
+                    data-path="tasks" href="#"><span
+                        class="material-symbols-outlined text-[20px]">checklist</span><span>Tasks</span></a><a
+                    class="flex items-center gap-space-md px-space-md py-2.5 rounded-lg text-on-surface-variant font-label-lg text-label-lg hover:bg-surface-container-high hover:text-on-surface transition-colors"
+                    data-path="volunteers" href="#"><span
+                        class="material-symbols-outlined text-[20px]">group</span><span>Volunteers</span></a><a
+                    aria-current="page"
+                    class="flex items-center gap-space-md px-space-md py-2.5 rounded-lg transition-colors bg-primary-container text-on-primary font-label-lg text-label-lg shadow-sm"
+                    data-path="assignment-plan" href="#"><span
+                        class="material-symbols-outlined text-[20px]">splitscreen</span><span>Assignment
+                        Plan</span></a><a
+                    class="flex items-center gap-space-md px-space-md py-2.5 rounded-lg text-on-surface-variant font-label-lg text-label-lg hover:bg-surface-container-high hover:text-on-surface transition-colors"
+                    data-path="ai-assistant" href="#"><span
+                        class="material-symbols-outlined text-[20px]">auto_awesome</span><span>AI Assistant</span></a><a
+                    class="flex items-center gap-space-md px-space-md py-2.5 rounded-lg text-on-surface-variant font-label-lg text-label-lg hover:bg-surface-container-high hover:text-on-surface transition-colors"
+                    data-path="feedback" href="#"><span
+                        class="material-symbols-outlined text-[20px]">rate_review</span><span>Feedback</span></a><a
+                    class="flex items-center gap-space-md px-space-md py-2.5 rounded-lg text-on-surface-variant font-label-lg text-label-lg hover:bg-surface-container-high hover:text-on-surface transition-colors"
+                    data-path="certificates" href="#"><span
+                        class="material-symbols-outlined text-[20px]">workspace_premium</span><span>Certificates</span></a><a
+                    class="flex items-center gap-space-md px-space-md py-2.5 rounded-lg text-on-surface-variant font-label-lg text-label-lg hover:bg-surface-container-high hover:text-on-surface transition-colors"
+                    data-path="settings" href="#"><span
+                        class="material-symbols-outlined text-[20px]">settings</span><span>Settings</span></a></nav>
+        </div>
+        <div class="p-space-lg mx-space-md mb-space-lg rounded-xl bg-surface-container-low">
+            <div class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-1">Platform
+                Status</div>
+            <div class="flex items-center gap-space-sm">
+                <div class="w-2 h-2 rounded-full bg-outline"></div><span
+                    class="font-body-sm text-body-sm text-on-surface-variant">No event selected</span>
+            </div>
+        </div>
+    </aside>
+    <div class="pl-64">
+        <header
+            class="fixed top-0 left-64 right-0 h-16 bg-surface-container-lowest/90 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)] z-40 flex items-center justify-between px-space-xl">
+            <div class="flex items-center gap-space-lg"><button
+                    class="flex items-center gap-space-sm px-space-md py-1.5 rounded-lg bg-surface-container-low text-on-surface font-label-md text-label-md hover:bg-surface-container hover:text-on-surface transition-colors"
+                    type="button"><span
+                        class="material-symbols-outlined text-[18px] text-on-surface-variant">event_available</span><span>Select
+                        event</span><span
+                        class="material-symbols-outlined text-[18px] text-on-surface-variant">expand_more</span></button>
+                <div class="flex items-center gap-space-sm"><span
+                        class="font-body-sm text-body-sm text-on-surface-variant">/</span><span
+                        class="font-label-lg text-label-lg text-on-surface">Assignment Plan</span><span
+                        class="px-2 py-0.5 rounded-full font-label-sm text-label-sm bg-surface-container text-on-surface-variant">No
+                        event selected</span></div>
+            </div>
+            <div class="flex items-center gap-space-lg"><button
+                    class="flex items-center gap-space-xs px-space-md py-1.5 rounded-lg bg-surface-container-high text-on-surface font-label-md text-label-md hover:bg-surface-container-highest hover:text-on-surface transition-colors"
+                    type="button"><span
+                        class="material-symbols-outlined text-[18px] text-primary">auto_awesome</span><span>AI
+                        Assistant</span></button><button
+                    class="w-8 h-8 rounded-lg flex items-center justify-center text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors"
+                    type="button"><span class="material-symbols-outlined text-[20px]">notifications</span></button>
+                <div class="flex items-center gap-space-md">
+                    <div class="flex flex-col text-right"><span
+                            class="font-label-md text-label-md text-on-surface leading-tight">User name</span><span
+                            class="font-body-sm text-body-sm text-on-surface-variant leading-tight">Role</span></div>
+                    <div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span
+                            class="material-symbols-outlined text-on-primary text-[18px]">person</span></div>
+                </div>
+            </div>
+        </header>
+        <main class="relative pt-16 w-full min-h-screen bg-background">
+            <div class="flex flex-col w-full">
+                <!-- Visual Ambient Backdrops (Constrained) -->
+                <div
+                    class="relative w-full overflow-hidden px-space-lg lg:px-space-xl py-space-lg flex flex-col gap-space-xl">
+                    <div
+                        class="absolute -top-32 right-12 w-96 h-96 bg-primary-container/5 rounded-full blur-3xl pointer-events-none">
+                    </div>
+                    <div
+                        class="absolute top-96 -left-20 w-80 h-80 bg-secondary-container/10 rounded-full blur-3xl pointer-events-none">
+                    </div>
+                    <!-- Section 1: Top Operational Bar & Metrics Header -->
+                    <section class="flex flex-col gap-space-lg">
+                        <!-- Breadcrumb Bar & Global Lifecycle State -->
+                        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-space-md pb-space-xs">
+                            <div class="flex flex-col">
+                                <div class="flex items-center gap-space-sm">
+                                    <span
+                                        class="font-label-sm text-label-sm text-outline tracking-wider uppercase">Optimization
+                                        Engine</span>
+                                    <span class="font-body-sm text-body-sm text-outline">/</span>
+                                    <span class="font-label-sm text-label-sm text-primary font-semibold">Allocation
+                                        Matrix</span>
+                                </div>
+                                <h1 class="font-headline-lg text-headline-lg text-on-surface tracking-tight mt-0.5">
+                                    Assignment Plan</h1>
+                            </div>
+                            <!-- Controls: Lifecycle Status + View Switcher + Solver Primary Action -->
+                            <div class="flex flex-wrap items-center gap-space-md">
+                                <!-- Lifecycle State Indicator -->
+                                <div class="flex items-center p-1 rounded-xl bg-surface-container-low shadow-sm">
+                                    <div
+                                        class="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-surface-container-lowest shadow-sm text-on-surface">
+                                        <span class="w-2 h-2 rounded-full bg-outline"></span>
+                                        <span class="font-label-sm text-label-sm">No plan</span>
+                                    </div>
+                                    <div
+                                        class="flex items-center gap-1.5 px-2.5 py-1 text-on-surface-variant opacity-60">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-outline-variant"></span>
+                                        <span class="font-label-sm text-label-sm">Draft</span>
+                                    </div>
+                                    <div
+                                        class="flex items-center gap-1.5 px-2.5 py-1 text-on-surface-variant opacity-60">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-outline-variant"></span>
+                                        <span class="font-label-sm text-label-sm">Approved</span>
+                                    </div>
+                                    <div
+                                        class="flex items-center gap-1.5 px-2.5 py-1 text-on-surface-variant opacity-60">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-outline-variant"></span>
+                                        <span class="font-label-sm text-label-sm">Published</span>
+                                    </div>
+                                </div>
+                                <!-- View Switcher -->
+                                <div class="flex items-center p-1 rounded-xl bg-surface-container-low">
+                                    <button
+                                        class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface-container-lowest text-primary font-label-md text-label-md shadow-sm"
+                                        type="button">
+                                        <span class="material-symbols-outlined text-[18px]">view_agenda</span>
+                                        <span>Component Spec</span>
+                                    </button>
+                                    <button
+                                        class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-on-surface-variant hover:text-on-surface font-label-md text-label-md transition-colors"
+                                        type="button">
+                                        <span class="material-symbols-outlined text-[18px]">timeline</span>
+                                        <span>Timeline view</span>
+                                    </button>
+                                </div>
+                                <!-- Solver Weights Config & Run CTA -->
+                                <button
+                                    class="flex items-center gap-1.5 h-10 px-3.5 rounded-lg bg-surface-container-lowest hover:bg-surface-container-high text-on-surface font-label-lg text-label-lg shadow-sm transition-all"
+                                    id="config-weights-btn" type="button">
+                                    <span
+                                        class="material-symbols-outlined text-[18px] text-on-surface-variant">tune</span>
+                                    <span>Weights</span>
+                                </button>
+                                <button
+                                    class="flex items-center gap-2 h-10 px-5 rounded-lg bg-primary hover:bg-primary-container text-on-primary font-label-lg text-label-lg shadow-md hover:shadow-lg transition-all active:scale-[0.99]"
+                                    id="run-solver-main-btn" type="button">
+                                    <span class="material-symbols-outlined text-[20px]"
+                                        style="font-variation-settings: 'FILL' 1;">bolt</span>
+                                    <span>Run solver</span>
+                                </button>
+                            </div>
+                        </div>
+                        <!-- 4 High-Density Metric Cards (Clean Null State with Strict En-Dash '--' Representation) -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-space-md">
+                            <!-- Metric 1: Average Fit Score -->
+                            <div
+                                class="bg-surface-container-lowest p-space-lg rounded-xl shadow-sm flex flex-col justify-between relative overflow-hidden group hover:shadow-md transition-shadow">
+                                <div class="flex items-start justify-between">
+                                    <span
+                                        class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Average
+                                        fit score</span>
+                                    <span
+                                        class="w-8 h-8 rounded-lg bg-surface-container-low flex items-center justify-center text-primary">
+                                        <span class="material-symbols-outlined text-[18px]">query_stats</span>
+                                    </span>
+                                </div>
+                                <div class="mt-space-md flex flex-col">
+                                    <div class="flex items-baseline gap-space-sm">
+                                        <span
+                                            class="font-headline-xl text-headline-xl text-on-surface font-bold tracking-tight">--</span>
+                                        <span class="font-label-sm text-label-sm text-outline">%</span>
+                                    </div>
+                                    <div
+                                        class="flex items-center gap-1.5 mt-1 text-on-surface-variant font-body-sm text-body-sm">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-outline"></span>
+                                        <span>Target &gt;= 80%</span>
+                                    </div>
+                                </div>
+                                <div class="w-full bg-surface-container-low h-1 rounded-full mt-3 overflow-hidden">
+                                    <div class="bg-primary h-full w-0"></div>
+                                </div>
+                            </div>
+                            <!-- Metric 2: Hard Constraint Violations -->
+                            <div
+                                class="bg-surface-container-lowest p-space-lg rounded-xl shadow-sm flex flex-col justify-between relative overflow-hidden group hover:shadow-md transition-shadow">
+                                <div class="flex items-start justify-between">
+                                    <span
+                                        class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Unqualified
+                                        assignments</span>
+                                    <span
+                                        class="w-8 h-8 rounded-lg bg-surface-container-low flex items-center justify-center text-secondary">
+                                        <span class="material-symbols-outlined text-[18px]">verified_user</span>
+                                    </span>
+                                </div>
+                                <div class="mt-space-md flex flex-col">
+                                    <div class="flex items-baseline gap-space-sm">
+                                        <span
+                                            class="font-headline-xl text-headline-xl text-on-surface font-bold tracking-tight">--</span>
+                                        <span class="font-label-sm text-label-sm text-outline">conflicts</span>
+                                    </div>
+                                    <div
+                                        class="flex items-center gap-1.5 mt-1 text-on-surface-variant font-body-sm text-body-sm">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-outline"></span>
+                                        <span>Hard constraints</span>
+                                    </div>
+                                </div>
+                                <div class="w-full bg-surface-container-low h-1 rounded-full mt-3 overflow-hidden">
+                                    <div class="bg-secondary h-full w-0"></div>
+                                </div>
+                            </div>
+                            <!-- Metric 3: Max Shift Workload -->
+                            <div
+                                class="bg-surface-container-lowest p-space-lg rounded-xl shadow-sm flex flex-col justify-between relative overflow-hidden group hover:shadow-md transition-shadow">
+                                <div class="flex items-start justify-between">
+                                    <span
+                                        class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Max
+                                        workload</span>
+                                    <span
+                                        class="w-8 h-8 rounded-lg bg-surface-container-low flex items-center justify-center text-tertiary">
+                                        <span class="material-symbols-outlined text-[18px]">timer</span>
+                                    </span>
+                                </div>
+                                <div class="mt-space-md flex flex-col">
+                                    <div class="flex items-baseline gap-space-sm">
+                                        <span
+                                            class="font-headline-xl text-headline-xl text-on-surface font-bold tracking-tight">--</span>
+                                        <span class="font-label-sm text-label-sm text-outline">hrs / vol</span>
+                                    </div>
+                                    <div
+                                        class="flex items-center gap-1.5 mt-1 text-on-surface-variant font-body-sm text-body-sm">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-outline"></span>
+                                        <span>Shift cap: -- hrs</span>
+                                    </div>
+                                </div>
+                                <div class="w-full bg-surface-container-low h-1 rounded-full mt-3 overflow-hidden">
+                                    <div class="bg-tertiary h-full w-0"></div>
+                                </div>
+                            </div>
+                            <!-- Metric 4: Headcount Filled -->
+                            <div
+                                class="bg-surface-container-lowest p-space-lg rounded-xl shadow-sm flex flex-col justify-between relative overflow-hidden group hover:shadow-md transition-shadow">
+                                <div class="flex items-start justify-between">
+                                    <span
+                                        class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Headcount
+                                        filled</span>
+                                    <span
+                                        class="w-8 h-8 rounded-lg bg-surface-container-low flex items-center justify-center text-primary-container">
+                                        <span class="material-symbols-outlined text-[18px]">groups</span>
+                                    </span>
+                                </div>
+                                <div class="mt-space-md flex flex-col">
+                                    <div class="flex items-baseline gap-space-sm">
+                                        <span
+                                            class="font-headline-xl text-headline-xl text-on-surface font-bold tracking-tight">--</span>
+                                        <span class="font-label-sm text-label-sm text-outline">/ --</span>
+                                    </div>
+                                    <div
+                                        class="flex items-center gap-1.5 mt-1 text-on-surface-variant font-body-sm text-body-sm">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-outline"></span>
+                                        <span>-- / -- required</span>
+                                    </div>
+                                </div>
+                                <div class="w-full bg-surface-container-low h-1 rounded-full mt-3 overflow-hidden">
+                                    <div class="bg-primary-container h-full w-0"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                    <!-- Section 2: Dedicated Collapsible Warnings & Compliance Monitor -->
+                    <section class="bg-surface-container-lowest rounded-xl shadow-sm overflow-hidden transition-all">
+                        <div
+                            class="px-space-xl py-space-md bg-surface-container-low flex flex-wrap items-center justify-between gap-space-md">
+                            <div class="flex items-center gap-space-md">
+                                <span
+                                    class="material-symbols-outlined text-outline text-[20px]">format_image_left</span>
+                                <div class="flex flex-col">
+                                    <span class="font-headline-sm text-headline-sm text-on-surface">Solver Constraint
+                                        Monitor</span>
+                                    <span class="font-body-sm text-body-sm text-on-surface-variant">Real-time telemetry
+                                        for resource conflicts, overlap violations, and prerequisite
+                                        deficiencies.</span>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-space-md">
+                                <span class="font-label-sm text-label-sm text-outline italic">Hidden when there are no
+                                    active solver warnings or violations</span>
+                                <button
+                                    class="w-8 h-8 rounded-lg flex items-center justify-center bg-surface-container text-on-surface hover:bg-surface-container-high transition-colors"
+                                    id="toggle-warnings-btn" type="button">
+                                    <span class="material-symbols-outlined text-[18px]"
+                                        id="warning-chevron">expand_less</span>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="p-space-lg grid grid-cols-1 md:grid-cols-2 gap-space-md"
+                            id="warnings-content-panel">
+                            <!-- Clash Indicator Box -->
+                            <div class="p-space-md rounded-xl bg-surface-container-low flex items-start gap-space-md">
+                                <div
+                                    class="w-9 h-9 rounded-lg bg-tertiary-fixed flex items-center justify-center text-on-tertiary-fixed shrink-0">
+                                    <span class="material-symbols-outlined text-[20px]">schedule</span>
+                                </div>
+                                <div class="flex flex-col flex-1 min-w-0">
+                                    <div class="flex items-center justify-between">
+                                        <span class="font-headline-sm text-headline-sm text-on-surface">Schedule Overlap
+                                            Clashes</span>
+                                        <span
+                                            class="px-2.5 py-0.5 rounded-full font-label-sm text-label-sm bg-surface-container-highest text-on-surface font-semibold">0
+                                            detected</span>
+                                    </div>
+                                    <span class="font-body-sm text-body-sm text-on-surface-variant mt-1">Concurrence
+                                        checks cross-reference volunteer travel times and multi-track shifts.</span>
+                                </div>
+                            </div>
+                            <!-- Skill Gap Box -->
+                            <div class="p-space-md rounded-xl bg-surface-container-low flex items-start gap-space-md">
+                                <div
+                                    class="w-9 h-9 rounded-lg bg-surface-container-highest flex items-center justify-center text-on-surface shrink-0">
+                                    <span class="material-symbols-outlined text-[20px]">psychology</span>
+                                </div>
+                                <div class="flex flex-col flex-1 min-w-0">
+                                    <div class="flex items-center justify-between">
+                                        <span class="font-headline-sm text-headline-sm text-on-surface">Unmet Skill
+                                            Requirements</span>
+                                        <span
+                                            class="px-2.5 py-0.5 rounded-full font-label-sm text-label-sm bg-surface-container-highest text-on-surface font-semibold">0
+                                            detected</span>
+                                    </div>
+                                    <span class="font-body-sm text-body-sm text-on-surface-variant mt-1">Evaluates
+                                        certifications, tech equipment licenses, and past lead ratings.</span>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                    <!-- Section 3 & 4: Main Layout Area (Split Bento: Canvas Empty State & High-Fidelity Component Specification + Right Explainability Drawer) -->
+                    <div class="grid grid-cols-1 xl:grid-cols-12 gap-space-xl items-start">
+                        <!-- Left Column (8 of 12 on large screens): Empty State Hero Canvas + Detailed Task Blueprint Spec -->
+                        <div class="xl:col-span-8 flex flex-col gap-space-xl">
+                            <!-- Empty State Hero Canvas -->
+                            <div
+                                class="bg-surface-container-lowest rounded-2xl p-space-xl lg:p-10 shadow-sm flex flex-col items-center text-center relative overflow-hidden">
+                                <div
+                                    class="w-20 h-20 rounded-2xl bg-surface-container-low flex items-center justify-center text-primary shadow-sm mb-space-lg">
+                                    <span class="material-symbols-outlined text-[44px]">splitscreen</span>
+                                </div>
+                                <h2 class="font-headline-lg text-headline-lg text-on-surface max-w-xl font-bold">No plan
+                                    yet. Run the solver to generate assignments</h2>
+                                <p class="font-body-lg text-body-lg text-on-surface-variant max-w-2xl mt-space-sm">
+                                    The algorithmic solver balances volunteer availability, skill ratings, fatigue
+                                    limits, and role priorities. Once generated, assignments display directly within the
+                                    interactive roster below.
+                                </p>
+                                <div class="flex flex-wrap items-center justify-center gap-space-md mt-space-xl">
+                                    <button
+                                        class="h-10 px-5 rounded-lg bg-primary hover:bg-primary-container text-on-primary font-label-lg text-label-lg shadow-sm flex items-center gap-2 transition-all"
+                                        type="button">
+                                        <span class="material-symbols-outlined text-[18px]">play_arrow</span>
+                                        <span>Run solver</span>
+                                    </button>
+                                    <button
+                                        class="h-10 px-4 rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface font-label-lg text-label-lg shadow-sm flex items-center gap-2 transition-all"
+                                        type="button">
+                                        <span class="material-symbols-outlined text-[18px]">tune</span>
+                                        <span>Configure solver weights</span>
+                                    </button>
+                                </div>
+                            </div>
+                            <!-- Component Specification Blueprint Header -->
+                            <div
+                                class="bg-surface-container-lowest rounded-2xl p-space-xl shadow-sm flex flex-col gap-space-lg">
+                                <div
+                                    class="flex flex-col sm:flex-row sm:items-center justify-between gap-space-sm pb-space-md">
+                                    <div class="flex items-center gap-space-md">
+                                        <span
+                                            class="px-2.5 py-1 rounded-md bg-primary-fixed text-on-primary-fixed font-label-sm text-label-sm uppercase tracking-wider font-bold">
+                                            Reference Design
+                                        </span>
+                                        <h3 class="font-headline-sm text-headline-sm text-on-surface">COMPONENT
+                                            SPECIFICATION — TASK CARD BLUEPRINT</h3>
+                                    </div>
+                                    <span class="font-label-sm text-label-sm text-outline">Strict Generic Schema · No
+                                        Mock Artifacts</span>
+                                </div>
+                                <!-- THE TASK CARD SPECIMEN (Exact high-fidelity anatomy, strictly generic data) -->
+                                <div
+                                    class="bg-surface-container-low rounded-xl p-space-lg shadow-sm flex flex-col gap-space-lg">
+                                    <!-- Card Header: Title Placeholder, Category, Priority, and Status Pin -->
+                                    <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-space-md">
+                                        <div class="flex flex-col gap-1">
+                                            <div class="flex flex-wrap items-center gap-space-sm">
+                                                <span
+                                                    class="px-2.5 py-0.5 rounded-full font-label-sm text-label-sm bg-surface-container-highest text-on-surface font-semibold">[Task
+                                                    Category]</span>
+                                                <span
+                                                    class="px-2.5 py-0.5 rounded-full font-label-sm text-label-sm bg-surface-container-high text-on-surface-variant font-medium">[Priority]</span>
+                                                <span
+                                                    class="px-2.5 py-0.5 rounded-full font-label-sm text-label-sm bg-surface-container-highest text-on-surface font-semibold flex items-center gap-1">
+                                                    <span class="w-1.5 h-1.5 rounded-full bg-outline"></span>
+                                                    <span>Constraint Status</span>
+                                                </span>
+                                            </div>
+                                            <h4
+                                                class="font-headline-md text-headline-md text-on-surface font-semibold mt-1 tracking-tight">
+                                                [Task Name]</h4>
+                                            <div
+                                                class="flex items-center gap-1.5 text-on-surface-variant font-body-sm text-body-sm">
+                                                <span
+                                                    class="material-symbols-outlined text-[16px] text-outline">schedule</span>
+                                                <span>[Day, Time Slot — e.g. Start - End Time]</span>
+                                                <span class="mx-1 text-outline">·</span>
+                                                <span
+                                                    class="material-symbols-outlined text-[16px] text-outline">pin_drop</span>
+                                                <span>[Venue / Track Station]</span>
+                                            </div>
+                                        </div>
+                                        <!-- Headcount Progress Pill & Action -->
+                                        <div class="flex flex-col items-end gap-1.5 shrink-0">
+                                            <div class="flex items-center gap-2">
+                                                <span
+                                                    class="font-label-sm text-label-sm text-outline font-semibold">Headcount</span>
+                                                <span
+                                                    class="px-2.5 py-0.5 rounded-full font-label-sm text-label-sm bg-surface-container-highest text-on-surface font-bold">[Filled
+                                                    / Required Headcount]</span>
+                                            </div>
+                                            <div
+                                                class="w-36 bg-surface-container-high h-2 rounded-full overflow-hidden">
+                                                <div class="bg-primary h-full w-1/3"></div>
+                                            </div>
+                                            <span class="font-body-sm text-body-sm text-outline">-- / -- slots
+                                                filled</span>
+                                        </div>
+                                    </div>
+                                    <!-- Assigned Volunteer Slot (Active Row) -->
+                                    <div class="flex flex-col gap-space-xs">
+                                        <span
+                                            class="font-label-sm text-label-sm text-outline uppercase tracking-wider font-semibold">Primary
+                                            Roster Assignment</span>
+                                        <div
+                                            class="bg-surface-container-lowest p-space-md rounded-xl shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-space-md hover:bg-surface-container-high/40 transition-colors">
+                                            <div class="flex items-center gap-space-md">
+                                                <div
+                                                    class="w-10 h-10 rounded-full bg-surface-container-high flex items-center justify-center text-on-surface font-label-lg text-label-lg shrink-0">
+                                                    <span class="material-symbols-outlined text-[20px]">person</span>
+                                                </div>
+                                                <div class="flex flex-col">
+                                                    <div class="flex items-center gap-2">
+                                                        <span
+                                                            class="font-headline-sm text-headline-sm text-on-surface">Volunteer
+                                                            name</span>
+                                                        <span
+                                                            class="px-2 py-0.2 rounded-full font-label-sm text-label-sm bg-surface-container-low text-on-surface-variant">[Dept
+                                                            · Year]</span>
+                                                    </div>
+                                                    <div class="flex items-center gap-3 mt-0.5">
+                                                        <span
+                                                            class="font-body-sm text-body-sm text-on-surface-variant">Role:
+                                                            Assigned Lead</span>
+                                                        <span class="text-outline">·</span>
+                                                        <div class="flex items-center gap-1.5">
+                                                            <span
+                                                                class="font-label-sm text-label-sm text-primary font-semibold">Fit
+                                                                score: --%</span>
+                                                            <div
+                                                                class="w-12 bg-surface-container h-1.5 rounded-full overflow-hidden">
+                                                                <div class="bg-primary h-full w-0"></div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <!-- Active Volunteer Quick Controls & Active Dropdown Preview -->
+                                            <div class="flex items-center gap-space-sm relative">
+                                                <button
+                                                    class="h-8 px-3 rounded-lg bg-surface-container-low hover:bg-surface-container text-on-surface font-label-sm text-label-sm transition-colors flex items-center gap-1"
+                                                    type="button">
+                                                    <span
+                                                        class="material-symbols-outlined text-[16px]">visibility</span>
+                                                    <span>Inspect</span>
+                                                </button>
+                                                <!-- 3-Dots Dropdown Trigger with Open Options Representation -->
+                                                <div class="relative">
+                                                    <button
+                                                        class="w-8 h-8 rounded-lg bg-surface-container-low hover:bg-surface-container flex items-center justify-center text-on-surface-variant transition-colors"
+                                                        id="actions-menu-trigger" type="button">
+                                                        <span
+                                                            class="material-symbols-outlined text-[18px]">more_vert</span>
+                                                    </button>
+                                                    <!-- Expanded Actions Dropdown -->
+                                                    <div class="absolute right-0 top-10 w-48 bg-surface-container-lowest rounded-xl shadow-xl p-1 z-30 flex flex-col gap-0.5"
+                                                        id="actions-menu-dropdown">
+                                                        <button
+                                                            class="w-full text-left px-3 py-2 rounded-lg text-on-surface font-label-sm text-label-sm hover:bg-surface-container-low flex items-center gap-2 transition-colors"
+                                                            type="button">
+                                                            <span
+                                                                class="material-symbols-outlined text-[16px] text-outline">event_busy</span>
+                                                            <span>Mark unavailable</span>
+                                                        </button>
+                                                        <button
+                                                            class="w-full text-left px-3 py-2 rounded-lg text-primary font-label-sm text-label-sm hover:bg-surface-container-low flex items-center gap-2 transition-colors"
+                                                            type="button">
+                                                            <span
+                                                                class="material-symbols-outlined text-[16px]">person_search</span>
+                                                            <span>Find replacement</span>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!-- Standby / Ranked Backup Slot -->
+                                    <div class="flex flex-col gap-space-xs">
+                                        <span
+                                            class="font-label-sm text-label-sm text-outline uppercase tracking-wider font-semibold">Ranked
+                                            Backup Slot</span>
+                                        <div
+                                            class="bg-surface-container-lowest p-space-md rounded-xl shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-space-md">
+                                            <div class="flex items-center gap-space-md">
+                                                <div
+                                                    class="w-9 h-9 rounded-full bg-surface-container flex items-center justify-center text-on-surface font-label-sm text-label-sm shrink-0">
+                                                    <span
+                                                        class="material-symbols-outlined text-[18px]">person_outline</span>
+                                                </div>
+                                                <div class="flex flex-col">
+                                                    <div class="flex items-center gap-2">
+                                                        <span class="font-label-lg text-label-lg text-on-surface">Backup
+                                                            volunteer name</span>
+                                                        <span
+                                                            class="px-2 py-0.5 rounded-full font-label-sm text-label-sm bg-surface-container-highest text-on-surface font-medium">Standby
+                                                            rank: #1</span>
+                                                    </div>
+                                                    <span
+                                                        class="font-body-sm text-body-sm text-on-surface-variant">Standby
+                                                        rank: #1 (Fit score: --%)</span>
+                                                </div>
+                                            </div>
+                                            <button
+                                                class="h-8 px-3 rounded-lg bg-surface-container-high hover:bg-surface-container-highest text-primary font-label-sm text-label-sm font-semibold transition-all self-start sm:self-auto flex items-center gap-1.5"
+                                                type="button">
+                                                <span class="material-symbols-outlined text-[16px]">swap_horiz</span>
+                                                <span>Swap to active</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <!-- Open / Dashed Allocation Slot -->
+                                    <div
+                                        class="p-space-lg rounded-xl bg-surface-container-lowest flex flex-col sm:flex-row items-center justify-between gap-space-md shadow-sm">
+                                        <div class="flex items-center gap-space-md">
+                                            <div
+                                                class="w-9 h-9 rounded-lg bg-surface-container-low flex items-center justify-center text-outline">
+                                                <span class="material-symbols-outlined text-[20px]">add</span>
+                                            </div>
+                                            <div class="flex flex-col">
+                                                <span class="font-label-lg text-label-lg text-on-surface">Open Volunteer
+                                                    Slot</span>
+                                                <span class="font-body-sm text-body-sm text-outline">Requires manual
+                                                    assignment or automatic solver generation</span>
+                                            </div>
+                                        </div>
+                                        <button
+                                            class="h-8 px-3 rounded-lg bg-surface-container-low hover:bg-surface-container text-on-surface font-label-sm text-label-sm font-medium"
+                                            type="button">
+                                            Assign volunteer
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Right Column (4 of 12): "Why this pick?" Explainability Inspection Drawer -->
+                        <aside
+                            class="xl:col-span-4 bg-surface-container-lowest rounded-2xl p-space-xl shadow-sm flex flex-col gap-space-lg sticky top-20">
+                            <!-- Drawer Header -->
+                            <div class="flex items-start justify-between gap-space-sm pb-space-md">
+                                <div class="flex flex-col">
+                                    <div class="flex items-center gap-2">
+                                        <span
+                                            class="material-symbols-outlined text-primary text-[22px]">auto_awesome</span>
+                                        <h3
+                                            class="font-headline-md text-headline-md text-on-surface font-bold tracking-tight">
+                                            Why this pick?</h3>
+                                    </div>
+                                    <span
+                                        class="font-label-sm text-label-sm text-outline uppercase tracking-wider font-semibold mt-1">Explainability
+                                        Engine</span>
+                                </div>
+                                <span
+                                    class="px-2 py-0.5 rounded-full font-label-sm text-label-sm bg-surface-container-low text-on-surface font-medium">v2.4
+                                    Core</span>
+                            </div>
+                            <p class="font-body-sm text-body-sm text-on-surface-variant">
+                                Opens when an assigned volunteer or backup card is selected. Analyzes algorithmic
+                                scoring factors and constraint satisfiability.
+                            </p>
+                            <!-- Current Target Context Banner -->
+                            <div class="p-space-md rounded-xl bg-surface-container-low flex items-center gap-space-md">
+                                <div
+                                    class="w-8 h-8 rounded-full bg-surface-container-highest flex items-center justify-center text-on-surface font-label-md text-label-md shrink-0">
+                                    <span class="material-symbols-outlined text-[16px]">person</span>
+                                </div>
+                                <div class="flex flex-col min-w-0">
+                                    <span class="font-label-sm text-label-sm text-outline font-semibold">Active
+                                        Selection</span>
+                                    <span class="font-label-md text-label-md text-on-surface truncate">Inspecting:
+                                        Volunteer name → [Task Name]</span>
+                                </div>
+                            </div>
+                            <!-- 5 Structured Factor Modules (Zero Mock Values, Clean Data-Store Placeholders) -->
+                            <div class="flex flex-col gap-space-md">
+                                <!-- Factor 1: Skill Match -->
+                                <div class="p-space-md rounded-xl bg-surface-container-low flex flex-col gap-space-sm">
+                                    <div class="flex items-center justify-between">
+                                        <span class="font-label-md text-label-md text-on-surface font-semibold">Skill
+                                            match</span>
+                                        <span class="font-label-sm text-label-sm text-on-surface font-bold">-- /
+                                            100</span>
+                                    </div>
+                                    <div class="w-full bg-surface-container h-1.5 rounded-full overflow-hidden">
+                                        <div class="bg-primary h-full w-0"></div>
+                                    </div>
+                                    <div
+                                        class="flex flex-col gap-1 mt-1 text-on-surface-variant font-body-sm text-body-sm">
+                                        <div class="flex items-center justify-between">
+                                            <span>[Required Competency A]</span>
+                                            <span class="font-label-sm text-label-sm text-outline">--</span>
+                                        </div>
+                                        <div class="flex items-center justify-between">
+                                            <span>[Required Competency B]</span>
+                                            <span class="font-label-sm text-label-sm text-outline">--</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- Factor 2: Availability & Commute -->
+                                <div class="p-space-md rounded-xl bg-surface-container-low flex flex-col gap-space-sm">
+                                    <div class="flex items-center justify-between">
+                                        <span
+                                            class="font-label-md text-label-md text-on-surface font-semibold">Availability
+                                            alignment</span>
+                                        <span class="font-label-sm text-label-sm text-outline font-semibold">--</span>
+                                    </div>
+                                    <div
+                                        class="flex items-center justify-between text-on-surface-variant font-body-sm text-body-sm">
+                                        <span>Time-slot alignment indicator</span>
+                                        <span class="font-label-sm text-label-sm text-outline font-bold">--</span>
+                                    </div>
+                                    <div
+                                        class="flex items-center justify-between text-on-surface-variant font-body-sm text-body-sm">
+                                        <span>Commute / transition buffer</span>
+                                        <span class="font-label-sm text-label-sm text-outline font-bold">--</span>
+                                    </div>
+                                </div>
+                                <!-- Factor 3: Past Performance -->
+                                <div class="p-space-md rounded-xl bg-surface-container-low flex flex-col gap-space-sm">
+                                    <div class="flex items-center justify-between">
+                                        <span class="font-label-md text-label-md text-on-surface font-semibold">Past
+                                            performance</span>
+                                        <span class="font-label-sm text-label-sm text-outline font-semibold">--</span>
+                                    </div>
+                                    <div
+                                        class="flex items-center justify-between text-on-surface-variant font-body-sm text-body-sm">
+                                        <span>Historical reliability score</span>
+                                        <span class="font-label-sm text-label-sm text-outline font-bold">--</span>
+                                    </div>
+                                    <div
+                                        class="flex items-center justify-between text-on-surface-variant font-body-sm text-body-sm">
+                                        <span>Ratings summary</span>
+                                        <span class="font-label-sm text-label-sm text-outline font-bold">--</span>
+                                    </div>
+                                </div>
+                                <!-- Factor 4: Workload & Fatigue -->
+                                <div class="p-space-md rounded-xl bg-surface-container-low flex flex-col gap-space-sm">
+                                    <div class="flex items-center justify-between">
+                                        <span class="font-label-md text-label-md text-on-surface font-semibold">Workload
+                                            &amp; Fatigue</span>
+                                        <span class="font-label-sm text-label-sm text-outline font-semibold">--</span>
+                                    </div>
+                                    <div
+                                        class="flex items-center justify-between text-on-surface-variant font-body-sm text-body-sm">
+                                        <span>Assigned hours</span>
+                                        <span class="font-label-sm text-label-sm text-outline font-bold">-- / max --
+                                            hrs</span>
+                                    </div>
+                                    <div
+                                        class="flex items-center justify-between text-on-surface-variant font-body-sm text-body-sm">
+                                        <span>Consecutive shifts</span>
+                                        <span class="font-label-sm text-label-sm text-outline font-bold">--</span>
+                                    </div>
+                                </div>
+                                <!-- Factor 5: Runner-up Comparison -->
+                                <div class="p-space-md rounded-xl bg-surface-container-low flex flex-col gap-space-sm">
+                                    <div class="flex items-center justify-between">
+                                        <span
+                                            class="font-label-md text-label-md text-on-surface font-semibold">Runner-up
+                                            comparison</span>
+                                        <span
+                                            class="px-2 py-0.5 rounded-full font-label-sm text-label-sm bg-surface-container-highest text-on-surface font-medium">Rank
+                                            #2</span>
+                                    </div>
+                                    <span class="font-body-sm text-body-sm text-on-surface-variant">Algorithmic margin
+                                        over second-choice nominee</span>
+                                    <div
+                                        class="flex items-center justify-between text-on-surface font-label-sm text-label-sm mt-1">
+                                        <span>Diff with second-choice:</span>
+                                        <span class="font-bold text-outline">-- score difference</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <button
+                                class="w-full h-10 rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface font-label-md text-label-md transition-colors flex items-center justify-center gap-1.5"
+                                type="button">
+                                <span class="material-symbols-outlined text-[18px]">rule</span>
+                                <span>View constraint breakdown</span>
+                            </button>
+                        </aside>
+                    </div>
+                    <!-- Section 5: Modal Preview / Integrated Approval Overlay -->
+                    <div class="relative z-30 bg-surface-container-lowest rounded-2xl p-space-xl lg:p-space-xl shadow-xl flex flex-col gap-space-lg"
+                        id="approval-modal">
+                        <div class="flex items-start justify-between gap-space-md">
+                            <div class="flex items-center gap-space-md">
+                                <div
+                                    class="w-12 h-12 rounded-xl bg-primary-fixed flex items-center justify-center text-primary shrink-0">
+                                    <span class="material-symbols-outlined text-[28px]">lock</span>
+                                </div>
+                                <div class="flex flex-col">
+                                    <div class="flex items-center gap-2">
+                                        <span
+                                            class="px-2 py-0.5 rounded-full font-label-sm text-label-sm bg-surface-container-low text-primary font-bold">Lifecycle
+                                            Milestone</span>
+                                        <span class="font-label-sm text-label-sm text-outline">Pre-Flight Review</span>
+                                    </div>
+                                    <h3 class="font-headline-md text-headline-md text-on-surface font-bold">Approve
+                                        Assignment Plan</h3>
+                                </div>
+                            </div>
+                            <span class="font-label-sm text-label-sm text-outline">Action is irreversible once
+                                published</span>
+                        </div>
+                        <p class="font-body-md text-body-md text-on-surface-variant max-w-4xl">
+                            Approving this plan locks the current roster allocations. Volunteer slots will be reserved,
+                            unassigned tasks will be flagged for manual dispatch, and the plan moves to the Published
+                            readiness state.
+                        </p>
+                        <!-- Checklist of Changes Container -->
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-space-md">
+                            <div class="p-space-md rounded-xl bg-surface-container-low flex items-center gap-space-md">
+                                <span class="material-symbols-outlined text-primary text-[20px]">check_circle</span>
+                                <span class="font-label-md text-label-md text-on-surface">Locks -- task
+                                    assignments</span>
+                            </div>
+                            <div class="p-space-md rounded-xl bg-surface-container-low flex items-center gap-space-md">
+                                <span class="material-symbols-outlined text-primary text-[20px]">mark_email_read</span>
+                                <span class="font-label-md text-label-md text-on-surface">Notifies -- event
+                                    coordinators</span>
+                            </div>
+                            <div class="p-space-md rounded-xl bg-surface-container-low flex items-center gap-space-md">
+                                <span class="material-symbols-outlined text-primary text-[20px]">calendar_month</span>
+                                <span class="font-label-md text-label-md text-on-surface">Enables volunteer shift
+                                    calendar exports</span>
+                            </div>
+                        </div>
+                        <!-- Broadcast Phase Trigger Container -->
+                        <div
+                            class="p-space-md rounded-xl bg-surface-container-low flex flex-col sm:flex-row sm:items-center justify-between gap-space-md">
+                            <div class="flex items-center gap-space-sm">
+                                <span class="material-symbols-outlined text-secondary text-[20px]">campaign</span>
+                                <span class="font-body-sm text-body-sm text-on-surface font-medium">Post-approval stage:
+                                    Direct dispatch broadcast to confirmed volunteer mobile apps and notification
+                                    emails.</span>
+                            </div>
+                            <button
+                                class="h-9 px-4 rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface font-label-md text-label-md transition-colors shrink-0 flex items-center gap-1.5"
+                                type="button">
+                                <span class="material-symbols-outlined text-[16px]">send</span>
+                                <span>Publish and notify volunteers</span>
+                            </button>
+                        </div>
+                    </div>
+                    <!-- Section 6: Sticky Footer Across the Workspace -->
+                    <div
+                        class="sticky bottom-0 z-40 bg-surface-container-lowest/95 backdrop-blur-md rounded-xl shadow-xl px-space-xl py-space-md flex flex-col sm:flex-row items-center justify-between gap-space-md -mx-space-lg lg:-mx-space-xl px-space-lg lg:px-space-xl">
+                        <div class="flex items-center gap-space-md">
+                            <div class="flex items-center gap-2">
+                                <span class="w-2.5 h-2.5 rounded-full bg-outline"></span>
+                                <span class="font-label-md text-label-md text-on-surface font-semibold">Solver state:
+                                    Unexecuted (v2.4 Core)</span>
+                            </div>
+                            <span class="hidden md:inline font-body-sm text-body-sm text-outline">|</span>
+                            <span
+                                class="hidden md:inline font-body-sm text-body-sm text-on-surface-variant">Deterministic
+                                Linear Optimization Engine</span>
+                        </div>
+                        <div class="flex items-center gap-space-md">
+                            <button
+                                class="h-10 px-4 rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface font-label-lg text-label-lg transition-colors"
+                                type="button">
+                                Reject
+                            </button>
+                            <button
+                                class="h-10 px-5 rounded-lg bg-primary hover:bg-primary-container text-on-primary font-label-lg text-label-lg shadow-md transition-all active:scale-[0.99] flex items-center gap-2"
+                                type="button">
+                                <span class="material-symbols-outlined text-[18px]">verified</span>
+                                <span>Approve plan</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <!-- Micro-interactions Script -->
+                <script>
+                        (function () {
+                            // Toggle Solver Warnings accordion
+                            const toggleWarningsBtn = document.getElementById('toggle-warnings-btn');
+                            const warningsContent = document.getElementById('warnings-content-panel');
+                            const warningChevron = document.getElementById('warning-chevron');
+
+                            if (toggleWarningsBtn && warningsContent && warningChevron) {
+                                toggleWarningsBtn.addEventListener('click', function () {
+                                    const isCollapsed = warningsContent.classList.contains('hidden');
+                                    if (isCollapsed) {
+                                        warningsContent.classList.remove('hidden');
+                                        warningChevron.textContent = 'expand_less';
+                                    } else {
+                                        warningsContent.classList.add('hidden');
+                                        warningChevron.textContent = 'expand_more';
+                                    }
+                                });
+                            }
+
+                            // Toggle Actions Dropdown Menu
+                            const actionsMenuBtn = document.getElementById('actions-menu-trigger');
+                            const actionsMenuDropdown = document.getElementById('actions-menu-dropdown');
+
+                            if (actionsMenuBtn && actionsMenuDropdown) {
+                                actionsMenuBtn.addEventListener('click', function (e) {
+                                    e.stopPropagation();
+                                    actionsMenuDropdown.classList.toggle('hidden');
+                                });
+
+                                document.addEventListener('click', function (e) {
+                                    if (!actionsMenuDropdown.contains(e.target) && e.target !== actionsMenuBtn) {
+                                        actionsMenuDropdown.classList.add('hidden');
+                                    }
+                                });
+                            }
+                        })();
+                </script>
+            </div>
+        </main>
+    </div>
+</body>
+
+</html>
