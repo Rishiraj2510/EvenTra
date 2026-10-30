@@ -1,3 +1,11 @@
+const defaultCertificateTemplate = {
+  type: 'builtin',
+  templateId: 'classic',
+  backgroundImage: '',
+  namePosition: 'center',
+  textColor: 'dark',
+}
+
 export const initialEvents = [
   {
     id: 'evt-1',
@@ -8,6 +16,7 @@ export const initialEvents = [
     description: 'Annual inter-collegiate technical festival featuring hackathons, robotics, and coding arenas.',
     status: 'live',
     registrationFormUrl: 'https://forms.google.com/eventra-technosphere-2025',
+    certificateTemplate: { ...defaultCertificateTemplate },
   },
   {
     id: 'evt-2',
@@ -18,6 +27,7 @@ export const initialEvents = [
     description: 'State-level music, dance, and fine arts symposium across collegiate departments.',
     status: 'planning',
     registrationFormUrl: '',
+    certificateTemplate: { ...defaultCertificateTemplate },
   },
   {
     id: 'evt-3',
@@ -28,6 +38,7 @@ export const initialEvents = [
     description: 'Track and field tournaments, football league, and basketball championships.',
     status: 'done',
     registrationFormUrl: '',
+    certificateTemplate: { ...defaultCertificateTemplate },
   },
   {
     id: 'evt-4',
@@ -38,5 +49,7 @@ export const initialEvents = [
     description: 'Peer-reviewed paper presentations and guest keynotes from industry pioneers.',
     status: 'draft',
     registrationFormUrl: '',
+    certificateTemplate: { ...defaultCertificateTemplate },
   },
 ]
+
