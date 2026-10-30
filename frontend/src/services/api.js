@@ -10,6 +10,7 @@ import { mockVolunteerHistory } from '../mocks/volunteerHistory.js'
 import { defaultSettings } from '../mocks/settings.js'
 import { setCurrentWeights } from '../utils/scoring.js'
 import { mockFeedbackStore } from '../mocks/feedback.js'
+import { mockCertificatesStore } from '../mocks/certificates.js'
 
 export const USE_MOCKS = true
 
@@ -297,6 +298,60 @@ export async function updateEventFormLink(eventId, registrationFormUrl) {
   })
   if (!response.ok) {
     throw new Error(`Failed to update registration form link: ${response.statusText}`)
+  }
+  return response.json()
+}
+
+export async function updateCertificateTemplate(eventId, template) {
+  if (USE_MOCKS) {
+    await new Promise((resolve) => setTimeout(resolve, 250))
+    const index = mockEventsStore.findIndex((e) => e.id === eventId)
+    if (index === -1) {
+      throw new Error(`Event with ID ${eventId} not found`)
+    }
+    const updated = {
+      ...mockEventsStore[index],
+      certificateTemplate: {
+        type: template.type || 'builtin',
+        templateId: template.templateId || 'classic',
+        backgroundImage: template.backgroundImage || '',
+        namePosition: template.namePosition || 'center',
+        textColor: template.textColor || 'dark',
+      },
+    }
+    mockEventsStore[index] = updated
+    return updated
+  }
+
+  // With USE_MOCKS = false, PUT /api/events/{id}/certificate-template
+  // If template has a custom image as File/Blob, send multipart/form-data
+  let body
+  const headers = {}
+  if (template.imageFile instanceof File || template.imageFile instanceof Blob) {
+    body = new FormData()
+    body.append('type', template.type)
+    body.append('templateId', template.templateId || '')
+    body.append('namePosition', template.namePosition || 'center')
+    body.append('textColor', template.textColor || 'dark')
+    body.append('image', template.imageFile)
+  } else {
+    headers['Content-Type'] = 'application/json'
+    body = JSON.stringify({
+      type: template.type,
+      templateId: template.templateId,
+      backgroundImage: template.backgroundImage,
+      namePosition: template.namePosition,
+      textColor: template.textColor,
+    })
+  }
+
+  const response = await fetch(`/api/events/${encodeURIComponent(eventId)}/certificate-template`, {
+    method: 'PUT',
+    headers,
+    body,
+  })
+  if (!response.ok) {
+    throw new Error(`Failed to update certificate template: ${response.statusText}`)
   }
   return response.json()
 }
@@ -1063,5 +1118,182 @@ export async function saveFeedback(assignmentId, { rating, comment }) {
   return response.json()
 }
 
+// Helper to compute task hours
+function calculateTaskHours(startTime, endTime) {
+  if (!startTime || !endTime) return 4
+  const [sh, sm] = startTime.split(':').map(Number)
+  const [eh, em] = endTime.split(':').map(Number)
+  const diff = (eh + em / 60) - (sh + sm / 60)
+  return diff > 0 ? Math.round(diff * 10) / 10 : 4
+}
 
+export async function getCertificates(eventId) {
+  if (USE_MOCKS) {
+    await new Promise((resolve) => setTimeout(resolve, 200))
+    if (!eventId) return []
 
+    // Eligibility rule: plan must be "published"
+    const plan = mockPlansStore.find((p) => p.eventId === eventId)
+    if (!plan || plan.status !== 'published') {
+      return []
+    }
+
+    const event = mockEventsStore.find((e) => e.id === eventId)
+    const eventName = event ? event.name : 'Event'
+
+    // Group assignments by volunteerId
+    const volunteerAssignmentsMap = new Map()
+    for (const asg of plan.assignments || []) {
+      if (!volunteerAssignmentsMap.has(asg.volunteerId)) {
+        volunteerAssignmentsMap.set(asg.volunteerId, [])
+      }
+      volunteerAssignmentsMap.get(asg.volunteerId).push(asg)
+    }
+
+    const rows = []
+    for (const [volId, asgs] of volunteerAssignmentsMap.entries()) {
+      // Must have at least one assignment with saved feedback
+      const feedbackAssignments = asgs.filter((a) => {
+        const fb = mockFeedbackStore[a.id]
+        return fb && fb.rating !== null && fb.rating !== undefined
+      })
+
+      if (feedbackAssignments.length === 0) {
+        continue
+      }
+
+      const vol = mockVolunteersStore.find((v) => v.id === volId)
+      const volunteerName = vol?.fullName || asgs[0]?.volunteerName || 'Volunteer'
+
+      // Calculate total hours across completed/assigned tasks
+      let totalHours = 0
+      for (const a of asgs) {
+        const task = mockTasksStore.find((t) => t.id === a.taskId)
+        totalHours += calculateTaskHours(task?.startTime, task?.endTime)
+      }
+      totalHours = Math.round(totalHours * 10) / 10
+
+      // Check if already issued
+      const existingCert = mockCertificatesStore.find(
+        (c) => c.eventId === eventId && c.volunteerId === volId
+      )
+
+      rows.push({
+        volunteerId: volId,
+        volunteerName,
+        tasksCompleted: asgs.length,
+        hours: totalHours,
+        status: existingCert ? 'issued' : 'not_issued',
+        issuedAt: existingCert ? existingCert.issuedAt : null,
+        certificateId: existingCert?.id || null,
+        eventName,
+      })
+    }
+
+    return rows
+  }
+
+  const response = await fetch(`/api/events/${encodeURIComponent(eventId)}/certificates`)
+  if (!response.ok) {
+    throw new Error(`Failed to fetch certificates: ${response.statusText}`)
+  }
+  return response.json()
+}
+
+export async function issueCertificates(eventId, volunteerIds) {
+  if (USE_MOCKS) {
+    await new Promise((resolve) => setTimeout(resolve, 300))
+    if (!eventId) throw new Error('Event ID is required')
+    if (!Array.isArray(volunteerIds) || volunteerIds.length === 0) {
+      throw new Error('No volunteers selected for certificate issuance')
+    }
+
+    const plan = mockPlansStore.find((p) => p.eventId === eventId)
+    if (!plan || plan.status !== 'published') {
+      throw new Error('Certificates can only be issued for published plans')
+    }
+
+    const event = mockEventsStore.find((e) => e.id === eventId)
+    const eventName = event ? event.name : 'Event'
+    const nowIso = new Date().toISOString()
+    const newlyIssued = []
+
+    for (const volId of volunteerIds) {
+      const existingIndex = mockCertificatesStore.findIndex(
+        (c) => c.eventId === eventId && c.volunteerId === volId
+      )
+
+      if (existingIndex !== -1) {
+        continue
+      }
+
+      const vol = mockVolunteersStore.find((v) => v.id === volId)
+      const asgs = (plan.assignments || []).filter((a) => a.volunteerId === volId)
+      let totalHours = 0
+      for (const a of asgs) {
+        const task = mockTasksStore.find((t) => t.id === a.taskId)
+        totalHours += calculateTaskHours(task?.startTime, task?.endTime)
+      }
+
+      const certRecord = {
+        id: `cert-${eventId}-${volId}`,
+        eventId,
+        eventName,
+        volunteerId: volId,
+        volunteerName: vol?.fullName || 'Volunteer',
+        tasksCompleted: asgs.length || 1,
+        hours: Math.round(totalHours * 10) / 10 || 4,
+        issuedAt: nowIso,
+        template: event?.certificateTemplate
+          ? JSON.parse(JSON.stringify(event.certificateTemplate))
+          : { type: 'builtin', templateId: 'classic', backgroundImage: '', namePosition: 'center', textColor: 'dark' },
+      }
+
+      mockCertificatesStore.push(certRecord)
+      newlyIssued.push(certRecord)
+    }
+
+    return {
+      success: true,
+      count: newlyIssued.length,
+      certificates: newlyIssued,
+    }
+  }
+
+  const response = await fetch(`/api/events/${encodeURIComponent(eventId)}/certificates/issue`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ volunteerIds }),
+  })
+  if (!response.ok) {
+    throw new Error(`Failed to issue certificates: ${response.statusText}`)
+  }
+  return response.json()
+}
+
+export async function getMyCertificates(volunteerId) {
+  if (USE_MOCKS) {
+    await new Promise((resolve) => setTimeout(resolve, 200))
+    if (!volunteerId) return []
+
+    // Filter certificates for this volunteer
+    const userCerts = mockCertificatesStore.filter((c) => c.volunteerId === volunteerId)
+
+    // Volunteer card shape: { id, eventName, issuedAt, hours, volunteerName, template, eventId }
+    return userCerts.map((c) => ({
+      id: c.id,
+      eventName: c.eventName,
+      issuedAt: c.issuedAt,
+      hours: c.hours,
+      volunteerName: c.volunteerName,
+      eventId: c.eventId,
+      template: c.template || { type: 'builtin', templateId: 'classic', backgroundImage: '', namePosition: 'center', textColor: 'dark' },
+    }))
+  }
+
+  const response = await fetch(`/api/volunteers/${encodeURIComponent(volunteerId)}/certificates`)
+  if (!response.ok) {
+    throw new Error(`Failed to fetch my certificates: ${response.statusText}`)
+  }
+  return response.json()
+}
