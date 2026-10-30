@@ -9,6 +9,7 @@ import { createMessage, createToolCall, createApproval, createAuditEntry } from 
 import { mockVolunteerHistory } from '../mocks/volunteerHistory.js'
 import { defaultSettings } from '../mocks/settings.js'
 import { setCurrentWeights } from '../utils/scoring.js'
+import { mockFeedbackStore } from '../mocks/feedback.js'
 
 export const USE_MOCKS = true
 
@@ -920,6 +921,144 @@ export async function getMyDuties(volunteerId, eventId) {
   const response = await fetch(`/api/volunteers/${encodeURIComponent(volunteerId)}/duties${qs}`)
   if (!response.ok) {
     throw new Error(`Failed to fetch duties: ${response.statusText}`)
+  }
+  return response.json()
+}
+
+export async function getFeedback(eventId) {
+  if (USE_MOCKS) {
+    await new Promise((resolve) => setTimeout(resolve, 200))
+    if (!eventId) return []
+
+    // Find the plan for this event
+    const plan = mockPlansStore.find((p) => p.eventId === eventId)
+    // Build rows from the in-memory plan's assignments when status is "published"; otherwise return an empty list
+    if (!plan || plan.status !== 'published') {
+      return []
+    }
+
+    const event = mockEventsStore.find((e) => e.id === eventId)
+    const eventName = event ? event.name : 'Event'
+
+    // Row shape: { assignmentId, volunteerId, volunteerName, taskTitle, rating: number | null, comment }
+    const rows = (plan.assignments || []).map((asg) => {
+      const fb = mockFeedbackStore[asg.id] || {}
+      const task = mockTasksStore.find((t) => t.id === asg.taskId)
+      const vol = mockVolunteersStore.find((v) => v.id === asg.volunteerId)
+
+      return {
+        assignmentId: asg.id,
+        volunteerId: asg.volunteerId,
+        volunteerName: asg.volunteerName || vol?.fullName || 'Volunteer',
+        taskTitle: asg.taskTitle || task?.title || 'Assigned Task',
+        rating: fb.rating ?? null,
+        comment: fb.comment ?? '',
+        department: vol?.department || '',
+        year: vol?.year || '',
+        timeRange: task?.startTime && task?.endTime ? `${task.startTime} - ${task.endTime}` : '09:00 - 13:00',
+        eventName,
+      }
+    })
+
+    return rows
+  }
+
+  const response = await fetch(`/api/events/${encodeURIComponent(eventId)}/feedback`)
+  if (!response.ok) {
+    throw new Error(`Failed to fetch feedback: ${response.statusText}`)
+  }
+  return response.json()
+}
+
+export async function saveFeedback(assignmentId, { rating, comment }) {
+  if (USE_MOCKS) {
+    await new Promise((resolve) => setTimeout(resolve, 250))
+    if (!assignmentId) {
+      throw new Error('Assignment ID is required')
+    }
+    const numRating = Number(rating)
+    if (!numRating || numRating < 1 || numRating > 5) {
+      throw new Error('Rating must be an integer between 1 and 5')
+    }
+    const cleanComment = (comment || '').trim()
+    if (cleanComment.length > 300) {
+      throw new Error('Comment must not exceed 300 characters')
+    }
+
+    mockFeedbackStore[assignmentId] = {
+      assignmentId,
+      rating: Math.round(numRating),
+      comment: cleanComment,
+      updatedAt: new Date().toISOString(),
+    }
+
+    // Find assignment to update volunteer profile history
+    let foundAsg = null
+    let foundEventName = 'Current Event'
+    for (const p of mockPlansStore) {
+      const match = (p.assignments || []).find((a) => a.id === assignmentId)
+      if (match) {
+        foundAsg = match
+        const ev = mockEventsStore.find((e) => e.id === p.eventId)
+        if (ev) foundEventName = ev.name
+        break
+      }
+    }
+
+    if (foundAsg && foundAsg.volunteerId) {
+      const volId = foundAsg.volunteerId
+      if (!mockVolunteerHistory[volId]) {
+        mockVolunteerHistory[volId] = {
+          volunteerId: volId,
+          averageRating: null,
+          assignments: [],
+        }
+      }
+
+      const historyRecord = mockVolunteerHistory[volId]
+      if (!historyRecord.assignments) {
+        historyRecord.assignments = []
+      }
+
+      // Check if assignment already exists in history
+      const existingHistoryIndex = historyRecord.assignments.findIndex(
+        (a) => a.taskTitle === foundAsg.taskTitle && a.eventName === foundEventName
+      )
+
+      if (existingHistoryIndex !== -1) {
+        historyRecord.assignments[existingHistoryIndex].rating = Math.round(numRating)
+      } else {
+        historyRecord.assignments.unshift({
+          eventName: foundEventName,
+          taskTitle: foundAsg.taskTitle || 'Assigned Task',
+          fit: foundAsg.fit || 90,
+          rating: Math.round(numRating),
+        })
+      }
+
+      // Recompute averageRating
+      const ratedAssignments = historyRecord.assignments.filter((a) => typeof a.rating === 'number' && !isNaN(a.rating))
+      if (ratedAssignments.length > 0) {
+        const sum = ratedAssignments.reduce((acc, a) => acc + a.rating, 0)
+        historyRecord.averageRating = Math.round((sum / ratedAssignments.length) * 10) / 10
+      }
+    }
+
+    return {
+      success: true,
+      assignmentId,
+      rating: Math.round(numRating),
+      comment: cleanComment,
+    }
+  }
+
+  const response = await fetch(`/api/feedback/${encodeURIComponent(assignmentId)}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ rating, comment }),
+  })
+  if (!response.ok) {
+    throw new Error(`Failed to save feedback: ${response.statusText}`)
   }
   return response.json()
 }
