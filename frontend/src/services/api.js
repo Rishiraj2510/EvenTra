@@ -3,6 +3,8 @@ import { demoUser } from '../mocks/users.js'
 import { initialTasks } from '../mocks/tasks.js'
 import { initialVolunteers } from '../mocks/volunteers.js'
 import { createEmptyDashboardSummary } from '../mocks/dashboard.js'
+import { initialPlans, createEmptyPlan, computePlanSummary } from '../mocks/plan.js'
+import { calculateFitScore } from '../utils/scoring.js'
 
 export const USE_MOCKS = true
 
@@ -10,6 +12,11 @@ export const USE_MOCKS = true
 let mockEventsStore = [...initialEvents]
 let mockTasksStore = [...initialTasks]
 let mockVolunteersStore = [...initialVolunteers]
+let mockPlansStore = initialPlans.map((p) => ({
+  ...p,
+  assignments: p.assignments.map((a) => ({ ...a })),
+  skillGaps: p.skillGaps.map((sg) => ({ ...sg })),
+}))
 
 export async function login(email, password) {
   if (!email || !email.trim()) {
@@ -242,16 +249,25 @@ export async function getDashboardSummary(eventId) {
 
     const volunteers = mockVolunteersStore.filter((v) => v.eventId === eventId)
     const tasks = mockTasksStore.filter((t) => t.eventId === eventId)
+    const currentPlan = mockPlansStore.find((p) => p.eventId === eventId)
+
+    const totalHeadcountRequired = tasks.reduce((sum, t) => sum + (Number(t.headcount) || 1), 0)
+    const headcountFilled = currentPlan?.status && currentPlan.status !== 'none'
+      ? (currentPlan.summary?.headcountFilled ?? currentPlan.assignments.length)
+      : null
+    const openSkillGaps = currentPlan?.status && currentPlan.status !== 'none'
+      ? (currentPlan.summary?.skillGapCount ?? currentPlan.skillGaps.length)
+      : null
 
     return {
       ...summary,
       volunteersRegistered: volunteers.length,
       activeTasks: tasks.length,
-      headcountFilled: null,
-      headcountRequired: null,
-      openSkillGaps: null,
+      headcountFilled,
+      headcountRequired: totalHeadcountRequired > 0 ? totalHeadcountRequired : null,
+      openSkillGaps,
       alerts: [],
-      planStatus: 'none',
+      planStatus: currentPlan?.status || 'none',
       workloadPerVolunteer: [],
     }
   }
@@ -262,4 +278,187 @@ export async function getDashboardSummary(eventId) {
   }
   return response.json()
 }
+
+export async function getPlan(eventId) {
+  if (USE_MOCKS) {
+    await new Promise((resolve) => setTimeout(resolve, 200))
+    if (!eventId) return null
+    let plan = mockPlansStore.find((p) => p.eventId === eventId)
+    if (!plan) {
+      plan = createEmptyPlan(eventId)
+      mockPlansStore.push(plan)
+    }
+    return JSON.parse(JSON.stringify(plan))
+  }
+
+  const response = await fetch(`/api/events/${encodeURIComponent(eventId)}/plan`)
+  if (!response.ok) {
+    throw new Error(`Failed to fetch assignment plan: ${response.statusText}`)
+  }
+  return response.json()
+}
+
+export async function runSolver(eventId) {
+  if (USE_MOCKS) {
+    // Simulate 1.5 second delay with loading state
+    await new Promise((resolve) => setTimeout(resolve, 1500))
+    if (!eventId) {
+      throw new Error('Event ID is required to run the solver')
+    }
+
+    let planIndex = mockPlansStore.findIndex((p) => p.eventId === eventId)
+    const tasks = mockTasksStore.filter((t) => t.eventId === eventId)
+    const volunteers = mockVolunteersStore.filter((v) => v.eventId === eventId)
+
+    // Build fresh assignments from tasks and volunteers
+    const sampleBreakdowns = [
+      { skill: 0.95, experience: 0.90, performance: 0.85, load: 0.80, interest: 0.90 },
+      { skill: 0.92, experience: 0.75, performance: 0.85, load: 0.90, interest: 0.80 },
+      { skill: 0.85, experience: 0.70, performance: 0.75, load: 0.85, interest: 0.70 },
+      { skill: 0.65, experience: 0.40, performance: 0.60, load: 0.70, interest: 0.50 },
+    ]
+
+    const assignments = tasks.slice(0, Math.min(tasks.length, volunteers.length)).map((t, i) => {
+      const v = volunteers[i]
+      const breakdown = sampleBreakdowns[i % sampleBreakdowns.length]
+      const isFlagged = i === tasks.length - 1 || i === 3
+      return {
+        id: `asg-${eventId}-${i + 1}`,
+        taskId: t.id,
+        taskTitle: t.title,
+        volunteerId: v.id,
+        volunteerName: v.fullName,
+        breakdown,
+        fit: calculateFitScore(breakdown),
+        reason: `Matched based on ${v.department} background and schedule availability.`,
+        flags: isFlagged ? ['First-timer'] : [],
+        locked: false,
+      }
+    })
+
+    const skillGaps = [
+      {
+        taskId: tasks[0]?.id || 'tsk-1',
+        taskTitle: tasks[0]?.title || 'Task Support',
+        missingSkill: tasks[0]?.mandatorySkills?.[0] || 'First Aid Certified',
+        slotsUnfilled: 1,
+      },
+    ]
+
+    const totalHeadcount = tasks.reduce((sum, t) => sum + (Number(t.headcount) || 1), 0)
+    const updatedPlan = {
+      eventId,
+      status: 'draft',
+      summary: computePlanSummary(assignments, skillGaps, totalHeadcount || 14),
+      assignments,
+      skillGaps,
+    }
+
+    if (planIndex !== -1) {
+      mockPlansStore[planIndex] = updatedPlan
+    } else {
+      mockPlansStore.push(updatedPlan)
+    }
+
+    return JSON.parse(JSON.stringify(updatedPlan))
+  }
+
+  const response = await fetch('/api/plan/run', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ eventId }),
+  })
+  if (!response.ok) {
+    throw new Error(`Solver execution failed: ${response.statusText}`)
+  }
+  return response.json()
+}
+
+export async function approvePlan(eventId) {
+  if (USE_MOCKS) {
+    await new Promise((resolve) => setTimeout(resolve, 300))
+    const planIndex = mockPlansStore.findIndex((p) => p.eventId === eventId)
+    if (planIndex === -1) {
+      throw new Error(`Plan for event ${eventId} not found`)
+    }
+    if (mockPlansStore[planIndex].status !== 'draft') {
+      throw new Error('Only draft plans can be approved')
+    }
+    mockPlansStore[planIndex] = {
+      ...mockPlansStore[planIndex],
+      status: 'approved',
+    }
+    return JSON.parse(JSON.stringify(mockPlansStore[planIndex]))
+  }
+
+  const response = await fetch('/api/plan/approve', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ eventId }),
+  })
+  if (!response.ok) {
+    throw new Error(`Plan approval failed: ${response.statusText}`)
+  }
+  return response.json()
+}
+
+export async function swapAssignment(planId, assignmentId, volunteerId) {
+  if (USE_MOCKS) {
+    await new Promise((resolve) => setTimeout(resolve, 300))
+    // planId is either the plan eventId or plan object id
+    let plan = mockPlansStore.find((p) => p.eventId === planId || p.id === planId)
+    if (!plan) {
+      // fallback to plan containing this assignment
+      plan = mockPlansStore.find((p) => p.assignments.some((a) => a.id === assignmentId))
+    }
+    if (!plan) {
+      throw new Error(`Plan not found for assignment ${assignmentId}`)
+    }
+
+    const asgIndex = plan.assignments.findIndex((a) => a.id === assignmentId)
+    if (asgIndex === -1) {
+      throw new Error(`Assignment ${assignmentId} not found`)
+    }
+
+    const newVolunteer = mockVolunteersStore.find((v) => v.id === volunteerId)
+    if (!newVolunteer) {
+      throw new Error(`Volunteer ${volunteerId} not found`)
+    }
+
+    // Compute updated breakdown & fit for newly assigned volunteer
+    const currentAsg = plan.assignments[asgIndex]
+    const updatedBreakdown = {
+      skill: Math.min(0.98, Math.max(0.6, (currentAsg.breakdown.skill + 0.05) % 1 || 0.8)),
+      experience: Math.min(0.95, (newVolunteer.pastEventsCount || 1) * 0.2),
+      performance: 0.85,
+      load: 0.85,
+      interest: 0.75,
+    }
+
+    const updatedAssignment = {
+      ...currentAsg,
+      volunteerId: newVolunteer.id,
+      volunteerName: newVolunteer.fullName,
+      breakdown: updatedBreakdown,
+      fit: calculateFitScore(updatedBreakdown),
+      reason: `Manual reassignment to ${newVolunteer.fullName} (${newVolunteer.department}).`,
+    }
+
+    plan.assignments[asgIndex] = updatedAssignment
+    plan.summary = computePlanSummary(plan.assignments, plan.skillGaps, plan.summary.headcountRequired)
+
+    return JSON.parse(JSON.stringify(plan))
+  }
+
+  const response = await fetch(`/api/plan/assignments/${encodeURIComponent(assignmentId)}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ volunteerId, planId }),
+  })
+  if (!response.ok) {
+    throw new Error(`Failed to swap assignment: ${response.statusText}`)
+  }
+  return response.json()
+}
+
 
