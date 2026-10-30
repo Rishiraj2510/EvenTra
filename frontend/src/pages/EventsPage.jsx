@@ -1,4 +1,6 @@
 import { useState, useMemo } from 'react'
+import { Navigate } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
 import { getEvents, createEvent } from '../services/api'
 import { useFetch } from '../hooks/useFetch'
 import CreateEventModal from '../components/events/CreateEventModal'
@@ -23,7 +25,9 @@ const STATUS_CONFIG = {
 }
 
 export default function EventsPage() {
+  const { role } = useAuth()
   const { data: events, loading, error, reload } = useFetch(getEvents)
+
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedFilter, setSelectedFilter] = useState('all')
@@ -51,6 +55,11 @@ export default function EventsPage() {
       return matchesFilter && matchesSearch
     })
   }, [events, selectedFilter, searchQuery])
+
+  // Redirect volunteers away (organiser only)
+  if (role === 'volunteer') {
+    return <Navigate to="/my-duties" replace />
+  }
 
   // Stat metrics
   const totalCount = events ? events.length : 0

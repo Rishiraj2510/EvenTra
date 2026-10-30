@@ -11,10 +11,12 @@ export function AuthProvider({ children }) {
     const assignedRole = userData?.role || role || 'organiser'
     setRole(assignedRole)
     setUser({
+      id: userData?.id || 'usr-1',
       name: userData?.name || 'Rishiraj Jhawar',
       email: userData?.email || 'rishiraj@college.edu',
       role: assignedRole,
       displayRole: assignedRole === 'organiser' ? 'Lead Organiser' : 'Student Volunteer',
+      volunteerId: userData?.volunteerId || 'vol-1',
     })
   }
 
@@ -32,6 +34,7 @@ export function AuthProvider({ children }) {
           ...prevUser,
           role: nextRole,
           displayRole: nextRole === 'organiser' ? 'Lead Organiser' : 'Student Volunteer',
+          volunteerId: prevUser.volunteerId || 'vol-1',
         }
       })
       return nextRole

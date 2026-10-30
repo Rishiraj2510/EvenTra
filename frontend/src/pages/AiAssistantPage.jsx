@@ -170,7 +170,7 @@ export default function AiAssistantPage() {
 
   // Redirect volunteers away (role protection: organiser/coordinator only)
   if (role === 'volunteer') {
-    return <Navigate to="/events" replace />
+    return <Navigate to="/my-duties" replace />
   }
 
   return (

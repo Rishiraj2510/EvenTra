@@ -2,7 +2,7 @@ import { useState, useCallback, useMemo } from 'react'
 import { Navigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useEvent } from '../context/EventContext'
-import { getPlan, runSolver, approvePlan, swapAssignment, getVolunteers } from '../services/api'
+import { getPlan, runSolver, approvePlan, publishPlan, swapAssignment, getVolunteers } from '../services/api'
 import { useFetch } from '../hooks/useFetch'
 import { getCurrentWeights } from '../utils/scoring'
 
@@ -29,8 +29,10 @@ export default function AssignmentPlanPage() {
   // Local state for actions, drawer, modal
   const [isRunningSolver, setIsRunningSolver] = useState(false)
   const [isApproving, setIsApproving] = useState(false)
+  const [isPublishing, setIsPublishing] = useState(false)
   const [actionError, setActionError] = useState('')
   const [showApproveConfirm, setShowApproveConfirm] = useState(false)
+  const [showPublishConfirm, setShowPublishConfirm] = useState(false)
 
   // Drawer explainability state
   const [selectedAssignmentForDrawer, setSelectedAssignmentForDrawer] = useState(null)
@@ -48,7 +50,7 @@ export default function AssignmentPlanPage() {
 
   // Redirect volunteers away (role protection: organiser/coordinator only)
   if (role === 'volunteer') {
-    return <Navigate to="/events" replace />
+    return <Navigate to="/my-duties" replace />
   }
 
   const status = plan?.status || 'none'
@@ -83,6 +85,22 @@ export default function AssignmentPlanPage() {
       setActionError(err.message || 'Failed to approve plan')
     } finally {
       setIsApproving(false)
+    }
+  }
+
+  // Trigger publish
+  const handleConfirmPublish = async () => {
+    if (!selectedEventId || isPublishing || status !== 'approved') return
+    setActionError('')
+    setIsPublishing(true)
+    try {
+      await publishPlan(selectedEventId)
+      setShowPublishConfirm(false)
+      await reload()
+    } catch (err) {
+      setActionError(err.message || 'Failed to publish plan')
+    } finally {
+      setIsPublishing(false)
     }
   }
 
@@ -232,6 +250,18 @@ export default function AssignmentPlanPage() {
               >
                 <span className="material-symbols-outlined text-[18px]">verified</span>
                 <span>{isApproved ? 'Approved' : 'Approve plan'}</span>
+              </button>
+
+              {/* Publish Plan Button */}
+              <button
+                onClick={() => setShowPublishConfirm(true)}
+                disabled={status !== 'approved' || isPublishing}
+                className="flex items-center gap-2 h-10 px-5 rounded-lg bg-primary hover:bg-primary-container text-on-primary font-label-lg text-label-lg shadow-sm transition-all active:scale-[0.99] cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                type="button"
+                title={status === 'published' ? 'Plan is published' : status === 'approved' ? 'Publish assignments to volunteers' : 'Plan must be approved before publishing'}
+              >
+                <span className="material-symbols-outlined text-[18px]">send</span>
+                <span>{status === 'published' ? 'Published' : 'Publish plan'}</span>
               </button>
             </div>
           )}
@@ -846,6 +876,46 @@ export default function AssignmentPlanPage() {
                   className="px-5 h-10 rounded-lg bg-secondary hover:bg-on-secondary-container text-on-secondary font-label-md text-label-md shadow-sm cursor-pointer transition-all disabled:opacity-50"
                 >
                   {isApproving ? 'Approving...' : 'Yes, Approve'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Modal: Publish Plan Confirmation */}
+        {showPublishConfirm && (
+          <div className="fixed inset-0 z-50 bg-on-surface/40 backdrop-blur-sm flex items-center justify-center p-4">
+            <div className="bg-surface-container-lowest rounded-2xl p-6 shadow-xl max-w-md w-full flex flex-col gap-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary shrink-0">
+                  <span className="material-symbols-outlined text-[24px]">send</span>
+                </div>
+                <div>
+                  <h3 className="font-headline-sm text-headline-sm text-on-surface font-bold">
+                    Publish Assignment Plan?
+                  </h3>
+                  <p className="font-body-sm text-body-sm text-on-surface-variant">
+                    This will release and notify volunteer rosters. Volunteers will be able to view their assigned duties in My Duties.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-end gap-3 mt-2 pt-3 border-t border-surface-container/60">
+                <button
+                  type="button"
+                  onClick={() => setShowPublishConfirm(false)}
+                  disabled={isPublishing}
+                  className="px-4 h-10 rounded-lg bg-surface-container-low hover:bg-surface-container text-on-surface font-label-md text-label-md cursor-pointer transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleConfirmPublish}
+                  disabled={isPublishing}
+                  className="px-5 h-10 rounded-lg bg-primary hover:bg-primary-container text-on-primary font-label-md text-label-md shadow-sm cursor-pointer transition-all disabled:opacity-50"
+                >
+                  {isPublishing ? 'Publishing...' : 'Yes, Publish Plan'}
                 </button>
               </div>
             </div>

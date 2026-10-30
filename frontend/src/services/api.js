@@ -1,5 +1,5 @@
 import { initialEvents } from '../mocks/events.js'
-import { demoUser } from '../mocks/users.js'
+import { demoUser, demoVolunteerUser } from '../mocks/users.js'
 import { initialTasks } from '../mocks/tasks.js'
 import { initialVolunteers } from '../mocks/volunteers.js'
 import { createEmptyDashboardSummary } from '../mocks/dashboard.js'
@@ -39,6 +39,14 @@ export async function login(email, password) {
 
   if (USE_MOCKS) {
     await new Promise((resolve) => setTimeout(resolve, 350))
+    const trimmed = email.trim().toLowerCase()
+    // If logging in with volunteer credentials or volunteer email, return demoVolunteerUser
+    if (trimmed.includes('volunteer') || trimmed === demoVolunteerUser.email.toLowerCase()) {
+      return {
+        ...demoVolunteerUser,
+        email: email.trim(),
+      }
+    }
     // Return a copy of demo user with provided email
     return {
       ...demoUser,
@@ -455,6 +463,34 @@ export async function approvePlan(eventId) {
   return response.json()
 }
 
+export async function publishPlan(eventId) {
+  if (USE_MOCKS) {
+    await new Promise((resolve) => setTimeout(resolve, 300))
+    const planIndex = mockPlansStore.findIndex((p) => p.eventId === eventId)
+    if (planIndex === -1) {
+      throw new Error(`Plan for event ${eventId} not found`)
+    }
+    if (mockPlansStore[planIndex].status !== 'approved') {
+      throw new Error('Only approved plans can be published')
+    }
+    mockPlansStore[planIndex] = {
+      ...mockPlansStore[planIndex],
+      status: 'published',
+    }
+    return JSON.parse(JSON.stringify(mockPlansStore[planIndex]))
+  }
+
+  const response = await fetch('/api/plan/publish', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ eventId }),
+  })
+  if (!response.ok) {
+    throw new Error(`Plan publish failed: ${response.statusText}`)
+  }
+  return response.json()
+}
+
 export async function swapAssignment(planId, assignmentId, volunteerId) {
   if (USE_MOCKS) {
     await new Promise((resolve) => setTimeout(resolve, 300))
@@ -840,6 +876,52 @@ export async function saveSettings(settings) {
     setCurrentWeights(data.weights)
   }
   return data
+}
+
+export async function getMyDuties(volunteerId, eventId) {
+  if (USE_MOCKS) {
+    await new Promise((resolve) => setTimeout(resolve, 200))
+    if (!volunteerId) return []
+
+    // Find plans: if eventId is provided, filter to that event; otherwise look across all plans
+    const matchingPlans = eventId
+      ? mockPlansStore.filter((p) => p.eventId === eventId)
+      : mockPlansStore
+
+    const duties = []
+    for (const p of matchingPlans) {
+      // Volunteers can only see duties from published plans
+      if (p.status !== 'published') {
+        continue
+      }
+      const myAssignments = (p.assignments || []).filter((a) => a.volunteerId === volunteerId)
+      for (const asg of myAssignments) {
+        const task = mockTasksStore.find((t) => t.id === asg.taskId)
+        duties.push({
+          id: asg.id,
+          taskId: asg.taskId,
+          eventId: p.eventId,
+          taskTitle: asg.taskTitle || task?.title || 'Assigned Task',
+          date: task?.date || '2025-03-15',
+          startTime: task?.startTime || '09:00',
+          endTime: task?.endTime || '13:00',
+          location: task?.location || 'Campus Center',
+          status: task?.status === 'done' || task?.status === 'completed' ? 'completed' : 'upcoming',
+        })
+      }
+    }
+
+    return duties
+  }
+
+  const queryParams = new URLSearchParams()
+  if (eventId) queryParams.set('eventId', eventId)
+  const qs = queryParams.toString() ? `?${queryParams.toString()}` : ''
+  const response = await fetch(`/api/volunteers/${encodeURIComponent(volunteerId)}/duties${qs}`)
+  if (!response.ok) {
+    throw new Error(`Failed to fetch duties: ${response.statusText}`)
+  }
+  return response.json()
 }
 
 
