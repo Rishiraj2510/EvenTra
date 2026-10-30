@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback } from 'react'
 import { Navigate } from 'react-router-dom'
-import { useAuth } from '../context/AuthContext'
+import { useAuth, getHomeRoute } from '../context/AuthContext'
 import { getTasks, createTask, updateTask, deleteTask, getEvents } from '../services/api'
 import { useFetch } from '../hooks/useFetch'
 import CreateTaskModal from '../components/tasks/CreateTaskModal'
@@ -49,7 +49,7 @@ export default function TasksPage() {
 
   // Redirect volunteers away (organiser only)
   if (role === 'volunteer') {
-    return <Navigate to="/my-duties" replace />
+    return <Navigate to={getHomeRoute(role)} replace />
   }
 
   // Handlers

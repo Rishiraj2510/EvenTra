@@ -1,6 +1,6 @@
 import { useState, useCallback, useMemo } from 'react'
 import { Navigate } from 'react-router-dom'
-import { useAuth } from '../context/AuthContext'
+import { useAuth, getHomeRoute } from '../context/AuthContext'
 import { useEvent } from '../context/EventContext'
 import { getPlan, runSolver, approvePlan, publishPlan, swapAssignment, getVolunteers } from '../services/api'
 import { useFetch } from '../hooks/useFetch'
@@ -50,7 +50,7 @@ export default function AssignmentPlanPage() {
 
   // Redirect volunteers away (role protection: organiser/coordinator only)
   if (role === 'volunteer') {
-    return <Navigate to="/my-duties" replace />
+    return <Navigate to={getHomeRoute(role)} replace />
   }
 
   const status = plan?.status || 'none'

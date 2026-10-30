@@ -1,4 +1,5 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
+import { useAuth, getHomeRoute } from './context/AuthContext'
 import AppLayout from './components/layout/AppLayout'
 import ProtectedRoute from './components/layout/ProtectedRoute'
 import LoginPage from './pages/LoginPage'
@@ -17,6 +18,8 @@ import MyCertificatesPage from './pages/MyCertificatesPage'
 import MyProfilePage from './pages/MyProfilePage'
 
 export default function App() {
+  const { role } = useAuth()
+
   return (
     <Routes>
       {/* Public Login Route (outside AppLayout) */}
@@ -25,7 +28,7 @@ export default function App() {
       {/* Protected AppLayout Routes */}
       <Route element={<ProtectedRoute />}>
         <Route element={<AppLayout />}>
-          <Route path="/" element={<Navigate to="/events" replace />} />
+          <Route path="/" element={<Navigate to={getHomeRoute(role)} replace />} />
           <Route path="/events" element={<EventsPage />} />
 
           {/* Organiser routes */}

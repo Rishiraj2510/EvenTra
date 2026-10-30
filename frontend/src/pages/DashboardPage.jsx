@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react'
 import { useNavigate, Navigate } from 'react-router-dom'
-import { useAuth } from '../context/AuthContext'
+import { useAuth, getHomeRoute } from '../context/AuthContext'
 import { useEvent } from '../context/EventContext'
 import { getDashboardSummary } from '../services/api'
 import { useFetch } from '../hooks/useFetch'
@@ -35,7 +35,7 @@ export default function DashboardPage() {
 
   // Redirect volunteers away from Dashboard
   if (role === 'volunteer') {
-    return <Navigate to="/my-duties" replace />
+    return <Navigate to={getHomeRoute(role)} replace />
   }
 
   // Handle Form URL Save

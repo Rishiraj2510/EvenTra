@@ -1,6 +1,6 @@
 import { useState, useCallback, useMemo } from 'react'
 import { Navigate, Link } from 'react-router-dom'
-import { useAuth } from '../context/AuthContext'
+import { useAuth, getHomeRoute } from '../context/AuthContext'
 import { useEvent } from '../context/EventContext'
 import { getFeedback, saveFeedback } from '../services/api'
 import { useFetch } from '../hooks/useFetch'
@@ -59,7 +59,7 @@ export default function FeedbackPage() {
 
   // Ensure role guard is evaluated after hooks
   if (role === 'volunteer') {
-    return <Navigate to="/my-duties" replace />
+    return <Navigate to={getHomeRoute(role)} replace />
   }
 
   // Row edit handlers

@@ -1,8 +1,9 @@
 import { useState, useCallback } from 'react'
 import { Navigate } from 'react-router-dom'
-import { useAuth } from '../context/AuthContext'
+import { useAuth, getHomeRoute } from '../context/AuthContext'
 import { getMyCertificates } from '../services/api'
 import { useFetch } from '../hooks/useFetch'
+import { APP_NAME } from '../config'
 import CertificateCard from '../components/certificates/CertificateCard'
 
 export default function MyCertificatesPage() {
@@ -22,7 +23,7 @@ export default function MyCertificatesPage() {
 
   // Ensure role guard is evaluated after hooks
   if (role !== 'volunteer') {
-    return <Navigate to="/dashboard" replace />
+    return <Navigate to={getHomeRoute(role)} replace />
   }
 
   const handleOpenCert = (cert) => {
@@ -174,7 +175,7 @@ export default function MyCertificatesPage() {
                           check_circle
                         </span>
                         <span className="font-label-sm text-label-sm text-secondary font-medium tracking-wide">
-                          Eventra Verified
+                          {APP_NAME} Verified
                         </span>
                       </div>
                     </div>

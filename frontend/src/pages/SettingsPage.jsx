@@ -1,6 +1,6 @@
 import { useState, useCallback, useMemo } from 'react'
 import { Navigate } from 'react-router-dom'
-import { useAuth } from '../context/AuthContext'
+import { useAuth, getHomeRoute } from '../context/AuthContext'
 import { getSettings, saveSettings } from '../services/api'
 import { useFetch } from '../hooks/useFetch'
 import { DEFAULT_WEIGHTS } from '../utils/scoring'
@@ -157,7 +157,7 @@ export default function SettingsPage() {
 
   // Redirect volunteers away (role protection: organiser/coordinator only)
   if (role === 'volunteer') {
-    return <Navigate to="/my-duties" replace />
+    return <Navigate to={getHomeRoute(role)} replace />
   }
 
   // Loading state
