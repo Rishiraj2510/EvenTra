@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <meta content="web_dashboard" name="shell-type" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"
+        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet" />
+    <style>
+        @layer base {
+
+            html,
+            body {
+                margin: 0;
+                padding: 0;
+            }
+
+            body {
+                overscroll-behavior: none;
+            }
+
+            main>:first-child {
+                margin-top: 0 !important;
+            }
+
+            main>:last-child {
+                margin-bottom: 0 !important;
+            }
+        }
+
+        ::-webkit-scrollbar {
+            display: none;
+        }
+    </style>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script
+        id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { colors: { "inverse-surface": "#213145", "on-primary": "#ffffff", "secondary": "#006c49", "on-secondary-fixed-variant": "#005236", "surface-container-lowest": "#ffffff", "on-tertiary-fixed": "#2a1700", "on-primary-fixed-variant": "#3323cc", "primary": "#3525cd", "on-background": "#0b1c30", "on-surface-variant": "#464555", "surface-tint": "#4d44e3", "on-secondary-container": "#00714d", "surface-container-high": "#dce9ff", "tertiary-fixed": "#ffddb8", "tertiary": "#684000", "on-tertiary-container": "#ffd4a4", "error-container": "#ffdad6", "surface": "#f8f9ff", "on-error-container": "#93000a", "inverse-primary": "#c3c0ff", "secondary-fixed-dim": "#4edea3", "on-primary-container": "#dad7ff", "on-secondary": "#ffffff", "tertiary-container": "#885500", "tertiary-fixed-dim": "#ffb95f", "outline": "#777587", "primary-fixed-dim": "#c3c0ff", "primary-container": "#4f46e5", "surface-dim": "#cbdbf5", "background": "#f8f9ff", "primary-fixed": "#e2dfff", "surface-container-highest": "#d3e4fe", "outline-variant": "#c7c4d8", "on-secondary-fixed": "#002113", "surface-container": "#e5eeff", "secondary-container": "#6cf8bb", "inverse-on-surface": "#eaf1ff", "surface-variant": "#d3e4fe", "error": "#ba1a1a", "on-primary-fixed": "#0f0069", "secondary-fixed": "#6ffbbe", "surface-bright": "#f8f9ff", "surface-container-low": "#eff4ff", "on-tertiary-fixed-variant": "#653e00", "on-tertiary": "#ffffff", "on-surface": "#0b1c30", "on-error": "#ffffff" }, borderRadius: { DEFAULT: "0.25rem", lg: "0.5rem", xl: "0.75rem", full: "9999px" }, spacing: { "space-xl": "1.5rem", "margin-md": "1.5rem", "space-xs": "0.25rem", "space-sm": "0.5rem", "gutter-lg": "1.5rem", "margin-lg": "2rem", margin: "1rem", gutter: "1rem", "space-lg": "1rem", "space-md": "0.75rem" }, fontFamily: { "body-md": ["Inter"], "label-md": ["Inter"], "label-sm": ["Inter"], "label-lg": ["Inter"], "body-sm": ["Inter"], "headline-sm": ["Inter"], "headline-xl-mobile": ["Inter"], "headline-md": ["Inter"], "headline-xl": ["Inter"], "headline-lg": ["Inter"], "body-lg": ["Inter"] }, fontSize: { "body-md": ["14px", { lineHeight: "20px", fontWeight: "400" }], "label-md": ["12px", { lineHeight: "16px", fontWeight: "500" }], "label-sm": ["11px", { lineHeight: "14px", letterSpacing: "0.04em", fontWeight: "600" }], "label-lg": ["14px", { lineHeight: "20px", fontWeight: "500" }], "body-sm": ["12px", { lineHeight: "16px", fontWeight: "400" }], "headline-sm": ["16px", { lineHeight: "24px", letterSpacing: "0em", fontWeight: "600" }], "headline-xl-mobile": ["28px", { lineHeight: "36px", letterSpacing: "-0.02em", fontWeight: "700" }], "headline-md": ["20px", { lineHeight: "28px", letterSpacing: "-0.01em", fontWeight: "600" }], "headline-xl": ["36px", { lineHeight: "44px", letterSpacing: "-0.02em", fontWeight: "700" }], "headline-lg": ["28px", { lineHeight: "36px", letterSpacing: "-0.015em", fontWeight: "600" }], "body-lg": ["16px", { lineHeight: "24px", fontWeight: "400" }] } } } };</script>
+</head>
+
+<body class="bg-surface font-body-md text-body-md text-on-surface antialiased min-h-screen">
+    <aside
+        class="fixed left-0 top-0 h-full w-64 bg-surface-container-lowest shadow-[0_1px_8px_rgba(0,0,0,0.04)] z-50 flex flex-col justify-between py-space-xl">
+        <div class="flex flex-col gap-space-xl">
+            <div class="px-space-xl flex items-center gap-space-sm">
+                <div
+                    class="w-9 h-9 rounded-lg bg-primary-container flex items-center justify-center text-on-primary shadow-sm">
+                    <span class="material-symbols-outlined text-[20px]">verified</span>
+                </div><span
+                    class="font-headline-md text-headline-md font-bold tracking-tight text-on-surface">Eventra</span>
+            </div>
+            <nav class="flex flex-col gap-space-xs px-space-md"
+                data-active-classes="bg-primary-container text-on-primary font-label-lg text-label-lg shadow-sm"><a
+                    aria-current="page"
+                    class="flex items-center gap-space-md px-space-lg py-space-sm rounded-lg transition-all bg-primary-container text-on-primary font-label-lg text-label-lg shadow-sm"
+                    data-path="my-duties" href="#"><span
+                        class="material-symbols-outlined text-[20px]">assignment</span><span>My Duties</span></a><a
+                    class="flex items-center gap-space-md px-space-lg py-space-sm rounded-lg font-label-lg text-label-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all"
+                    data-path="my-profile" href="#"><span
+                        class="material-symbols-outlined text-[20px]">account_box</span><span>My Profile</span></a><a
+                    class="flex items-center gap-space-md px-space-lg py-space-sm rounded-lg font-label-lg text-label-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all"
+                    data-path="my-certificates" href="#"><span
+                        class="material-symbols-outlined text-[20px]">workspace_premium</span><span>My
+                        Certificates</span></a></nav>
+        </div>
+        <div class="px-space-md">
+            <div class="bg-surface-container-low rounded-lg p-space-md flex items-center justify-between">
+                <div class="flex flex-col"><span class="font-label-sm text-label-sm uppercase text-outline">Volunteer
+                        Hub</span><span class="font-body-sm text-body-sm text-on-surface-variant">v2.4 Collegiate</span>
+                </div><span class="material-symbols-outlined text-outline text-[18px]">school</span>
+            </div>
+        </div>
+    </aside>
+    <div class="pl-64">
+        <header
+            class="fixed top-0 left-64 right-0 h-16 bg-surface/80 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)] z-40">
+            <div class="w-full h-full px-space-xl flex items-center justify-between">
+                <div class="flex items-center gap-space-md"><button
+                        class="flex items-center gap-space-xs bg-surface-container-lowest px-space-md py-space-xs rounded-lg shadow-[0_1px_3px_0_rgba(0,0,0,0.05)] text-on-surface hover:bg-surface-container-low transition-colors"
+                        type="button"><span
+                            class="material-symbols-outlined text-outline text-[18px]">calendar_today</span><span
+                            class="font-label-md text-label-md font-medium text-on-surface">Select event</span><span
+                            class="material-symbols-outlined text-outline text-[16px]">expand_more</span></button><span
+                        class="font-body-sm text-body-sm text-outline">/</span>
+                    <div class="flex items-center gap-space-xs"><span
+                            class="w-2 h-2 rounded-full bg-outline-variant"></span><span
+                            class="font-body-sm text-body-sm text-outline">No event selected</span></div>
+                </div>
+                <div class="flex items-center gap-space-lg"><button aria-label="Notifications"
+                        class="w-9 h-9 rounded-lg flex items-center justify-center text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors relative"
+                        type="button"><span class="material-symbols-outlined text-[20px]">notifications</span><span
+                            class="absolute top-2 right-2 w-2 h-2 rounded-full bg-primary-container ring-2 ring-surface"></span></button>
+                    <div class="flex items-center gap-space-md pl-space-sm">
+                        <div class="flex flex-col text-right"><span
+                                class="font-label-md text-label-md text-on-surface">User name</span><span
+                                class="font-label-sm text-label-sm text-outline">Role</span></div>
+                        <div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center shadow-sm"><span
+                                class="material-symbols-outlined text-on-primary text-[18px]">person</span></div>
+                    </div>
+                </div>
+            </div>
+        </header>
+        <main class="w-full pt-16 bg-surface min-h-screen px-space-xl py-space-xl">
+            <div class="flex flex-col w-full">
+                <div class="flex flex-col gap-space-xl max-w-[1360px] mx-auto w-full">
+                    <div class="flex flex-col md:flex-row md:items-end justify-between gap-space-md pb-space-md">
+                        <div class="flex flex-col gap-space-xs">
+                            <div class="flex items-center gap-space-sm">
+                                <span
+                                    class="inline-flex items-center px-space-sm py-0.5 rounded-full bg-surface-container-high text-on-surface-variant font-label-sm text-label-sm uppercase tracking-wider">
+                                    Volunteer Workspace
+                                </span>
+                                <span
+                                    class="inline-flex items-center gap-1.5 px-space-sm py-0.5 rounded-full bg-secondary-container text-on-secondary-container font-label-sm text-label-sm font-medium">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+                                    Sync Active
+                                </span>
+                            </div>
+                            <h1 class="font-headline-xl text-headline-xl text-on-surface tracking-tight">My Duties</h1>
+                            <p class="font-body-md text-body-md text-on-surface-variant">View your assigned shifts and
+                                check in when you're on duty</p>
+                        </div>
+                        <div class="flex items-center gap-space-sm">
+                            <div class="flex items-center p-1 rounded-lg bg-surface-container shadow-inner"
+                                role="tablist">
+                                <button
+                                    class="px-space-md py-1.5 rounded-md font-label-md text-label-md text-on-primary bg-primary-container shadow-sm transition-all flex items-center gap-1.5"
+                                    id="viewBtn-empty" onclick="switchState('empty')" type="button">
+                                    <span class="material-symbols-outlined text-[16px]">visibility</span>
+                                    Default Empty
+                                </button>
+                                <button
+                                    class="px-space-md py-1.5 rounded-md font-label-md text-label-md text-on-surface-variant hover:text-on-surface transition-all flex items-center gap-1.5"
+                                    id="viewBtn-loading" onclick="switchState('loading')" type="button">
+                                    <span class="material-symbols-outlined text-[16px]">hourglass_top</span>
+                                    Loading Skeleton
+                                </button>
+                                <button
+                                    class="px-space-md py-1.5 rounded-md font-label-md text-label-md text-on-surface-variant hover:text-on-surface transition-all flex items-center gap-1.5"
+                                    id="viewBtn-error" onclick="switchState('error')" type="button">
+                                    <span class="material-symbols-outlined text-[16px]">warning</span>
+                                    Error State
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-space-lg">
+                        <div
+                            class="bg-surface-container-lowest rounded-xl p-space-xl shadow-[0_1px_3px_0_rgba(0,0,0,0.05)] flex items-start justify-between relative overflow-hidden group">
+                            <div class="flex flex-col gap-space-xs z-10">
+                                <span class="font-label-sm text-label-sm uppercase tracking-wider text-outline">Total
+                                    hours</span>
+                                <div class="flex items-baseline gap-space-xs">
+                                    <span
+                                        class="font-headline-xl text-headline-xl text-on-surface tracking-tight">--</span>
+                                    <span class="font-body-sm text-body-sm text-outline">hrs</span>
+                                </div>
+                                <span class="font-body-sm text-body-sm text-on-surface-variant">Logged volunteer
+                                    hours</span>
+                            </div>
+                            <div
+                                class="w-12 h-12 rounded-xl bg-primary-fixed flex items-center justify-center text-primary shadow-sm z-10">
+                                <span class="material-symbols-outlined text-[26px]">schedule</span>
+                            </div>
+                            <div
+                                class="absolute -right-6 -bottom-6 w-24 h-24 bg-primary-fixed/20 rounded-full blur-xl pointer-events-none">
+                            </div>
+                        </div>
+                        <div
+                            class="bg-surface-container-lowest rounded-xl p-space-xl shadow-[0_1px_3px_0_rgba(0,0,0,0.05)] flex items-start justify-between relative overflow-hidden group">
+                            <div class="flex flex-col gap-space-xs z-10">
+                                <span
+                                    class="font-label-sm text-label-sm uppercase tracking-wider text-outline">Certificates</span>
+                                <div class="flex items-baseline gap-space-xs">
+                                    <span
+                                        class="font-headline-xl text-headline-xl text-on-surface tracking-tight">--</span>
+                                    <span class="font-body-sm text-body-sm text-outline">issued</span>
+                                </div>
+                                <a class="font-label-md text-label-md text-primary hover:text-on-primary-fixed-variant transition-colors flex items-center gap-1 mt-1 group-hover:translate-x-0.5 duration-200"
+                                    href="#">
+                                    View my certificates
+                                    <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+                                </a>
+                            </div>
+                            <div
+                                class="w-12 h-12 rounded-xl bg-secondary-fixed flex items-center justify-center text-secondary shadow-sm z-10">
+                                <span class="material-symbols-outlined text-[26px]">workspace_premium</span>
+                            </div>
+                            <div
+                                class="absolute -right-6 -bottom-6 w-24 h-24 bg-secondary-fixed/20 rounded-full blur-xl pointer-events-none">
+                            </div>
+                        </div>
+                    </div>
+                    <div
+                        class="bg-surface-container-lowest rounded-xl shadow-[0_1px_3px_0_rgba(0,0,0,0.05)] overflow-hidden">
+                        <div
+                            class="px-space-xl py-space-lg flex flex-col sm:flex-row sm:items-center justify-between gap-space-md bg-surface-container-low/50">
+                            <div class="flex items-center gap-space-xs">
+                                <button
+                                    class="px-space-md py-1.5 rounded-full font-label-md text-label-md bg-primary text-on-primary shadow-sm font-medium"
+                                    type="button">
+                                    All shifts (0)
+                                </button>
+                                <button
+                                    class="px-space-md py-1.5 rounded-full font-label-md text-label-md text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors"
+                                    type="button">
+                                    Upcoming (0)
+                                </button>
+                                <button
+                                    class="px-space-md py-1.5 rounded-full font-label-md text-label-md text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors"
+                                    type="button">
+                                    Past (0)
+                                </button>
+                            </div>
+                            <div class="flex items-center gap-space-sm">
+                                <span
+                                    class="font-label-sm text-label-sm uppercase tracking-wider text-outline flex items-center gap-1">
+                                    <span class="material-symbols-outlined text-[16px] text-outline">event_repeat</span>
+                                    Schedule Synchronized
+                                </span>
+                            </div>
+                        </div>
+                        <div class="p-space-xl">
+                            <div class="w-full" id="state-empty">
+                                <div class="relative pl-8 my-4">
+                                    <div class="absolute left-3 top-3 bottom-3 w-0.5 bg-surface-container-highest">
+                                    </div>
+                                    <div
+                                        class="bg-surface-container-low rounded-xl p- space-xl py-16 px-space-xl flex flex-col items-center text-center max-w-2xl mx-auto shadow-sm">
+                                        <div
+                                            class="w-16 h-16 rounded-2xl bg-surface-container-high flex items-center justify-center text-outline mb-space-md shadow-inner">
+                                            <span class="material-symbols-outlined text-[32px]">event_busy</span>
+                                        </div>
+                                        <h2
+                                            class="font-headline-md text-headline-md text-on-surface font-semibold mb-space-xs">
+                                            No duties assigned yet</h2>
+                                        <p
+                                            class="font-body-md text-body-md text-on-surface-variant max-w-md mb-space-lg">
+                                            When an organiser assigns you to a shift, it will appear here.
+                                        </p>
+                                        <button
+                                            class="px-5 py-2.5 rounded-lg bg-primary-container text-on-primary font-label-lg text-label-lg shadow-sm hover:bg-primary transition-all flex items-center gap-space-xs"
+                                            type="button">
+                                            <span class="material-symbols-outlined text-[18px]">edit_calendar</span>
+                                            <span>Update availability</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="w-full hidden" id="state-loading">
+                                <div class="mb-space-md flex items-center gap-space-xs">
+                                    <span
+                                        class="inline-flex items-center px-space-sm py-0.5 rounded font-label-sm text-label-sm bg-primary-fixed text-on-primary-fixed font-semibold tracking-wide">
+                                        LOADING STATE PREVIEW
+                                    </span>
+                                    <span class="font-body-sm text-body-sm text-outline">Simulated async data
+                                        retrieval</span>
+                                </div>
+                                <div class="relative pl-8 py-2">
+                                    <div class="absolute left-3 top-0 bottom-0 w-0.5 bg-surface-container-highest">
+                                    </div>
+                                    <div class="flex flex-col gap-space-lg">
+                                        <div
+                                            class="relative bg-surface-container-lowest rounded-xl p-space-lg shadow-sm animate-pulse flex flex-col gap-space-md">
+                                            <div
+                                                class="absolute -left-8 top-6 w-3 h-3 rounded-full bg-primary ring-4 ring-surface">
+                                            </div>
+                                            <div class="flex items-center justify-between">
+                                                <div class="h-5 w-28 bg-surface-container-highest rounded-full"></div>
+                                                <div class="h-6 w-20 bg-surface-container-high rounded-full"></div>
+                                            </div>
+                                            <div class="flex flex-col gap-space-xs">
+                                                <div class="h-6 w-64 bg-surface-container-highest rounded-md"></div>
+                                                <div class="flex items-center gap-space-lg mt-1">
+                                                    <div class="h-4 w-36 bg-surface-container rounded"></div>
+                                                    <div class="h-4 w-44 bg-surface-container rounded"></div>
+                                                </div>
+                                            </div>
+                                            <div class="flex items-center justify-between pt-space-xs">
+                                                <div class="flex items-center gap-space-sm">
+                                                    <div class="w-7 h-7 rounded-full bg-surface-container-highest">
+                                                    </div>
+                                                    <div class="h-4 w-24 bg-surface-container rounded"></div>
+                                                </div>
+                                                <div class="h-9 w-28 bg-surface-container-highest rounded-lg"></div>
+                                            </div>
+                                        </div>
+                                        <div
+                                            class="relative bg-surface-container-lowest rounded-xl p-space-lg shadow-sm animate-pulse flex flex-col gap-space-md opacity-70">
+                                            <div
+                                                class="absolute -left-8 top-6 w-3 h-3 rounded-full bg-outline-variant ring-4 ring-surface">
+                                            </div>
+                                            <div class="flex items-center justify-between">
+                                                <div class="h-5 w-32 bg-surface-container-highest rounded-full"></div>
+                                                <div class="h-6 w-24 bg-surface-container-high rounded-full"></div>
+                                            </div>
+                                            <div class="flex flex-col gap-space-xs">
+                                                <div class="h-6 w-72 bg-surface-container-highest rounded-md"></div>
+                                                <div class="flex items-center gap-space-lg mt-1">
+                                                    <div class="h-4 w-40 bg-surface-container rounded"></div>
+                                                    <div class="h-4 w-32 bg-surface-container rounded"></div>
+                                                </div>
+                                            </div>
+                                            <div class="flex items-center justify-between pt-space-xs">
+                                                <div class="flex items-center gap-space-sm">
+                                                    <div class="w-7 h-7 rounded-full bg-surface-container-highest">
+                                                    </div>
+                                                    <div class="h-4 w-28 bg-surface-container rounded"></div>
+                                                </div>
+                                                <div class="h-9 w-28 bg-surface-container-highest rounded-lg"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="w-full hidden" id="state-error">
+                                <div class="mb-space-md flex items-center gap-space-xs">
+                                    <span
+                                        class="inline-flex items-center px-space-sm py-0.5 rounded font-label-sm text-label-sm bg-error-container text-on-error-container font-semibold tracking-wide">
+                                        ERROR STATE PREVIEW
+                                    </span>
+                                    <span class="font-body-sm text-body-sm text-outline">Network response failure
+                                        simulation</span>
+                                </div>
+                                <div
+                                    class="bg-surface-container-low rounded-xl p-space-xl py-14 flex flex-col items-center text-center max-w-xl mx-auto shadow-sm">
+                                    <div
+                                        class="w-14 h-14 rounded-2xl bg-error-container flex items-center justify-center text-error mb-space-md shadow-sm">
+                                        <span class="material-symbols-outlined text-[28px]">error</span>
+                                    </div>
+                                    <h2
+                                        class="font-headline-md text-headline-md text-on-surface font-semibold mb-space-xs">
+                                        Unable to load shift schedule</h2>
+                                    <p class="font-body-md text-body-md text-on-surface-variant max-w-md mb-space-lg">
+                                        A connection error occurred while retrieving your volunteer roster. Please try
+                                        again.
+                                    </p>
+                                    <div class="flex items-center gap-space-sm">
+                                        <button
+                                            class="px-space-lg py-2 rounded-lg bg-surface-container-lowest text-on-surface font-label-lg text-label-lg shadow-sm hover:bg-surface-container-high transition-colors flex items-center gap-space-xs"
+                                            type="button">
+                                            <span class="material-symbols-outlined text-[18px]">refresh</span>
+                                            <span>Retry connection</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex flex-col gap-space-md pt-space-md">
+                        <div
+                            class="flex flex-col sm:flex-row sm:items-center justify-between gap-space-xs bg-surface-container-high p-space-md rounded-xl">
+                            <div class="flex items-center gap-space-sm">
+                                <span class="material-symbols-outlined text-primary text-[20px]">architecture</span>
+                                <span class="font-headline-sm text-headline-sm text-on-surface font-bold">COMPONENT
+                                    SPECIFICATION — SHIFT CARD (Reference Blueprint)</span>
+                            </div>
+                            <span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">
+                                Standard Schema V2
+                            </span>
+                        </div>
+                        <p class="font-body-sm text-body-sm text-on-surface-variant px-space-xs">
+                            Standard card anatomy and lifecycle states for volunteer duty roster. Displayed with generic
+                            schema labels.
+                        </p>
+                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-space-lg">
+                            <div
+                                class="bg-surface-container-lowest rounded-xl p-space-lg shadow-[0_1px_3px_0_rgba(0,0,0,0.05)] flex flex-col justify-between gap-space-lg relative overflow-hidden">
+                                <div class="flex flex-col gap-space-md">
+                                    <div class="flex items-center justify-between">
+                                        <span
+                                            class="px-space-sm py-0.5 rounded-md font-label-sm text-label-sm bg-surface-container-high text-on-surface-variant uppercase font-medium tracking-wider">
+                                            [Category]
+                                        </span>
+                                        <span
+                                            class="px-space-sm py-0.5 rounded-full font-label-sm text-label-sm bg-primary-fixed text-on-primary-fixed font-medium">
+                                            Upcoming
+                                        </span>
+                                    </div>
+                                    <div class="flex flex-col gap-1">
+                                        <span
+                                            class="font-headline-sm text-headline-sm text-on-surface font-semibold">Task
+                                            name</span>
+                                        <span class="font-body-sm text-body-sm text-outline">[Track / Role]</span>
+                                    </div>
+                                    <div class="flex flex-col gap-space-xs pt-1 text-on-surface-variant">
+                                        <div class="flex items-center gap-space-xs">
+                                            <span
+                                                class="material-symbols-outlined text-[16px] text-outline">schedule</span>
+                                            <span class="font-body-sm text-body-sm">Time</span>
+                                            <span class="font-body-sm text-body-sm text-outline">([Start Time - End
+                                                Time])</span>
+                                        </div>
+                                        <div class="flex items-center gap-space-xs">
+                                            <span
+                                                class="material-symbols-outlined text-[16px] text-outline">location_on</span>
+                                            <span class="font-body-sm text-body-sm">Location</span>
+                                            <span class="font-body-sm text-body-sm text-outline">([Venue / Stage /
+                                                Station])</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div
+                                    class="pt-space-sm flex items-center justify-between bg-surface-container-low -mx-space-lg -mb-space-lg p-space-md px-space-lg">
+                                    <div class="flex items-center gap-space-xs">
+                                        <span class="w-2 h-2 rounded-full bg-outline-variant"></span>
+                                        <span class="font-label-sm text-label-sm text-outline">Scheduled</span>
+                                    </div>
+                                    <button
+                                        class="px-space-lg py-2 rounded-lg bg-surface-container-high text-on-surface-variant font-label-md text-label-md cursor-not-allowed opacity-60 flex items-center gap-1.5"
+                                        disabled="" type="button">
+                                        <span class="material-symbols-outlined text-[16px]">check_circle</span>
+                                        <span>Check in (Locked)</span>
+                                    </button>
+                                </div>
+                            </div>
+                            <div
+                                class="bg-surface-container-lowest rounded-xl p-space-lg shadow-[0_4px_12px_rgba(79,70,229,0.08)] flex flex-col justify-between gap-space-lg relative overflow-hidden">
+                                <div class="flex flex-col gap-space-md">
+                                    <div class="flex items-center justify-between">
+                                        <span
+                                            class="px-space-sm py-0.5 rounded-md font-label-sm text-label-sm bg-surface-container-high text-on-surface-variant uppercase font-medium tracking-wider">
+                                            [Category]
+                                        </span>
+                                        <span
+                                            class="inline-flex items-center gap-1.5 px-space-sm py-0.5 rounded-full font-label-sm text-label-sm bg-secondary-container text-on-secondary-container font-medium">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-secondary animate-ping"></span>
+                                            On duty
+                                        </span>
+                                    </div>
+                                    <div class="flex flex-col gap-1">
+                                        <span
+                                            class="font-headline-sm text-headline-sm text-on-surface font-semibold">Task
+                                            name</span>
+                                        <span class="font-body-sm text-body-sm text-outline">[Track / Role]</span>
+                                    </div>
+                                    <div class="flex flex-col gap-space-xs pt-1 text-on-surface-variant">
+                                        <div class="flex items-center gap-space-xs">
+                                            <span
+                                                class="material-symbols-outlined text-[16px] text-primary">schedule</span>
+                                            <span
+                                                class="font-body-sm text-body-sm font-medium text-on-surface">Time</span>
+                                            <span class="font-body-sm text-body-sm text-outline">([Start Time - End
+                                                Time])</span>
+                                        </div>
+                                        <div class="flex items-center gap-space-xs">
+                                            <span
+                                                class="material-symbols-outlined text-[16px] text-primary">location_on</span>
+                                            <span
+                                                class="font-body-sm text-body-sm font-medium text-on-surface">Location</span>
+                                            <span class="font-body-sm text-body-sm text-outline">([Venue / Stage /
+                                                Station])</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div
+                                    class="pt-space-sm flex items-center justify-between bg-primary-fixed/20 -mx-space-lg -mb-space-lg p-space-md px-space-lg">
+                                    <div class="flex items-center gap-space-xs">
+                                        <span class="w-2 h-2 rounded-full bg-secondary"></span>
+                                        <span class="font-label-sm text-label-sm text-secondary font-medium">Window
+                                            Active</span>
+                                    </div>
+                                    <button
+                                        class="px-space-lg py-2 rounded-lg bg-primary-container text-on-primary font-label-md text-label-md hover:bg-primary shadow-sm transition-all flex items-center gap-1.5"
+                                        type="button">
+                                        <span class="material-symbols-outlined text-[18px]">verified</span>
+                                        <span>Check in</span>
+                                    </button>
+                                </div>
+                            </div>
+                            <div
+                                class="bg-surface-container-lowest rounded-xl p-space-lg shadow-[0_1px_3px_0_rgba(0,0,0,0.05)] flex flex-col justify-between gap-space-lg relative overflow-hidden opacity-90">
+                                <div class="flex flex-col gap-space-md">
+                                    <div class="flex items-center justify-between">
+                                        <span
+                                            class="px-space-sm py-0.5 rounded-md font-label-sm text-label-sm bg-surface-container-high text-on-surface-variant uppercase font-medium tracking-wider">
+                                            [Category]
+                                        </span>
+                                        <span
+                                            class="px-space-sm py-0.5 rounded-full font-label-sm text-label-sm bg-surface-container-high text-on-surface-variant font-medium">
+                                            Completed
+                                        </span>
+                                    </div>
+                                    <div class="flex flex-col gap-1">
+                                        <span
+                                            class="font-headline-sm text-headline-sm text-on-surface font-semibold">Task
+                                            name</span>
+                                        <span class="font-body-sm text-body-sm text-outline">[Track / Role]</span>
+                                    </div>
+                                    <div class="flex flex-col gap-space-xs pt-1 text-on-surface-variant">
+                                        <div class="flex items-center gap-space-xs">
+                                            <span
+                                                class="material-symbols-outlined text-[16px] text-outline">schedule</span>
+                                            <span class="font-body-sm text-body-sm">Time</span>
+                                            <span class="font-body-sm text-body-sm text-outline">([Start Time - End
+                                                Time])</span>
+                                        </div>
+                                        <div class="flex items-center gap-space-xs">
+                                            <span
+                                                class="material-symbols-outlined text-[16px] text-outline">location_on</span>
+                                            <span class="font-body-sm text-body-sm">Location</span>
+                                            <span class="font-body-sm text-body-sm text-outline">([Venue / Stage /
+                                                Station])</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div
+                                    class="pt-space-sm flex items-center justify-between bg-surface-container-low -mx-space-lg -mb-space-lg p-space-md px-space-lg">
+                                    <div class="flex items-center gap-space-xs">
+                                        <span
+                                            class="material-symbols-outlined text-secondary text-[16px]">done_all</span>
+                                        <span class="font-label-sm text-label-sm text-secondary font-medium">Hours
+                                            Logged</span>
+                                    </div>
+                                    <span class="font-label-sm text-label-sm text-outline py-1">Record Stored</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <script>
+                function switchState(stateName) {
+                    var states = ['empty', 'loading', 'error'];
+                    states.forEach(function (s) {
+                        var el = document.getElementById('state-' + s);
+                        var btn = document.getElementById('viewBtn-' + s);
+                        if (el) {
+                            if (s === stateName) {
+                                el.classList.remove('hidden');
+                            } else {
+                                el.classList.add('hidden');
+                            }
+                        }
+                        if (btn) {
+                            if (s === stateName) {
+                                btn.className = "px-space-md py-1.5 rounded-md font-label-md text-label-md text-on-primary bg-primary-container shadow-sm transition-all flex items-center gap-1.5";
+                            } else {
+                                btn.className = "px-space-md py-1.5 rounded-md font-label-md text-label-md text-on-surface-variant hover:text-on-surface transition-all flex items-center gap-1.5";
+                            }
+                        }
+                    });
+                }
+            </script>
+        </main>
+    </div>
+</body>
+
+</html>

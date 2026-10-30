@@ -35,7 +35,7 @@ export default function DashboardPage() {
 
   // Redirect volunteers away from Dashboard
   if (role === 'volunteer') {
-    return <Navigate to="/events" replace />
+    return <Navigate to="/my-duties" replace />
   }
 
   // Handle Form URL Save

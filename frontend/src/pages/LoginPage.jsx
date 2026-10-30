@@ -15,9 +15,9 @@ export default function LoginPage() {
   const [authError, setAuthError] = useState('')
   const [loading, setLoading] = useState(false)
 
-  // Route protection: if already logged in, redirect to /events
+  // Route protection: if already logged in, redirect based on role
   if (user) {
-    return <Navigate to="/events" replace />
+    return <Navigate to={user.role === 'volunteer' ? '/my-duties' : '/events'} replace />
   }
 
   const validate = () => {
@@ -53,7 +53,8 @@ export default function LoginPage() {
     try {
       const userData = await login(email, password)
       loginUser(userData)
-      navigate('/events', { replace: true })
+      const targetRoute = userData?.role === 'volunteer' ? '/my-duties' : '/events'
+      navigate(targetRoute, { replace: true })
     } catch (err) {
       setAuthError(err instanceof Error ? err.message : 'Authentication failed. Please verify your credentials.')
     } finally {

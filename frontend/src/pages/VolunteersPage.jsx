@@ -1,10 +1,12 @@
 import { useState, useMemo, useCallback } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Navigate } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
 import { useEvent } from '../context/EventContext'
 import { getVolunteers } from '../services/api'
 import { useFetch } from '../hooks/useFetch'
 
 export default function VolunteersPage() {
+  const { role } = useAuth()
   const { events, selectedEventId, setSelectedEventId, selectedEvent } = useEvent()
   const navigate = useNavigate()
 
@@ -55,6 +57,11 @@ export default function VolunteersPage() {
       return matchName || matchEmail || matchDept || matchSkill
     })
   }, [volunteers, selectedSkill, selectedStatus, searchQuery])
+
+  // Redirect volunteers away (organiser only)
+  if (role === 'volunteer') {
+    return <Navigate to="/my-duties" replace />
+  }
 
   // Copy registration form link
   const handleCopyLink = () => {

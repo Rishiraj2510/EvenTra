@@ -1,11 +1,12 @@
 import { useState, useMemo, useCallback } from 'react'
+import { Navigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { getTasks, createTask, updateTask, deleteTask, getEvents } from '../services/api'
 import { useFetch } from '../hooks/useFetch'
 import CreateTaskModal from '../components/tasks/CreateTaskModal'
 
 export default function TasksPage() {
-  const { selectedEventId, setSelectedEventId } = useAuth()
+  const { role, selectedEventId, setSelectedEventId } = useAuth()
 
   // Fetch events for dropdown context and labels
   const { data: events } = useFetch(getEvents)
@@ -45,6 +46,11 @@ export default function TasksPage() {
       return matchTitle || matchLoc || matchSkills
     })
   }, [tasks, criticalOnly, searchQuery])
+
+  // Redirect volunteers away (organiser only)
+  if (role === 'volunteer') {
+    return <Navigate to="/my-duties" replace />
+  }
 
   // Handlers
   const handleOpenCreateModal = () => {

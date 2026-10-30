@@ -52,7 +52,7 @@ export default function VolunteerProfilePage() {
 
   // Redirect volunteers away (organiser & coordinator only)
   if (role === 'volunteer') {
-    return <Navigate to="/events" replace />
+    return <Navigate to="/my-duties" replace />
   }
 
   const handleRetryAll = () => {
