@@ -7,6 +7,7 @@ import TasksPage from './pages/TasksPage'
 import VolunteersPage from './pages/VolunteersPage'
 import DashboardPage from './pages/DashboardPage'
 import AssignmentPlanPage from './pages/AssignmentPlanPage'
+import AiAssistantPage from './pages/AiAssistantPage'
 import PlaceholderPage from './pages/PlaceholderPage'
 
 export default function App() {
@@ -27,7 +28,7 @@ export default function App() {
           <Route path="/volunteers" element={<VolunteersPage />} />
           <Route path="/volunteers/:id" element={<PlaceholderPage title="Volunteer Profile" />} />
           <Route path="/assignment-plan" element={<AssignmentPlanPage />} />
-          <Route path="/ai-assistant" element={<PlaceholderPage title="AI Assistant" />} />
+          <Route path="/ai-assistant" element={<AiAssistantPage />} />
           <Route path="/feedback" element={<PlaceholderPage title="Feedback" />} />
           <Route path="/certificates" element={<PlaceholderPage title="Certificates" />} />
           <Route path="/settings" element={<PlaceholderPage title="Settings" />} />
