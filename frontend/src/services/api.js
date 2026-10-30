@@ -6,6 +6,7 @@ import { createEmptyDashboardSummary } from '../mocks/dashboard.js'
 import { initialPlans, createEmptyPlan, computePlanSummary } from '../mocks/plan.js'
 import { calculateFitScore } from '../utils/scoring.js'
 import { createMessage, createToolCall, createApproval, createAuditEntry } from '../mocks/agent.js'
+import { mockVolunteerHistory } from '../mocks/volunteerHistory.js'
 
 export const USE_MOCKS = true
 
@@ -210,6 +211,48 @@ export async function getVolunteers(eventId) {
   const response = await fetch(url)
   if (!response.ok) {
     throw new Error(`Failed to fetch volunteers: ${response.statusText}`)
+  }
+  return response.json()
+}
+
+export async function getVolunteer(id) {
+  if (USE_MOCKS) {
+    await new Promise((resolve) => setTimeout(resolve, 200))
+    const vol = mockVolunteersStore.find((v) => v.id === id)
+    if (!vol) {
+      return null
+    }
+    return { ...vol }
+  }
+
+  const response = await fetch(`/api/volunteers/${encodeURIComponent(id)}`)
+  if (!response.ok) {
+    if (response.status === 404) return null
+    throw new Error(`Failed to fetch volunteer: ${response.statusText}`)
+  }
+  return response.json()
+}
+
+export async function getVolunteerHistory(id) {
+  if (USE_MOCKS) {
+    await new Promise((resolve) => setTimeout(resolve, 200))
+    const record = mockVolunteerHistory[id]
+    if (!record) {
+      return { volunteerId: id, averageRating: null, assignments: [] }
+    }
+    return {
+      volunteerId: id,
+      averageRating: record.averageRating,
+      assignments: [...(record.assignments || [])],
+    }
+  }
+
+  const response = await fetch(`/api/volunteers/${encodeURIComponent(id)}/history`)
+  if (!response.ok) {
+    if (response.status === 404) {
+      return { volunteerId: id, averageRating: null, assignments: [] }
+    }
+    throw new Error(`Failed to fetch volunteer history: ${response.statusText}`)
   }
   return response.json()
 }
