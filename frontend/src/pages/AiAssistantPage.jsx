@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { Navigate } from 'react-router-dom'
-import { useAuth } from '../context/AuthContext'
+import { useAuth, getHomeRoute } from '../context/AuthContext'
 import { useEvent } from '../context/EventContext'
+import { APP_NAME } from '../config'
 import {
   getAgentHistory,
   getAuditLog,
@@ -170,7 +171,7 @@ export default function AiAssistantPage() {
 
   // Redirect volunteers away (role protection: organiser/coordinator only)
   if (role === 'volunteer') {
-    return <Navigate to="/my-duties" replace />
+    return <Navigate to={getHomeRoute(role)} replace />
   }
 
   return (
@@ -264,7 +265,7 @@ export default function AiAssistantPage() {
                       <span className="material-symbols-outlined text-[36px]">smart_toy</span>
                     </div>
                     <h2 className="font-headline-md text-headline-md text-on-surface">
-                      Eventra AI Assistant
+                      {APP_NAME} AI Assistant
                     </h2>
                     <p className="font-body-md text-body-md text-on-surface-variant mt-space-xs max-w-md">
                       Ask me to plan volunteers, replace someone, or check for skill gaps.
@@ -308,7 +309,7 @@ export default function AiAssistantPage() {
                     >
                       <div className="flex items-center gap-space-sm mb-1 px-1">
                         <span className="font-label-md text-label-md text-on-surface font-semibold">
-                          {msg.role === 'user' ? 'You' : 'Eventra Assistant'}
+                          {msg.role === 'user' ? 'You' : `${APP_NAME} Assistant`}
                         </span>
                         <span className="text-on-surface-variant font-label-sm text-label-sm">
                           {new Date(msg.createdAt).toLocaleTimeString([], {
@@ -455,7 +456,7 @@ export default function AiAssistantPage() {
                     </div>
                     <div className="flex flex-col gap-1 items-start">
                       <span className="font-label-sm text-label-sm text-outline px-1">
-                        Eventra Assistant is thinking...
+                        {APP_NAME} Assistant is thinking...
                       </span>
                       <div className="rounded-2xl rounded-tl-sm p-4 bg-surface-container-low flex items-center gap-2">
                         <div className="w-2 h-2 rounded-full bg-primary animate-bounce" />
@@ -485,7 +486,7 @@ export default function AiAssistantPage() {
                       onKeyDown={handleKeyDown}
                       rows={1}
                       disabled={isSending}
-                      placeholder="Ask Eventra Assistant or type a command... (Enter to send)"
+                      placeholder={`Ask ${APP_NAME} Assistant or type a command... (Enter to send)`}
                       className="w-full bg-transparent px-space-sm py-1.5 text-on-surface placeholder:text-outline focus:outline-none font-body-md text-body-md resize-none"
                     />
 

@@ -1,6 +1,6 @@
 import { useState, useCallback, useMemo } from 'react'
 import { Navigate, Link } from 'react-router-dom'
-import { useAuth } from '../context/AuthContext'
+import { useAuth, getHomeRoute } from '../context/AuthContext'
 import { useEvent } from '../context/EventContext'
 import { getMyDuties } from '../services/api'
 import { useFetch } from '../hooks/useFetch'
@@ -61,7 +61,7 @@ export default function MyDutiesPage() {
 
   // Redirect non-volunteers (organisers/coordinators)
   if (role !== 'volunteer') {
-    return <Navigate to="/dashboard" replace />
+    return <Navigate to={getHomeRoute(role)} replace />
   }
 
   // Loading state

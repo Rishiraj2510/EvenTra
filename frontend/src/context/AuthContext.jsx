@@ -1,5 +1,9 @@
 import { createContext, useContext, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { getHomeRoute } from '../utils/navigation'
+
+// eslint-disable-next-line react-refresh/only-export-components
+export { getHomeRoute }
 
 const AuthContext = createContext(null)
 
@@ -81,6 +85,7 @@ export function AuthProvider({ children }) {
         logoutUser,
         setRole,
         toggleRole,
+        getHomeRoute,
       }}
     >
       {children}

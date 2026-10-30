@@ -831,7 +831,7 @@ I have prepared an approval to reassign the slot to ${topCandidate.fullName}. Cl
     else {
       assistantMsg = createMessage(
         'assistant',
-        'I am the Eventra AI Assistant. You can ask me to: \n- "Plan volunteers for an upcoming event" (runs constraint solver)\n- "We need 3 people for stage management on Friday evening" (parses and drafts a new task)\n- "Explain the first assignment" (inspects algorithmic scoring weights)\n- "A volunteer dropped out, find a replacement" (recommends standby candidates)',
+        'I am the EvenTra AI Assistant. You can ask me to: \n- "Plan volunteers for an upcoming event" (runs constraint solver)\n- "We need 3 people for stage management on Friday evening" (parses and drafts a new task)\n- "Explain the first assignment" (inspects algorithmic scoring weights)\n- "A volunteer dropped out, find a replacement" (recommends standby candidates)',
         [],
         null
       )

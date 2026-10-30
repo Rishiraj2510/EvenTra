@@ -1,6 +1,7 @@
 import { NavLink } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
-import logo from '../../assets/logo.png'
+import { APP_NAME } from '../../config'
+import logoMark from '../../assets/logo-mark.svg'
 
 const ORGANISER_NAV_ITEMS = [
   { path: '/dashboard', label: 'Dashboard', icon: 'grid_view' },
@@ -26,12 +27,15 @@ export default function Sidebar() {
 
   return (
     <aside className="fixed left-0 top-0 h-full w-64 bg-surface-container-lowest z-50 flex flex-col shadow-[0_1px_8px_rgba(0,0,0,0.04)]">
-      <div className="flex h-16 items-center px-4 border-b border-slate-200 bg-white">
+      <div className="flex h-16 items-center gap-space-sm px-4 border-b border-slate-200 bg-white">
         <img
-          alt="Eventra Logo"
-          className="h-8 w-auto object-contain"
-          src={logo}
+          src={logoMark}
+          alt={APP_NAME}
+          className="h-9 w-9"
         />
+        <span className="text-lg font-semibold tracking-tight text-on-surface">
+          {APP_NAME}
+        </span>
       </div>
 
       <div className="px-space-md py-space-sm">

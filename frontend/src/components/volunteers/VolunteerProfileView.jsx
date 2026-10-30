@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
+import { APP_NAME } from '../../config'
 import StarRating from '../common/StarRating'
 
 const DAYS_OF_WEEK = [
@@ -565,7 +566,7 @@ export default function VolunteerProfileView({
                     No past assignments yet
                   </h4>
                   <p className="font-body-md text-body-md text-outline max-w-sm">
-                    This volunteer has not yet been assigned to completed events on Eventra.
+                    This volunteer has not yet been assigned to completed events on {APP_NAME}.
                   </p>
                 </div>
               )}

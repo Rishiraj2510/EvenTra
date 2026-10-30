@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback } from 'react'
 import { useNavigate, Navigate } from 'react-router-dom'
-import { useAuth } from '../context/AuthContext'
+import { useAuth, getHomeRoute } from '../context/AuthContext'
 import { useEvent } from '../context/EventContext'
 import { getVolunteers } from '../services/api'
 import { useFetch } from '../hooks/useFetch'
@@ -60,7 +60,7 @@ export default function VolunteersPage() {
 
   // Redirect volunteers away (organiser only)
   if (role === 'volunteer') {
-    return <Navigate to="/my-duties" replace />
+    return <Navigate to={getHomeRoute(role)} replace />
   }
 
   // Copy registration form link

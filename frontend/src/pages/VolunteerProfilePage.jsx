@@ -1,6 +1,6 @@
 import { useCallback } from 'react'
 import { useParams, useNavigate, Navigate } from 'react-router-dom'
-import { useAuth } from '../context/AuthContext'
+import { useAuth, getHomeRoute } from '../context/AuthContext'
 import { getVolunteer, getVolunteerHistory } from '../services/api'
 import { useFetch } from '../hooks/useFetch'
 import VolunteerProfileView from '../components/volunteers/VolunteerProfileView'
@@ -37,7 +37,7 @@ export default function VolunteerProfilePage() {
 
   // Redirect volunteers away (organiser & coordinator only)
   if (role === 'volunteer') {
-    return <Navigate to="/my-duties" replace />
+    return <Navigate to={getHomeRoute(role)} replace />
   }
 
   const handleRetryAll = () => {

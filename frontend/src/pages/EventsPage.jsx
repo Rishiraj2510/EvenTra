@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react'
 import { Navigate } from 'react-router-dom'
-import { useAuth } from '../context/AuthContext'
+import { useAuth, getHomeRoute } from '../context/AuthContext'
 import { getEvents, createEvent } from '../services/api'
 import { useFetch } from '../hooks/useFetch'
 import CreateEventModal from '../components/events/CreateEventModal'
@@ -58,7 +58,7 @@ export default function EventsPage() {
 
   // Redirect volunteers away (organiser only)
   if (role === 'volunteer') {
-    return <Navigate to="/my-duties" replace />
+    return <Navigate to={getHomeRoute(role)} replace />
   }
 
   // Stat metrics

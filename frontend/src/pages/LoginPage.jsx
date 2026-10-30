@@ -1,9 +1,10 @@
 import { useState } from 'react'
 import { useNavigate, Navigate } from 'react-router-dom'
-import { useAuth } from '../context/AuthContext'
+import { useAuth, getHomeRoute } from '../context/AuthContext'
 import { login, USE_MOCKS } from '../services/api'
 import { demoUser, demoVolunteerUser } from '../mocks/users'
-import logo from '../assets/logo.png'
+import { APP_NAME } from '../config'
+import logoMark from '../assets/logo-mark.svg'
 
 export default function LoginPage() {
   const { user, loginUser } = useAuth()
@@ -18,7 +19,7 @@ export default function LoginPage() {
 
   // Route protection: if already logged in, redirect based on role
   if (user) {
-    return <Navigate to={user.role === 'volunteer' ? '/my-duties' : '/events'} replace />
+    return <Navigate to={getHomeRoute(user.role)} replace />
   }
 
   const validate = () => {
@@ -54,8 +55,7 @@ export default function LoginPage() {
     try {
       const userData = await login(email, password)
       loginUser(userData)
-      const targetRoute = userData?.role === 'volunteer' ? '/my-duties' : '/events'
-      navigate(targetRoute, { replace: true })
+      navigate(getHomeRoute(userData?.role), { replace: true })
     } catch (err) {
       setAuthError(err instanceof Error ? err.message : 'Authentication failed. Please verify your credentials.')
     } finally {
@@ -76,12 +76,14 @@ export default function LoginPage() {
             {/* Header & Brand Mark */}
             <div className="relative z-10">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-white/10 backdrop-blur-md flex items-center justify-center shadow-sm">
-                  <span className="material-symbols-outlined text-secondary-fixed text-2xl">hub</span>
-                </div>
+                <img
+                  src={logoMark}
+                  alt={APP_NAME}
+                  className="w-10 h-10 rounded-lg shadow-sm"
+                />
                 <div className="flex flex-col">
                   <span className="font-headline-md text-headline-md tracking-tight font-bold text-white leading-none">
-                    Eventra
+                    {APP_NAME}
                   </span>
                   <span className="font-label-sm text-label-sm text-primary-fixed-dim uppercase tracking-wider mt-1">
                     Coordination Grid
@@ -156,12 +158,15 @@ export default function LoginPage() {
           <div className="lg:col-span-7 p-6 sm:p-10 md:p-12 flex flex-col justify-center bg-surface-container-lowest">
             {/* Top Header & Context */}
             <div className="flex items-center justify-between mb-8">
-              <div className="flex items-center">
+              <div className="flex items-center gap-2.5">
                 <img
-                  alt="Eventra Logo"
-                  className="h-8 w-auto object-contain"
-                  src={logo}
+                  alt={APP_NAME}
+                  className="h-8 w-8 object-contain"
+                  src={logoMark}
                 />
+                <span className="font-semibold text-lg tracking-tight text-on-surface">
+                  {APP_NAME}
+                </span>
               </div>
               <div className="flex items-center gap-2 text-on-surface-variant font-label-sm text-label-sm bg-surface-container-low px-3 py-1.5 rounded-full">
                 <span className="w-2 h-2 rounded-full bg-secondary" />

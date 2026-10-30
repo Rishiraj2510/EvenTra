@@ -9,6 +9,7 @@
  * - hours?: number | string
  * - isPreviewThumbnail?: boolean (for mini card previews if needed)
  */
+import { APP_NAME } from '../../config'
 
 export default function CertificateCard({
   template,
@@ -145,7 +146,7 @@ export default function CertificateCard({
 
           <div className="flex flex-col items-start sm:items-end text-xs">
             <div className="w-40 border-b border-outline-variant/60 mb-1" />
-            <span className="font-medium text-on-surface">Eventra Operations Director</span>
+            <span className="font-medium text-on-surface">{APP_NAME} Operations Director</span>
             <span className="text-[10px] text-outline">Verified Digital Credential</span>
           </div>
         </div>
@@ -207,11 +208,11 @@ export default function CertificateCard({
       {/* Decorative Inner Line */}
       <div className="absolute inset-2 border border-primary/10 rounded-lg pointer-events-none" />
 
-      {/* Top Eventra Badge */}
+      {/* Top EvenTra Badge */}
       <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 text-primary border border-primary/20 mb-space-md relative z-10">
         <span className="material-symbols-outlined text-[14px]">layers</span>
         <span className="font-label-sm text-label-sm uppercase font-bold tracking-wider">
-          Eventra Verified Credential
+          {APP_NAME} Verified Credential
         </span>
       </div>
 
@@ -253,7 +254,7 @@ export default function CertificateCard({
       <div className="w-full max-w-md pt-space-xs flex flex-col items-center relative z-10">
         <div className="w-56 border-b border-outline-variant mb-space-xs" />
         <span className="font-label-sm text-label-sm text-on-surface font-medium">
-          Organiser Signature / Eventra Verification
+          Organiser Signature / {APP_NAME} Verification
         </span>
         <span className="font-body-sm text-body-sm text-outline mt-0.5">Official Accreditation</span>
       </div>

@@ -1,6 +1,6 @@
 import { useState, useCallback, useMemo } from 'react'
 import { Navigate } from 'react-router-dom'
-import { useAuth } from '../context/AuthContext'
+import { useAuth, getHomeRoute } from '../context/AuthContext'
 import { useEvent } from '../context/EventContext'
 import { getCertificates, issueCertificates, updateCertificateTemplate } from '../services/api'
 import { useFetch } from '../hooks/useFetch'
@@ -92,7 +92,7 @@ export default function CertificatesPage() {
 
   // Ensure role guard is evaluated after all hooks
   if (role === 'volunteer') {
-    return <Navigate to="/my-duties" replace />
+    return <Navigate to={getHomeRoute(role)} replace />
   }
 
   // -----------------------------------------------------------------
