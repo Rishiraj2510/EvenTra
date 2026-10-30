@@ -14,7 +14,7 @@ import MyDutiesPage from './pages/MyDutiesPage'
 import FeedbackPage from './pages/FeedbackPage'
 import CertificatesPage from './pages/CertificatesPage'
 import MyCertificatesPage from './pages/MyCertificatesPage'
-import PlaceholderPage from './pages/PlaceholderPage'
+import MyProfilePage from './pages/MyProfilePage'
 
 export default function App() {
   return (
@@ -41,7 +41,7 @@ export default function App() {
 
           {/* Volunteer routes */}
           <Route path="/my-duties" element={<MyDutiesPage />} />
-          <Route path="/my-profile" element={<PlaceholderPage title="My Profile" />} />
+          <Route path="/my-profile" element={<MyProfilePage />} />
           <Route path="/my-certificates" element={<MyCertificatesPage />} />
         </Route>
       </Route>
