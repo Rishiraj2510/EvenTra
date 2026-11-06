@@ -1,0 +1,28 @@
+server:
+  port: 8080
+
+spring:
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/eventra}
+    username: ${DB_USER:${DB_USERNAME:eventra}}
+    password: ${DB_PASSWORD:change_me}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+    properties:
+      # Ensure Hibernate JDBC operates in UTC timezone across all environments
+      hibernate:
+        jdbc:
+          time_zone: UTC
+  flyway:
+    enabled: true
+    locations: filesystem:../database/migrations
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+
+
