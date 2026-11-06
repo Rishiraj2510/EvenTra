@@ -19,7 +19,7 @@ const EVENT_PICKER_ROUTES = [
 export default function Topbar() {
   const location = useLocation()
   const { user, role, logout } = useAuth()
-  const { events, selectedEventId, setSelectedEventId, selectedEvent } = useEvent()
+  const { events, selectedEventId, selectEvent, selectedEvent } = useEvent()
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
   const dropdownRef = useRef(null)
@@ -80,7 +80,7 @@ export default function Topbar() {
                 <button
                   type="button"
                   onClick={() => {
-                    setSelectedEventId('')
+                    selectEvent('')
                     setIsDropdownOpen(false)
                   }}
                   className={`w-full text-left px-space-md py-2 text-label-md flex items-center justify-between hover:bg-surface-container-low transition-colors cursor-pointer ${
@@ -100,7 +100,7 @@ export default function Topbar() {
                     key={evt.id}
                     type="button"
                     onClick={() => {
-                      setSelectedEventId(evt.id)
+                      selectEvent(evt.id)
                       setIsDropdownOpen(false)
                     }}
                     className={`w-full text-left px-space-md py-2 text-label-md flex items-center justify-between hover:bg-surface-container-low transition-colors cursor-pointer ${

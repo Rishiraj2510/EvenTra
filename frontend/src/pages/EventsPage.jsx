@@ -1,8 +1,8 @@
-import { useState, useMemo } from 'react'
-import { Navigate } from 'react-router-dom'
+import { useState, useMemo, useRef, useEffect } from 'react'
+import { Navigate, useNavigate } from 'react-router-dom'
 import { useAuth, getHomeRoute } from '../context/AuthContext'
-import { getEvents, createEvent } from '../services/api'
-import { useFetch } from '../hooks/useFetch'
+import { useEvent } from '../context/EventContext'
+import { createEvent, updateEvent, deleteEvent } from '../services/api'
 import CreateEventModal from '../components/events/CreateEventModal'
 
 const STATUS_CONFIG = {
@@ -26,15 +26,105 @@ const STATUS_CONFIG = {
 
 export default function EventsPage() {
   const { role } = useAuth()
-  const { data: events, loading, error, reload } = useFetch(getEvents)
+  const { events, loading, error, refreshEvents, selectEvent, selectedEventId } = useEvent()
+  const navigate = useNavigate()
 
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [editingEvent, setEditingEvent] = useState(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedFilter, setSelectedFilter] = useState('all')
 
-  const handleCreateEvent = async (eventData) => {
-    await createEvent(eventData)
-    await reload()
+  // Action menu state: { eventId, statusSubmenuOpen }
+  const [openMenuEventId, setOpenMenuEventId] = useState(null)
+  const [isStatusSubmenuOpen, setIsStatusSubmenuOpen] = useState(false)
+  const menuContainerRef = useRef(null)
+
+  // Confirm delete dialog state
+  const [eventToDelete, setEventToDelete] = useState(null)
+  const [isDeleting, setIsDeleting] = useState(false)
+
+  // Close action dropdown on outside click or Escape
+  useEffect(() => {
+    function handleClickOutside(e) {
+      if (menuContainerRef.current && !menuContainerRef.current.contains(e.target)) {
+        setOpenMenuEventId(null)
+        setIsStatusSubmenuOpen(false)
+      }
+    }
+
+    function handleKeyDown(e) {
+      if (e.key === 'Escape') {
+        setOpenMenuEventId(null)
+        setIsStatusSubmenuOpen(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    document.addEventListener('keydown', handleKeyDown)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+      document.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [])
+
+  const handleOpenCreateModal = () => {
+    setEditingEvent(null)
+    setIsModalOpen(true)
+  }
+
+  const handleOpenEditModal = (evt) => {
+    setEditingEvent(evt)
+    setIsModalOpen(true)
+    setOpenMenuEventId(null)
+    setIsStatusSubmenuOpen(false)
+  }
+
+  const handleSaveEvent = async (eventData) => {
+    if (editingEvent) {
+      await updateEvent(editingEvent.id, eventData)
+      await refreshEvents()
+    } else {
+      const newEvent = await createEvent(eventData)
+      await refreshEvents()
+      if (newEvent?.id) {
+        selectEvent(newEvent.id)
+      }
+    }
+  }
+
+  const handleRowClick = (eventId) => {
+    selectEvent(eventId)
+    navigate('/dashboard')
+  }
+
+  const handleOpenDashboard = (eventId) => {
+    selectEvent(eventId)
+    setOpenMenuEventId(null)
+    navigate('/dashboard')
+  }
+
+  const handleChangeStatus = async (eventId, newStatus) => {
+    setOpenMenuEventId(null)
+    setIsStatusSubmenuOpen(false)
+    await updateEvent(eventId, { status: newStatus })
+    await refreshEvents()
+  }
+
+  const handleDeleteConfirm = async () => {
+    if (!eventToDelete) return
+    setIsDeleting(true)
+    try {
+      await deleteEvent(eventToDelete.id)
+      if (selectedEventId === eventToDelete.id) {
+        selectEvent('')
+      }
+      await refreshEvents()
+      setEventToDelete(null)
+    } catch (err) {
+      console.error('Failed to delete event:', err)
+    } finally {
+      setIsDeleting(false)
+    }
   }
 
   // Filter & Search
@@ -79,7 +169,11 @@ export default function EventsPage() {
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-space-md">
           <div className="flex flex-col gap-space-xs">
             <div className="flex items-center gap-space-xs text-outline font-label-sm text-label-sm tracking-wide">
-              <span className="text-outline font-label-sm text-label-sm">No event selected</span>
+              <span className="text-outline font-label-sm text-label-sm">
+                {selectedEventId
+                  ? (events?.find((e) => e.id === selectedEventId)?.name || 'Event selected')
+                  : 'No event selected'}
+              </span>
             </div>
             <h1 className="font-headline-lg text-headline-lg text-on-surface tracking-tight">Events</h1>
             <p className="font-body-md text-body-md text-on-surface-variant max-w-2xl">
@@ -88,7 +182,7 @@ export default function EventsPage() {
           </div>
           <div className="flex items-center gap-space-sm self-start md:self-auto">
             <button
-              onClick={() => setIsModalOpen(true)}
+              onClick={handleOpenCreateModal}
               className="inline-flex items-center gap-space-xs h-10 px-space-lg rounded-lg bg-primary-container hover:bg-primary text-on-primary font-label-lg text-label-lg shadow-sm transition-all active:scale-[0.99] cursor-pointer"
               id="open-modal-btn"
               type="button"
@@ -204,7 +298,7 @@ export default function EventsPage() {
               {error}
             </p>
             <button
-              onClick={() => reload()}
+              onClick={() => refreshEvents()}
               className="inline-flex items-center gap-space-xs h-10 px-space-lg rounded-lg bg-primary-container hover:bg-primary text-on-primary font-label-lg text-label-lg shadow-sm transition-all cursor-pointer"
               type="button"
             >
@@ -216,9 +310,9 @@ export default function EventsPage() {
 
         {/* Content State: Table or Empty */}
         {!loading && !error && (
-          <div className="bg-surface-container-lowest rounded-xl shadow-sm overflow-hidden flex flex-col">
+          <div className="bg-surface-container-lowest rounded-xl shadow-sm overflow-visible flex flex-col">
             {/* Table Header */}
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto overflow-y-visible">
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="bg-surface-container-low text-outline font-label-sm text-label-sm uppercase tracking-wider h-10">
@@ -243,14 +337,16 @@ export default function EventsPage() {
                         label: evt.status,
                         bg: 'bg-surface-container-low text-on-surface-variant',
                       }
+                      const isMenuOpen = openMenuEventId === evt.id
                       return (
                         <tr
                           key={evt.id}
-                          className="hover:bg-surface-container-low/50 transition-colors"
+                          onClick={() => handleRowClick(evt.id)}
+                          className="hover:bg-surface-container-low/60 hover:shadow-[inset_2px_0_0_0_var(--color-primary,#4f46e5)] transition-all cursor-pointer group"
                         >
                           <td className="py-space-md px-space-lg">
                             <div className="flex flex-col">
-                              <span className="font-label-lg text-label-lg text-on-surface font-medium">
+                              <span className="font-label-lg text-label-lg text-on-surface group-hover:text-primary font-medium transition-colors">
                                 {evt.name}
                               </span>
                               {evt.description && (
@@ -285,16 +381,127 @@ export default function EventsPage() {
                               {statusBadge.label}
                             </span>
                           </td>
-                          <td className="py-space-md px-space-lg text-right">
-                            <button
-                              aria-label="View event options"
-                              className="p-space-xs rounded-lg text-outline hover:text-on-surface hover:bg-surface-container transition-colors cursor-pointer"
-                              type="button"
+                          <td
+                            className="py-space-md px-space-lg text-right relative"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <div
+                              className="relative inline-block text-left"
+                              ref={isMenuOpen ? menuContainerRef : null}
                             >
-                              <span className="material-symbols-outlined text-[20px]">
-                                more_vert
-                              </span>
-                            </button>
+                              <button
+                                aria-label={`Actions for ${evt.name}`}
+                                aria-haspopup="menu"
+                                aria-expanded={isMenuOpen}
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  setOpenMenuEventId(isMenuOpen ? null : evt.id)
+                                  setIsStatusSubmenuOpen(false)
+                                }}
+                                className="p-space-xs rounded-lg text-outline hover:text-on-surface hover:bg-surface-container transition-colors cursor-pointer"
+                                type="button"
+                              >
+                                <span className="material-symbols-outlined text-[20px]">
+                                  more_vert
+                                </span>
+                              </button>
+
+                              {isMenuOpen && (
+                                <div
+                                  className="absolute right-0 top-full mt-1 w-48 bg-surface-container-lowest rounded-xl shadow-xl border border-slate-200 py-1.5 z-50 animate-in fade-in zoom-in-95 duration-100"
+                                  role="menu"
+                                >
+                                  {/* Open dashboard */}
+                                  <button
+                                    type="button"
+                                    role="menuitem"
+                                    onClick={() => handleOpenDashboard(evt.id)}
+                                    className="w-full text-left px-space-md py-2 text-label-md text-on-surface hover:bg-surface-container-low flex items-center gap-space-sm transition-colors cursor-pointer"
+                                  >
+                                    <span className="material-symbols-outlined text-[18px] text-outline">
+                                      dashboard
+                                    </span>
+                                    <span>Open dashboard</span>
+                                  </button>
+
+                                  {/* Edit */}
+                                  <button
+                                    type="button"
+                                    role="menuitem"
+                                    onClick={() => handleOpenEditModal(evt)}
+                                    className="w-full text-left px-space-md py-2 text-label-md text-on-surface hover:bg-surface-container-low flex items-center gap-space-sm transition-colors cursor-pointer"
+                                  >
+                                    <span className="material-symbols-outlined text-[18px] text-outline">
+                                      edit
+                                    </span>
+                                    <span>Edit</span>
+                                  </button>
+
+                                  {/* Change status */}
+                                  <div className="relative">
+                                    <button
+                                      type="button"
+                                      role="menuitem"
+                                      onClick={() => setIsStatusSubmenuOpen((prev) => !prev)}
+                                      className="w-full text-left px-space-md py-2 text-label-md text-on-surface hover:bg-surface-container-low flex items-center justify-between transition-colors cursor-pointer"
+                                    >
+                                      <div className="flex items-center gap-space-sm">
+                                        <span className="material-symbols-outlined text-[18px] text-outline">
+                                          published_with_changes
+                                        </span>
+                                        <span>Change status</span>
+                                      </div>
+                                      <span className="material-symbols-outlined text-[16px] text-outline">
+                                        {isStatusSubmenuOpen ? 'expand_less' : 'chevron_right'}
+                                      </span>
+                                    </button>
+
+                                    {isStatusSubmenuOpen && (
+                                      <div className="bg-surface-container-low/70 py-1 pl-space-md border-y border-slate-100">
+                                        {['draft', 'planning', 'live', 'done'].map((st) => (
+                                          <button
+                                            key={st}
+                                            type="button"
+                                            onClick={() => handleChangeStatus(evt.id, st)}
+                                            className={`w-full text-left px-space-md py-1.5 text-label-sm capitalize flex items-center justify-between hover:bg-surface-container transition-colors cursor-pointer ${
+                                              evt.status === st
+                                                ? 'text-primary font-semibold'
+                                                : 'text-on-surface-variant'
+                                            }`}
+                                          >
+                                            <span>{st}</span>
+                                            {evt.status === st && (
+                                              <span className="material-symbols-outlined text-[14px] text-primary pr-2">
+                                                check
+                                              </span>
+                                            )}
+                                          </button>
+                                        ))}
+                                      </div>
+                                    )}
+                                  </div>
+
+                                  <div className="border-t border-slate-100 my-1" />
+
+                                  {/* Delete */}
+                                  <button
+                                    type="button"
+                                    role="menuitem"
+                                    onClick={() => {
+                                      setOpenMenuEventId(null)
+                                      setIsStatusSubmenuOpen(false)
+                                      setEventToDelete(evt)
+                                    }}
+                                    className="w-full text-left px-space-md py-2 text-label-md text-error hover:bg-error/10 flex items-center gap-space-sm transition-colors cursor-pointer"
+                                  >
+                                    <span className="material-symbols-outlined text-[18px]">
+                                      delete
+                                    </span>
+                                    <span>Delete</span>
+                                  </button>
+                                </div>
+                              )}
+                            </div>
                           </td>
                         </tr>
                       )
@@ -320,7 +527,7 @@ export default function EventsPage() {
                 </p>
                 <div className="flex flex-col sm:flex-row items-center gap-space-md">
                   <button
-                    onClick={() => setIsModalOpen(true)}
+                    onClick={handleOpenCreateModal}
                     className="inline-flex items-center gap-space-xs h-10 px-space-lg rounded-lg bg-primary-container hover:bg-primary text-on-primary font-label-lg text-label-lg shadow-sm transition-all active:scale-[0.99] cursor-pointer"
                     id="empty-state-cta-btn"
                     type="button"
@@ -335,12 +542,60 @@ export default function EventsPage() {
         )}
       </div>
 
-      {/* Create Event Modal */}
+      {/* Create / Edit Event Modal */}
       <CreateEventModal
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onCreate={handleCreateEvent}
+        onClose={() => {
+          setIsModalOpen(false)
+          setEditingEvent(null)
+        }}
+        onCreate={handleSaveEvent}
+        initialData={editingEvent}
       />
+
+      {/* Delete Confirmation Modal */}
+      {eventToDelete && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-space-md sm:p-space-lg bg-inverse-surface/45 backdrop-blur-sm transition-opacity"
+          onClick={(e) => {
+            if (e.target === e.currentTarget && !isDeleting) setEventToDelete(null)
+          }}
+        >
+          <div className="bg-surface-container-lowest w-full max-w-md rounded-xl shadow-xl overflow-hidden flex flex-col p-space-xl">
+            <div className="flex items-center gap-space-md mb-space-md">
+              <div className="w-10 h-10 rounded-full bg-error/10 text-error flex items-center justify-center shrink-0">
+                <span className="material-symbols-outlined text-[22px]">warning</span>
+              </div>
+              <h3 className="font-headline-sm text-headline-sm text-on-surface font-semibold">
+                Delete event?
+              </h3>
+            </div>
+            <p className="font-body-md text-body-md text-on-surface-variant mb-space-xl leading-relaxed">
+              Are you sure you want to delete{' '}
+              <span className="font-semibold text-on-surface">{eventToDelete.name}</span>? This
+              action cannot be undone.
+            </p>
+            <div className="flex items-center justify-end gap-space-md">
+              <button
+                type="button"
+                onClick={() => setEventToDelete(null)}
+                disabled={isDeleting}
+                className="h-10 px-space-lg rounded-lg text-on-surface-variant hover:bg-surface-container-low font-label-lg text-label-lg transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleDeleteConfirm}
+                disabled={isDeleting}
+                className="h-10 px-space-lg rounded-lg bg-error hover:bg-error/90 text-on-error font-label-lg text-label-lg shadow-sm transition-all active:scale-[0.99] cursor-pointer disabled:opacity-50"
+              >
+                {isDeleting ? 'Deleting...' : 'Delete event'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

@@ -1,19 +1,43 @@
 import { useState } from 'react'
 
-export default function CreateEventModal({ isOpen, onClose, onCreate }) {
-  const [formData, setFormData] = useState({
-    name: '',
-    category: '',
-    startDate: '',
-    endDate: '',
-    description: '',
-    status: 'draft',
+export default function CreateEventModal({ isOpen, onClose, onCreate, initialData = null }) {
+  if (!isOpen) return null
+
+  return (
+    <CreateEventModalContent
+      onClose={onClose}
+      onCreate={onCreate}
+      initialData={initialData}
+    />
+  )
+}
+
+function CreateEventModalContent({ onClose, onCreate, initialData }) {
+  const [formData, setFormData] = useState(() => {
+    if (initialData) {
+      return {
+        name: initialData.name || '',
+        category: initialData.category || '',
+        startDate: initialData.startDate || '',
+        endDate: initialData.endDate || '',
+        description: initialData.description || '',
+        status: initialData.status || 'draft',
+      }
+    }
+    return {
+      name: '',
+      category: '',
+      startDate: '',
+      endDate: '',
+      description: '',
+      status: 'draft',
+    }
   })
 
   const [dateError, setDateError] = useState('')
   const [submitting, setSubmitting] = useState(false)
 
-  if (!isOpen) return null
+  const isEditing = Boolean(initialData && initialData.id)
 
   const handleChange = (e) => {
     const { name, value } = e.target
@@ -57,17 +81,19 @@ export default function CreateEventModal({ isOpen, onClose, onCreate }) {
         status: formData.status,
       })
       onClose()
-      setFormData({
-        name: '',
-        category: '',
-        startDate: '',
-        endDate: '',
-        description: '',
-        status: 'draft',
-      })
+      if (!isEditing) {
+        setFormData({
+          name: '',
+          category: '',
+          startDate: '',
+          endDate: '',
+          description: '',
+          status: 'draft',
+        })
+      }
       setDateError('')
     } catch (err) {
-      console.error('Error creating event:', err)
+      console.error(isEditing ? 'Error updating event:' : 'Error creating event:', err)
     } finally {
       setSubmitting(false)
     }
@@ -86,10 +112,12 @@ export default function CreateEventModal({ isOpen, onClose, onCreate }) {
         <div className="px-space-xl py-space-lg bg-surface-container-lowest flex items-start justify-between">
           <div className="flex flex-col gap-space-xs">
             <h2 className="font-headline-md text-headline-md text-on-surface tracking-tight">
-              Create new event
+              {isEditing ? 'Edit event' : 'Create new event'}
             </h2>
             <p className="font-body-sm text-body-sm text-on-surface-variant">
-              Set event details and dates to initialize task dispatching.
+              {isEditing
+                ? 'Update event details and scheduling.'
+                : 'Set event details and dates to initialize task dispatching.'}
             </p>
           </div>
           <button
@@ -212,11 +240,13 @@ export default function CreateEventModal({ isOpen, onClose, onCreate }) {
               />
             </div>
 
-            {/* Field: Initial Status (Radio/Chips) */}
+            {/* Field: Initial / Event Status */}
             <div className="flex flex-col gap-space-xs">
-              <span className="font-label-md text-label-md text-on-surface">Initial Status</span>
-              <div className="grid grid-cols-2 gap-space-md pt-space-xs">
-                <label className="flex items-center gap-space-sm p-space-md rounded-xl bg-surface-container-low hover:bg-surface-container cursor-pointer transition-colors">
+              <span className="font-label-md text-label-md text-on-surface">
+                {isEditing ? 'Event Status' : 'Initial Status'}
+              </span>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-space-sm pt-space-xs">
+                <label className="flex items-center gap-space-xs p-space-sm rounded-xl bg-surface-container-low hover:bg-surface-container cursor-pointer transition-colors">
                   <input
                     className="accent-primary w-4 h-4 cursor-pointer"
                     name="status"
@@ -225,14 +255,9 @@ export default function CreateEventModal({ isOpen, onClose, onCreate }) {
                     checked={formData.status === 'draft'}
                     onChange={handleChange}
                   />
-                  <div className="flex flex-col">
-                    <span className="font-label-lg text-label-lg text-on-surface">Draft</span>
-                    <span className="font-body-sm text-body-sm text-outline">
-                      Hidden from volunteers
-                    </span>
-                  </div>
+                  <span className="font-label-md text-label-md text-on-surface">Draft</span>
                 </label>
-                <label className="flex items-center gap-space-sm p-space-md rounded-xl bg-surface-container-low hover:bg-surface-container cursor-pointer transition-colors">
+                <label className="flex items-center gap-space-xs p-space-sm rounded-xl bg-surface-container-low hover:bg-surface-container cursor-pointer transition-colors">
                   <input
                     className="accent-primary w-4 h-4 cursor-pointer"
                     name="status"
@@ -241,12 +266,29 @@ export default function CreateEventModal({ isOpen, onClose, onCreate }) {
                     checked={formData.status === 'planning'}
                     onChange={handleChange}
                   />
-                  <div className="flex flex-col">
-                    <span className="font-label-lg text-label-lg text-on-surface">Planning</span>
-                    <span className="font-body-sm text-body-sm text-outline">
-                      Ready for slot assignment
-                    </span>
-                  </div>
+                  <span className="font-label-md text-label-md text-on-surface">Planning</span>
+                </label>
+                <label className="flex items-center gap-space-xs p-space-sm rounded-xl bg-surface-container-low hover:bg-surface-container cursor-pointer transition-colors">
+                  <input
+                    className="accent-primary w-4 h-4 cursor-pointer"
+                    name="status"
+                    type="radio"
+                    value="live"
+                    checked={formData.status === 'live'}
+                    onChange={handleChange}
+                  />
+                  <span className="font-label-md text-label-md text-on-surface">Live</span>
+                </label>
+                <label className="flex items-center gap-space-xs p-space-sm rounded-xl bg-surface-container-low hover:bg-surface-container cursor-pointer transition-colors">
+                  <input
+                    className="accent-primary w-4 h-4 cursor-pointer"
+                    name="status"
+                    type="radio"
+                    value="done"
+                    checked={formData.status === 'done'}
+                    onChange={handleChange}
+                  />
+                  <span className="font-label-md text-label-md text-on-surface">Done</span>
                 </label>
               </div>
             </div>
@@ -268,7 +310,7 @@ export default function CreateEventModal({ isOpen, onClose, onCreate }) {
               type="submit"
               disabled={submitting || Boolean(dateError)}
             >
-              {submitting ? 'Creating...' : 'Create event'}
+              {submitting ? 'Saving...' : isEditing ? 'Save changes' : 'Create event'}
             </button>
           </div>
         </form>
