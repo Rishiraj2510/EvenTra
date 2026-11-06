@@ -1,4 +1,4 @@
-import { initialEvents } from '../mocks/events.js'
+import { mockEvents } from '../mocks/events.js'
 import { demoUser, demoVolunteerUser } from '../mocks/users.js'
 import { initialTasks } from '../mocks/tasks.js'
 import { initialVolunteers } from '../mocks/volunteers.js'
@@ -15,7 +15,6 @@ import { mockCertificatesStore } from '../mocks/certificates.js'
 export const USE_MOCKS = true
 
 // In-memory store for mocks during session
-let mockEventsStore = [...initialEvents]
 let mockTasksStore = [...initialTasks]
 let mockVolunteersStore = [...initialVolunteers]
 let mockPlansStore = initialPlans.map((p) => ({
@@ -82,7 +81,7 @@ export async function getEvents() {
   if (USE_MOCKS) {
     // Simulate brief network delay
     await new Promise((resolve) => setTimeout(resolve, 200))
-    return [...mockEventsStore]
+    return [...mockEvents]
   }
 
   const response = await fetch('/api/events')
@@ -100,7 +99,7 @@ export async function createEvent(eventData) {
       ...eventData,
       status: eventData.status || 'draft',
     }
-    mockEventsStore = [newEvent, ...mockEventsStore]
+    mockEvents.unshift(newEvent)
     return newEvent
   }
 
@@ -113,6 +112,55 @@ export async function createEvent(eventData) {
   })
   if (!response.ok) {
     throw new Error(`Failed to create event: ${response.statusText}`)
+  }
+  return response.json()
+}
+
+export async function updateEvent(id, eventData) {
+  if (USE_MOCKS) {
+    await new Promise((resolve) => setTimeout(resolve, 250))
+    const index = mockEvents.findIndex((e) => e.id === id)
+    if (index === -1) {
+      throw new Error(`Event with ID ${id} not found`)
+    }
+    const updated = {
+      ...mockEvents[index],
+      ...eventData,
+      id: mockEvents[index].id,
+    }
+    mockEvents[index] = updated
+    return updated
+  }
+
+  const response = await fetch(`/api/events/${encodeURIComponent(id)}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(eventData),
+  })
+  if (!response.ok) {
+    throw new Error(`Failed to update event: ${response.statusText}`)
+  }
+  return response.json()
+}
+
+export async function deleteEvent(id) {
+  if (USE_MOCKS) {
+    await new Promise((resolve) => setTimeout(resolve, 200))
+    const index = mockEvents.findIndex((e) => e.id === id)
+    if (index === -1) {
+      throw new Error(`Event with ID ${id} not found`)
+    }
+    mockEvents.splice(index, 1)
+    return { success: true, id }
+  }
+
+  const response = await fetch(`/api/events/${encodeURIComponent(id)}`, {
+    method: 'DELETE',
+  })
+  if (!response.ok) {
+    throw new Error(`Failed to delete event: ${response.statusText}`)
   }
   return response.json()
 }
@@ -305,15 +353,15 @@ export async function getVolunteerHistory(id) {
 export async function updateEventFormLink(eventId, registrationFormUrl) {
   if (USE_MOCKS) {
     await new Promise((resolve) => setTimeout(resolve, 250))
-    const index = mockEventsStore.findIndex((e) => e.id === eventId)
+    const index = mockEvents.findIndex((e) => e.id === eventId)
     if (index === -1) {
       throw new Error(`Event with ID ${eventId} not found`)
     }
     const updated = {
-      ...mockEventsStore[index],
+      ...mockEvents[index],
       registrationFormUrl: registrationFormUrl || '',
     }
-    mockEventsStore[index] = updated
+    mockEvents[index] = updated
     return updated
   }
 
@@ -333,12 +381,12 @@ export async function updateEventFormLink(eventId, registrationFormUrl) {
 export async function updateCertificateTemplate(eventId, template) {
   if (USE_MOCKS) {
     await new Promise((resolve) => setTimeout(resolve, 250))
-    const index = mockEventsStore.findIndex((e) => e.id === eventId)
+    const index = mockEvents.findIndex((e) => e.id === eventId)
     if (index === -1) {
       throw new Error(`Event with ID ${eventId} not found`)
     }
     const updated = {
-      ...mockEventsStore[index],
+      ...mockEvents[index],
       certificateTemplate: {
         type: template.type || 'builtin',
         templateId: template.templateId || 'classic',
@@ -347,7 +395,7 @@ export async function updateCertificateTemplate(eventId, template) {
         textColor: template.textColor || 'dark',
       },
     }
-    mockEventsStore[index] = updated
+    mockEvents[index] = updated
     return updated
   }
 
@@ -693,7 +741,7 @@ export async function sendAgentMessage(eventId, text) {
       )
       mockAuditLogsStore[eventId].unshift(createAuditEntry('parse_task_request', { prompt: text }, 'success', null))
 
-      const currentEvent = mockEventsStore.find((e) => e.id === eventId)
+      const currentEvent = mockEvents.find((e) => e.id === eventId)
       const proposedTask = {
         eventId,
         title: 'Stage Management & Audio Oversight',
@@ -1020,7 +1068,7 @@ export async function getFeedback(eventId) {
       return []
     }
 
-    const event = mockEventsStore.find((e) => e.id === eventId)
+    const event = mockEvents.find((e) => e.id === eventId)
     const eventName = event ? event.name : 'Event'
 
     // Row shape: { assignmentId, volunteerId, volunteerName, taskTitle, rating: number | null, comment }
@@ -1082,7 +1130,7 @@ export async function saveFeedback(assignmentId, { rating, comment }) {
       const match = (p.assignments || []).find((a) => a.id === assignmentId)
       if (match) {
         foundAsg = match
-        const ev = mockEventsStore.find((e) => e.id === p.eventId)
+        const ev = mockEvents.find((e) => e.id === p.eventId)
         if (ev) foundEventName = ev.name
         break
       }
@@ -1166,7 +1214,7 @@ export async function getCertificates(eventId) {
       return []
     }
 
-    const event = mockEventsStore.find((e) => e.id === eventId)
+    const event = mockEvents.find((e) => e.id === eventId)
     const eventName = event ? event.name : 'Event'
 
     // Group assignments by volunteerId
@@ -1241,7 +1289,7 @@ export async function issueCertificates(eventId, volunteerIds) {
       throw new Error('Certificates can only be issued for published plans')
     }
 
-    const event = mockEventsStore.find((e) => e.id === eventId)
+    const event = mockEvents.find((e) => e.id === eventId)
     const eventName = event ? event.name : 'Event'
     const nowIso = new Date().toISOString()
     const newlyIssued = []

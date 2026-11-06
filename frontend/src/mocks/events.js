@@ -53,3 +53,7 @@ export const initialEvents = [
   },
 ]
 
+// Single mutable in-memory array as single source of truth for events
+export const mockEvents = [...initialEvents]
+
+

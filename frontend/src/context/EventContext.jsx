@@ -49,6 +49,10 @@ export function EventProvider({ children }) {
     return events.find((e) => e.id === selectedEventId) || null
   }, [events, selectedEventId])
 
+  const selectEvent = useCallback((id) => {
+    setSelectedEventId(id || '')
+  }, [setSelectedEventId])
+
   const updateRegistrationLink = useCallback(async (eventId, url) => {
     const updated = await apiUpdateEventFormLink(eventId, url)
     // Update local events state immediately
@@ -65,6 +69,7 @@ export function EventProvider({ children }) {
         selectedEventId,
         setSelectedEventId,
         selectedEvent,
+        selectEvent,
         loading,
         error,
         refreshEvents: fetchEvents,
