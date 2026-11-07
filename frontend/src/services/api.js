@@ -11,12 +11,31 @@ import { defaultSettings } from '../mocks/settings.js'
 import { setCurrentWeights } from '../utils/scoring.js'
 import { mockFeedbackStore } from '../mocks/feedback.js'
 import { mockCertificatesStore } from '../mocks/certificates.js'
+import {
+  loadRegistrationForms,
+  saveRegistrationForms,
+  resetMockRegistrations as resetMockRegs,
+} from '../mocks/registrationForms.js'
+import { isRegistrationOpen } from '../utils/registration.js'
 
 export const USE_MOCKS = true
 
 // In-memory store for mocks during session
 let mockTasksStore = [...initialTasks]
 let mockVolunteersStore = [...initialVolunteers]
+let mockRegistrationFormsStore = loadRegistrationForms()
+
+// Synchronize initial responseCounts with actual volunteer counts in mock store
+mockRegistrationFormsStore = mockRegistrationFormsStore.map((form) => ({
+  ...form,
+  responseCount: mockVolunteersStore.filter((v) => v.eventId === form.eventId).length,
+}))
+saveRegistrationForms(mockRegistrationFormsStore)
+
+export function resetMockRegistrations() {
+  resetMockRegs()
+  mockRegistrationFormsStore = loadRegistrationForms()
+}
 let mockPlansStore = initialPlans.map((p) => ({
   ...p,
   assignments: p.assignments.map((a) => ({ ...a })),
@@ -350,33 +369,425 @@ export async function getVolunteerHistory(id) {
   return response.json()
 }
 
-export async function updateEventFormLink(eventId, registrationFormUrl) {
+// --- Registration Form & Volunteer Registration API ---
+
+export async function getRegistrationForm(eventId) {
   if (USE_MOCKS) {
-    await new Promise((resolve) => setTimeout(resolve, 250))
-    const index = mockEvents.findIndex((e) => e.id === eventId)
-    if (index === -1) {
-      throw new Error(`Event with ID ${eventId} not found`)
+    await new Promise((resolve) => setTimeout(resolve, 200))
+    if (!eventId) return null
+    let form = mockRegistrationFormsStore.find((f) => f.eventId === eventId)
+    if (!form) {
+      // Find event tasks to prefill offered skills
+      const eventTasks = mockTasksStore.filter((t) => t.eventId === eventId)
+      const skillSet = new Set()
+      eventTasks.forEach((t) => {
+        ;(t.mandatorySkills || []).forEach((s) => skillSet.add(s))
+        ;(t.preferredSkills || []).forEach((s) => skillSet.add(s))
+      })
+
+      form = {
+        eventId,
+        status: 'draft',
+        opensAt: '',
+        closesAt: '',
+        maxResponses: null,
+        offeredSkills: Array.from(skillSet),
+        extraQuestions: [],
+        responseCount: mockVolunteersStore.filter((v) => v.eventId === eventId).length,
+      }
+      mockRegistrationFormsStore.push(form)
+      saveRegistrationForms(mockRegistrationFormsStore)
     }
-    const updated = {
-      ...mockEvents[index],
-      registrationFormUrl: registrationFormUrl || '',
-    }
-    mockEvents[index] = updated
-    return updated
+    // Always sync responseCount with actual volunteers
+    form.responseCount = mockVolunteersStore.filter((v) => v.eventId === eventId).length
+    return JSON.parse(JSON.stringify(form))
   }
 
-  const response = await fetch(`/api/events/${eventId}`, {
-    method: 'PATCH',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ registrationFormUrl }),
-  })
+  const response = await fetch(`/api/events/${encodeURIComponent(eventId)}/registration-form`)
   if (!response.ok) {
-    throw new Error(`Failed to update registration form link: ${response.statusText}`)
+    if (response.status === 404) return null
+    throw new Error(`Failed to fetch registration form: ${response.statusText}`)
   }
   return response.json()
 }
+
+export async function saveRegistrationForm(eventId, data) {
+  if (USE_MOCKS) {
+    await new Promise((resolve) => setTimeout(resolve, 250))
+    if (!eventId) throw new Error('Event ID is required')
+
+    // If published plan, lock updates
+    const plan = mockPlansStore.find((p) => p.eventId === eventId)
+    if (plan && plan.status === 'published') {
+      throw new Error('Registration form is locked because the assignment plan has been published.')
+    }
+
+    let index = mockRegistrationFormsStore.findIndex((f) => f.eventId === eventId)
+    const existing = index !== -1 ? mockRegistrationFormsStore[index] : {}
+
+    const updated = {
+      ...existing,
+      eventId,
+      status: existing.status || 'draft',
+      opensAt: data.opensAt ?? existing.opensAt ?? '',
+      closesAt: data.closesAt ?? existing.closesAt ?? '',
+      maxResponses: data.maxResponses !== undefined && data.maxResponses !== '' && data.maxResponses !== null
+        ? Number(data.maxResponses)
+        : null,
+      offeredSkills: Array.isArray(data.offeredSkills) ? [...data.offeredSkills] : (existing.offeredSkills || []),
+      extraQuestions: Array.isArray(data.extraQuestions)
+        ? data.extraQuestions.slice(0, 2).map((q, i) => ({
+            id: q.id || `q_${Date.now()}_${i}`,
+            label: (q.label || '').slice(0, 100),
+          }))
+        : (existing.extraQuestions || []),
+      responseCount: mockVolunteersStore.filter((v) => v.eventId === eventId).length,
+    }
+
+    if (index !== -1) {
+      mockRegistrationFormsStore[index] = updated
+    } else {
+      mockRegistrationFormsStore.push(updated)
+    }
+
+    saveRegistrationForms(mockRegistrationFormsStore)
+    return JSON.parse(JSON.stringify(updated))
+  }
+
+  const response = await fetch(`/api/events/${encodeURIComponent(eventId)}/registration-form`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  })
+  if (!response.ok) {
+    throw new Error(`Failed to save registration form: ${response.statusText}`)
+  }
+  return response.json()
+}
+
+export async function openRegistration(eventId) {
+  if (USE_MOCKS) {
+    await new Promise((resolve) => setTimeout(resolve, 200))
+    const plan = mockPlansStore.find((p) => p.eventId === eventId)
+    if (plan && plan.status === 'published') {
+      throw new Error('Registration cannot be opened after the assignment plan has been published.')
+    }
+
+    let form = mockRegistrationFormsStore.find((f) => f.eventId === eventId)
+    if (!form) {
+      form = await getRegistrationForm(eventId)
+    }
+
+    if (form.status === 'open') {
+      throw new Error('Registration is already open.')
+    }
+
+    form.status = 'open'
+    form.responseCount = mockVolunteersStore.filter((v) => v.eventId === eventId).length
+    saveRegistrationForms(mockRegistrationFormsStore)
+    return JSON.parse(JSON.stringify(form))
+  }
+
+  const response = await fetch(`/api/events/${encodeURIComponent(eventId)}/registration-form/open`, {
+    method: 'POST',
+  })
+  if (!response.ok) {
+    throw new Error(`Failed to open registration: ${response.statusText}`)
+  }
+  return response.json()
+}
+
+export async function closeRegistration(eventId) {
+  if (USE_MOCKS) {
+    await new Promise((resolve) => setTimeout(resolve, 200))
+    let form = mockRegistrationFormsStore.find((f) => f.eventId === eventId)
+    if (!form) {
+      form = await getRegistrationForm(eventId)
+    }
+
+    if (form.status !== 'open') {
+      throw new Error('Registration is not currently open.')
+    }
+
+    form.status = 'closed'
+    form.responseCount = mockVolunteersStore.filter((v) => v.eventId === eventId).length
+    saveRegistrationForms(mockRegistrationFormsStore)
+    return JSON.parse(JSON.stringify(form))
+  }
+
+  const response = await fetch(`/api/events/${encodeURIComponent(eventId)}/registration-form/close`, {
+    method: 'POST',
+  })
+  if (!response.ok) {
+    throw new Error(`Failed to close registration: ${response.statusText}`)
+  }
+  return response.json()
+}
+
+export async function getAvailableEvents() {
+  if (USE_MOCKS) {
+    await new Promise((resolve) => setTimeout(resolve, 200))
+    // Return list of events that have registration forms configured, along with form info
+    const currentUserId = getLoggedInUser()?.id
+    const currentVolunteer = getLoggedInVolunteer()
+
+    const results = []
+    for (const evt of mockEvents) {
+      let form = mockRegistrationFormsStore.find((f) => f.eventId === evt.id)
+      if (!form) continue
+
+      // Check if logged-in user is registered for this event
+      const existingVol = mockVolunteersStore.find(
+        (v) => v.eventId === evt.id && (v.userId === currentUserId || (currentVolunteer && v.email?.toLowerCase() === currentVolunteer.email?.toLowerCase()))
+      )
+
+      form.responseCount = mockVolunteersStore.filter((v) => v.eventId === evt.id).length
+
+      results.push({
+        event: { ...evt },
+        form: { ...form },
+        isRegistered: Boolean(existingVol),
+        registeredVolunteerId: existingVol?.id || null,
+      })
+    }
+    saveRegistrationForms(mockRegistrationFormsStore)
+    return JSON.parse(JSON.stringify(results))
+  }
+
+  const response = await fetch('/api/volunteers/available-events')
+  if (!response.ok) {
+    throw new Error(`Failed to fetch available events: ${response.statusText}`)
+  }
+  return response.json()
+}
+
+export async function getRegistrationView(eventId) {
+  if (USE_MOCKS) {
+    await new Promise((resolve) => setTimeout(resolve, 200))
+    const event = mockEvents.find((e) => e.id === eventId)
+    if (!event) throw new Error(`Event ${eventId} not found`)
+
+    const form = await getRegistrationForm(eventId)
+    const currentUserId = getLoggedInUser()?.id
+    const currentVolunteer = getLoggedInVolunteer()
+
+    const existingRegistration = mockVolunteersStore.find(
+      (v) => v.eventId === eventId && (v.userId === currentUserId || (currentVolunteer && v.email?.toLowerCase() === currentVolunteer.email?.toLowerCase()))
+    )
+
+    const isOpen = isRegistrationOpen(form)
+
+    return {
+      event: { ...event },
+      form: { ...form },
+      isOpen,
+      existingRegistration: existingRegistration ? JSON.parse(JSON.stringify(existingRegistration)) : null,
+    }
+  }
+
+  const response = await fetch(`/api/events/${encodeURIComponent(eventId)}/registration-view`)
+  if (!response.ok) {
+    throw new Error(`Failed to fetch registration view: ${response.statusText}`)
+  }
+  return response.json()
+}
+
+export async function submitRegistration(eventId, data) {
+  if (USE_MOCKS) {
+    await new Promise((resolve) => setTimeout(resolve, 300))
+    const currentUser = getLoggedInUser()
+    if (!currentUser) throw new Error('You must be logged in to register.')
+
+    const plan = mockPlansStore.find((p) => p.eventId === eventId)
+    if (plan && plan.status === 'published') {
+      throw new Error('Registration is locked because the assignment plan has already been published.')
+    }
+
+    const form = mockRegistrationFormsStore.find((f) => f.eventId === eventId)
+    if (!form || form.status !== 'open') {
+      throw new Error('Registration is not open for this event.')
+    }
+
+    const now = Date.now()
+    if (form.opensAt && now < new Date(form.opensAt).getTime()) {
+      throw new Error('Registration has not opened yet.')
+    }
+    if (form.closesAt && now > new Date(form.closesAt).getTime()) {
+      throw new Error('Registration has closed for this event.')
+    }
+
+    const currentCount = mockVolunteersStore.filter((v) => v.eventId === eventId).length
+    if (form.maxResponses && currentCount >= form.maxResponses) {
+      throw new Error('This event registration is full and cannot accept more responses.')
+    }
+
+    // Check duplicate
+    const duplicate = mockVolunteersStore.find(
+      (v) => v.eventId === eventId && (v.userId === currentUser.id || v.email?.toLowerCase() === currentUser.email?.toLowerCase())
+    )
+    if (duplicate) {
+      const err = new Error('You have already registered for this event.')
+      err.status = 409
+      throw err
+    }
+
+    const newVolunteerId = `vol-${Date.now()}`
+    const newVolunteer = {
+      id: newVolunteerId,
+      eventId,
+      userId: currentUser.id,
+      fullName: currentUser.name,
+      email: currentUser.email,
+      phone: data.phone || '',
+      department: data.department || '',
+      yearOfStudy: data.yearOfStudy ? `${data.yearOfStudy}${getOrdinal(data.yearOfStudy)} Year` : '1st Year',
+      skills: Array.isArray(data.skills) ? [...data.skills] : [],
+      pastEventsCount: Number(data.pastEventsCount) || 0,
+      availability: Array.isArray(data.availability) ? [...data.availability] : [],
+      maxHoursPerEvent: Number(data.maxHoursPerEvent) || 8,
+      interests: Array.isArray(data.interests) ? [...data.interests] : [],
+      notificationPreference: data.notificationPreference || 'email',
+      status: 'active',
+      extraAnswers: Array.isArray(data.extraAnswers) ? [...data.extraAnswers] : [],
+    }
+
+    mockVolunteersStore.push(newVolunteer)
+    form.responseCount = mockVolunteersStore.filter((v) => v.eventId === eventId).length
+    saveRegistrationForms(mockRegistrationFormsStore)
+
+    return JSON.parse(JSON.stringify(newVolunteer))
+  }
+
+  const response = await fetch(`/api/events/${encodeURIComponent(eventId)}/registration`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  })
+  if (!response.ok) {
+    let msg = `Registration failed: ${response.statusText}`
+    try {
+      const errData = await response.json()
+      if (errData?.message) msg = errData.message
+    } catch {
+      // fallback
+    }
+    const err = new Error(msg)
+    err.status = response.status
+    throw err
+  }
+  return response.json()
+}
+
+export async function updateRegistration(eventId, data) {
+  if (USE_MOCKS) {
+    await new Promise((resolve) => setTimeout(resolve, 250))
+    const currentUser = getLoggedInUser()
+    if (!currentUser) throw new Error('You must be logged in to update registration.')
+
+    const form = mockRegistrationFormsStore.find((f) => f.eventId === eventId)
+    if (!form || !isRegistrationOpen(form)) {
+      throw new Error('Registration is closed or no longer accepting updates.')
+    }
+
+    const index = mockVolunteersStore.findIndex(
+      (v) => v.eventId === eventId && (v.userId === currentUser.id || v.email?.toLowerCase() === currentUser.email?.toLowerCase())
+    )
+    if (index === -1) {
+      throw new Error('Registration not found to update.')
+    }
+
+    const existing = mockVolunteersStore[index]
+    const updated = {
+      ...existing,
+      phone: data.phone ?? existing.phone,
+      department: data.department ?? existing.department,
+      yearOfStudy: data.yearOfStudy
+        ? `${data.yearOfStudy}${getOrdinal(data.yearOfStudy)} Year`
+        : existing.yearOfStudy,
+      skills: Array.isArray(data.skills) ? [...data.skills] : existing.skills,
+      pastEventsCount: data.pastEventsCount !== undefined ? Number(data.pastEventsCount) : existing.pastEventsCount,
+      availability: Array.isArray(data.availability) ? [...data.availability] : existing.availability,
+      maxHoursPerEvent: data.maxHoursPerEvent !== undefined ? Number(data.maxHoursPerEvent) : existing.maxHoursPerEvent,
+      interests: Array.isArray(data.interests) ? [...data.interests] : existing.interests,
+      notificationPreference: data.notificationPreference ?? existing.notificationPreference,
+      extraAnswers: Array.isArray(data.extraAnswers) ? [...data.extraAnswers] : existing.extraAnswers,
+    }
+
+    mockVolunteersStore[index] = updated
+    return JSON.parse(JSON.stringify(updated))
+  }
+
+  const response = await fetch(`/api/events/${encodeURIComponent(eventId)}/registration`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  })
+  if (!response.ok) {
+    throw new Error(`Failed to update registration: ${response.statusText}`)
+  }
+  return response.json()
+}
+
+export async function withdrawRegistration(eventId) {
+  if (USE_MOCKS) {
+    await new Promise((resolve) => setTimeout(resolve, 200))
+    const currentUser = getLoggedInUser()
+    if (!currentUser) throw new Error('You must be logged in.')
+
+    const form = mockRegistrationFormsStore.find((f) => f.eventId === eventId)
+    if (!form || !isRegistrationOpen(form)) {
+      throw new Error('Registration cannot be withdrawn because the form is closed.')
+    }
+
+    const index = mockVolunteersStore.findIndex(
+      (v) => v.eventId === eventId && (v.userId === currentUser.id || v.email?.toLowerCase() === currentUser.email?.toLowerCase())
+    )
+    if (index === -1) {
+      throw new Error('Registration not found.')
+    }
+
+    const removed = mockVolunteersStore.splice(index, 1)[0]
+    form.responseCount = mockVolunteersStore.filter((v) => v.eventId === eventId).length
+    saveRegistrationForms(mockRegistrationFormsStore)
+
+    return { success: true, id: removed.id }
+  }
+
+  const response = await fetch(`/api/events/${encodeURIComponent(eventId)}/registration`, {
+    method: 'DELETE',
+  })
+  if (!response.ok) {
+    throw new Error(`Failed to withdraw registration: ${response.statusText}`)
+  }
+  return response.json()
+}
+
+// Helpers for mock user extraction
+function getLoggedInUser() {
+  try {
+    const raw = localStorage.getItem('eventra_user') || sessionStorage.getItem('eventra_user')
+    if (raw) return JSON.parse(raw)
+  } catch {
+    // fallback
+  }
+  return demoVolunteerUser
+}
+
+function getLoggedInVolunteer() {
+  const u = getLoggedInUser()
+  if (!u) return null
+  return mockVolunteersStore.find((v) => v.id === u.volunteerId || v.email?.toLowerCase() === u.email?.toLowerCase())
+}
+
+function getOrdinal(n) {
+  const num = parseInt(n, 10)
+  if (isNaN(num)) return ''
+  if (num === 1) return 'st'
+  if (num === 2) return 'nd'
+  if (num === 3) return 'rd'
+  return 'th'
+}
+
 
 export async function updateCertificateTemplate(eventId, template) {
   if (USE_MOCKS) {

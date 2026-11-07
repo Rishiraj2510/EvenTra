@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react'
+import { useState, useMemo, useCallback, useEffect } from 'react'
 import { useNavigate, Navigate } from 'react-router-dom'
 import { useAuth, getHomeRoute } from '../context/AuthContext'
 import { useEvent } from '../context/EventContext'
@@ -17,11 +17,20 @@ export default function VolunteersPage() {
 
   const { data: volunteers, loading, error, reload } = useFetch(fetchVolunteersCallback)
 
+  // Polling: refetch every 60 seconds while this tab is open
+  useEffect(() => {
+    if (!selectedEventId) return
+    const intervalId = setInterval(() => {
+      reload()
+    }, 60000)
+
+    return () => clearInterval(intervalId)
+  }, [selectedEventId, reload])
+
   // Search & Filter state
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedSkill, setSelectedSkill] = useState('')
   const [selectedStatus, setSelectedStatus] = useState('')
-  const [copiedLink, setCopiedLink] = useState(false)
 
   // Extract distinct skill names for dropdown
   const availableSkills = useMemo(() => {
@@ -63,15 +72,6 @@ export default function VolunteersPage() {
     return <Navigate to={getHomeRoute(role)} replace />
   }
 
-  // Copy registration form link
-  const handleCopyLink = () => {
-    const link = selectedEvent?.registrationFormUrl || `${window.location.origin}/register?eventId=${selectedEventId || ''}`
-    navigator.clipboard?.writeText(link).then(() => {
-      setCopiedLink(true)
-      setTimeout(() => setCopiedLink(false), 2000)
-    })
-  }
-
   return (
     <div className="flex flex-col w-full">
       <div className="p-margin-lg flex flex-col gap-space-xl">
@@ -93,20 +93,15 @@ export default function VolunteersPage() {
             <div className="flex items-center gap-space-md shrink-0">
               <button
                 type="button"
-                onClick={handleCopyLink}
+                onClick={() => navigate('/registration-form')}
                 disabled={!selectedEventId}
-                className="flex items-center gap-space-xs px-space-lg h-10 rounded-lg bg-primary hover:bg-primary-container text-on-primary font-label-lg text-label-lg transition-colors shadow-sm cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex items-center gap-space-xs px-space-lg h-10 rounded-lg bg-primary-container hover:bg-primary text-on-primary font-label-lg text-label-lg transition-colors shadow-sm cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <span className="material-symbols-outlined text-[18px]">
-                  {copiedLink ? 'check' : 'link'}
-                </span>
-                <span>{copiedLink ? 'Link copied!' : 'Copy form link'}</span>
+                <span className="material-symbols-outlined text-[18px]">how_to_reg</span>
+                <span>Registration Form</span>
               </button>
             </div>
           </div>
-          <p className="font-body-sm text-body-sm text-on-surface-variant">
-            The registration form link is set by the organiser on the Dashboard.
-          </p>
         </div>
 
         {/* If No Event is Selected: Prompt State */}
@@ -367,18 +362,18 @@ export default function VolunteersPage() {
                               <p className="font-body-md text-body-md text-on-surface-variant max-w-md mb-space-xl leading-relaxed">
                                 {searchQuery || selectedSkill || selectedStatus
                                   ? 'Try adjusting your search criteria or filter options to see matching volunteers.'
-                                  : 'Share the registration form to start collecting volunteers.'}
+                                  : 'Open the event registration form to start collecting volunteers.'}
                               </p>
                               {!searchQuery && !selectedSkill && !selectedStatus && (
                                 <button
-                                  onClick={handleCopyLink}
-                                  className="flex items-center gap-space-xs px-space-lg h-10 rounded-lg bg-primary hover:bg-primary-container text-on-primary font-label-lg text-label-lg transition-colors shadow-sm cursor-pointer"
+                                  onClick={() => navigate('/registration-form')}
+                                  className="flex items-center gap-space-xs px-space-lg h-10 rounded-lg bg-primary-container hover:bg-primary text-on-primary font-label-lg text-label-lg transition-colors shadow-sm cursor-pointer"
                                   type="button"
                                 >
                                   <span className="material-symbols-outlined text-[18px]">
-                                    {copiedLink ? 'check' : 'link'}
+                                    how_to_reg
                                   </span>
-                                  <span>{copiedLink ? 'Link copied!' : 'Copy form link'}</span>
+                                  <span>Registration Form</span>
                                 </button>
                               )}
                             </div>

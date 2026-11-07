@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react'
-import { getEvents, updateEventFormLink as apiUpdateEventFormLink } from '../services/api'
+import { getEvents } from '../services/api'
 import { useAuth } from './AuthContext'
 
 const EventContext = createContext(null)
@@ -53,15 +53,6 @@ export function EventProvider({ children }) {
     setSelectedEventId(id || '')
   }, [setSelectedEventId])
 
-  const updateRegistrationLink = useCallback(async (eventId, url) => {
-    const updated = await apiUpdateEventFormLink(eventId, url)
-    // Update local events state immediately
-    setEvents((prev) =>
-      prev.map((evt) => (evt.id === eventId ? { ...evt, registrationFormUrl: url } : evt))
-    )
-    return updated
-  }, [])
-
   return (
     <EventContext.Provider
       value={{
@@ -73,7 +64,6 @@ export function EventProvider({ children }) {
         loading,
         error,
         refreshEvents: fetchEvents,
-        updateRegistrationLink,
       }}
     >
       {children}
