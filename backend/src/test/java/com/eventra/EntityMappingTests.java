@@ -31,7 +31,9 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-@SpringBootTest
+@SpringBootTest(properties = {
+        "jwt.secret=eventra_test_super_secret_key_at_least_32_bytes_long!!"
+})
 class EntityMappingTests {
 
     @Autowired

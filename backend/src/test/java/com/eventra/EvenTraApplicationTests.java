@@ -11,7 +11,9 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@SpringBootTest
+@SpringBootTest(properties = {
+        "jwt.secret=eventra_test_super_secret_key_at_least_32_bytes_long!!"
+})
 @AutoConfigureMockMvc
 class EvenTraApplicationTests {
 

@@ -16,7 +16,9 @@ import static org.junit.jupiter.api.Assertions.*;
  * Integration tests that verify the Flyway-applied schema constraints
  * against the real Docker PostgreSQL database.
  */
-@SpringBootTest
+@SpringBootTest(properties = {
+        "jwt.secret=eventra_test_super_secret_key_at_least_32_bytes_long!!"
+})
 class SchemaConstraintTests {
 
     @Autowired
