@@ -25,4 +25,18 @@ management:
       exposure:
         include: health
 
+jwt:
+  secret: ${JWT_SECRET:}
+  expiry-minutes: ${JWT_EXPIRY_MINUTES:30}
+
+---
+spring:
+  config:
+    activate:
+      on-profile: dev
+
+jwt:
+  secret: ${JWT_SECRET:eventra_dev_secret_key_at_least_32_bytes_long!!}
+
+
 
