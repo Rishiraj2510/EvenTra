@@ -16,6 +16,8 @@ import FeedbackPage from './pages/FeedbackPage'
 import CertificatesPage from './pages/CertificatesPage'
 import MyCertificatesPage from './pages/MyCertificatesPage'
 import MyProfilePage from './pages/MyProfilePage'
+import RegistrationFormPage from './pages/RegistrationFormPage'
+import AvailableEventFormsPage from './pages/AvailableEventFormsPage'
 
 export default function App() {
   const { role } = useAuth()
@@ -36,6 +38,7 @@ export default function App() {
           <Route path="/tasks" element={<TasksPage />} />
           <Route path="/volunteers" element={<VolunteersPage />} />
           <Route path="/volunteers/:id" element={<VolunteerProfilePage />} />
+          <Route path="/registration-form" element={<RegistrationFormPage />} />
           <Route path="/assignment-plan" element={<AssignmentPlanPage />} />
           <Route path="/ai-assistant" element={<AiAssistantPage />} />
           <Route path="/feedback" element={<FeedbackPage />} />
@@ -44,6 +47,7 @@ export default function App() {
 
           {/* Volunteer routes */}
           <Route path="/my-duties" element={<MyDutiesPage />} />
+          <Route path="/available-event-forms" element={<AvailableEventFormsPage />} />
           <Route path="/my-profile" element={<MyProfilePage />} />
           <Route path="/my-certificates" element={<MyCertificatesPage />} />
         </Route>

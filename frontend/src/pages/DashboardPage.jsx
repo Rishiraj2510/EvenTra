@@ -1,29 +1,14 @@
-import { useState, useCallback } from 'react'
-import { useNavigate, Navigate } from 'react-router-dom'
+import { useCallback } from 'react'
+import { useNavigate, Navigate, Link } from 'react-router-dom'
 import { useAuth, getHomeRoute } from '../context/AuthContext'
 import { useEvent } from '../context/EventContext'
-import { getDashboardSummary } from '../services/api'
+import { getDashboardSummary, getRegistrationForm } from '../services/api'
 import { useFetch } from '../hooks/useFetch'
 
 export default function DashboardPage() {
   const { role } = useAuth()
-  const { events, selectedEventId, setSelectedEventId, selectedEvent, updateRegistrationLink } = useEvent()
+  const { events, selectedEventId, setSelectedEventId } = useEvent()
   const navigate = useNavigate()
-
-  // Track the event ID whose URL is currently in state
-  const [syncedEventId, setSyncedEventId] = useState(selectedEventId)
-  const [formUrlInput, setFormUrlInput] = useState(selectedEvent?.registrationFormUrl || '')
-  const [formSaveStatus, setFormSaveStatus] = useState(null) // null | 'saved' | 'cleared'
-  const [formError, setFormError] = useState('')
-  const [isSavingForm, setIsSavingForm] = useState(false)
-
-  // Sync state if selectedEventId changed during render
-  if (selectedEventId !== syncedEventId) {
-    setSyncedEventId(selectedEventId)
-    setFormUrlInput(selectedEvent?.registrationFormUrl || '')
-    setFormError('')
-    setFormSaveStatus(null)
-  }
 
   // Fetch dashboard summary
   const fetchSummaryCallback = useCallback(() => {
@@ -31,56 +16,18 @@ export default function DashboardPage() {
     return getDashboardSummary(selectedEventId)
   }, [selectedEventId])
 
-  const { data: summary, loading, error, reload } = useFetch(fetchSummaryCallback)
+  // Fetch registration form status for the card
+  const fetchFormCallback = useCallback(() => {
+    if (!selectedEventId) return Promise.resolve(null)
+    return getRegistrationForm(selectedEventId)
+  }, [selectedEventId])
+
+  const { data: summary, loading: summaryLoading, error: summaryError, reload: reloadSummary } = useFetch(fetchSummaryCallback)
+  const { data: regForm, loading: formLoading, error: formError, reload: reloadForm } = useFetch(fetchFormCallback)
 
   // Redirect volunteers away from Dashboard
   if (role === 'volunteer') {
     return <Navigate to={getHomeRoute(role)} replace />
-  }
-
-  // Handle Form URL Save
-  const handleSaveFormUrl = async () => {
-    setFormError('')
-    setFormSaveStatus(null)
-    const trimmed = formUrlInput.trim()
-
-    if (!trimmed) {
-      setFormError('Please enter a valid URL or click Clear to remove it.')
-      return
-    }
-
-    if (!/^https:\/\/[^ "]+$/.test(trimmed)) {
-      setFormError('Please enter a valid non-empty https:// URL.')
-      return
-    }
-
-    try {
-      setIsSavingForm(true)
-      await updateRegistrationLink(selectedEventId, trimmed)
-      setFormSaveStatus('saved')
-      setTimeout(() => setFormSaveStatus(null), 3000)
-    } catch (err) {
-      setFormError(err.message || 'Failed to save registration link.')
-    } finally {
-      setIsSavingForm(false)
-    }
-  }
-
-  // Handle Form URL Clear
-  const handleClearFormUrl = async () => {
-    setFormError('')
-    setFormSaveStatus(null)
-    try {
-      setIsSavingForm(true)
-      await updateRegistrationLink(selectedEventId, '')
-      setFormUrlInput('')
-      setFormSaveStatus('cleared')
-      setTimeout(() => setFormSaveStatus(null), 3000)
-    } catch (err) {
-      setFormError(err.message || 'Failed to clear registration link.')
-    } finally {
-      setIsSavingForm(false)
-    }
   }
 
   // Handle Solver action click
@@ -95,10 +42,10 @@ export default function DashboardPage() {
   // Checklist calculations
   const tasksCount = summary?.activeTasks ?? 0
   const volunteersCount = summary?.volunteersRegistered ?? 0
-  const isFormLinkSet = Boolean(selectedEvent?.registrationFormUrl && selectedEvent.registrationFormUrl.trim().length > 0)
+  const isRegistrationConfigured = Boolean(regForm && (regForm.status === 'open' || regForm.status === 'closed' || regForm.status === 'draft'))
   const isPreferencesConfigured = false // stays unchecked for now per requirement
 
-  const isReadinessComplete = tasksCount > 0 && volunteersCount > 0 && isFormLinkSet
+  const isReadinessComplete = tasksCount > 0 && volunteersCount > 0 && Boolean(regForm && regForm.status === 'open')
 
   return (
     <div className="flex flex-col w-full">
@@ -169,7 +116,7 @@ export default function DashboardPage() {
         {selectedEventId && (
           <>
             {/* Loading state indicator if fetching summary */}
-            {loading && !summary && (
+            {summaryLoading && !summary && (
               <div className="bg-surface-container-lowest rounded-xl p-12 flex flex-col items-center justify-center text-center shadow-sm">
                 <div className="w-10 h-10 border-4 border-surface-container border-t-primary-container rounded-full animate-spin mb-3" />
                 <p className="font-body-md text-body-md text-on-surface-variant">Loading dashboard metrics...</p>
@@ -177,14 +124,14 @@ export default function DashboardPage() {
             )}
 
             {/* Error state */}
-            {error && (
+            {summaryError && (
               <div className="bg-error-container text-on-error-container p-4 rounded-xl flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <span className="material-symbols-outlined">error</span>
-                  <span className="font-body-md text-body-md">{error}</span>
+                  <span className="font-body-md text-body-md">{summaryError}</span>
                 </div>
                 <button
-                  onClick={reload}
+                  onClick={reloadSummary}
                   className="px-3 py-1 bg-surface-container-lowest rounded-lg font-label-md text-label-md text-on-surface shadow-sm cursor-pointer"
                 >
                   Retry
@@ -414,73 +361,97 @@ export default function DashboardPage() {
 
               {/* Right Column (5 cols) */}
               <div className="lg:col-span-5 flex flex-col gap-space-xl">
-                {/* Volunteer Registration Form Card */}
+                {/* Registration Status Card */}
                 <div className="bg-surface-container-lowest rounded-xl shadow-sm overflow-hidden">
-                  <div className="px-5 py-4 bg-surface-container-lowest border-b border-surface-container/50">
-                    <h2 className="font-headline-sm text-headline-sm text-on-surface">
-                      Volunteer registration form
-                    </h2>
+                  <div className="px-5 py-4 bg-surface-container-lowest border-b border-surface-container/50 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="material-symbols-outlined text-[20px] text-primary">how_to_reg</span>
+                      <h2 className="font-headline-sm text-headline-sm text-on-surface">
+                        Registration
+                      </h2>
+                    </div>
+                    {regForm && (
+                      <span
+                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full font-label-sm text-[12px] font-semibold capitalize ${
+                          regForm.status === 'open'
+                            ? 'bg-secondary-fixed text-on-secondary-fixed-variant'
+                            : regForm.status === 'closed'
+                            ? 'bg-surface-container-high text-outline'
+                            : 'bg-primary-fixed text-on-primary-fixed-variant'
+                        }`}
+                      >
+                        {regForm.status || 'Draft'}
+                      </span>
+                    )}
                   </div>
                   <div className="p-6 flex flex-col gap-4">
-                    <div className="flex flex-col gap-1.5">
-                      <label className="font-label-md text-label-md text-on-surface-variant">
-                        Google Form link for this event
-                      </label>
-                      <input
-                        type="url"
-                        value={formUrlInput}
-                        onChange={(e) => {
-                          setFormUrlInput(e.target.value)
-                          if (formError) setFormError('')
-                        }}
-                        placeholder="https://forms.google.com/..."
-                        className="h-10 px-space-md rounded-lg bg-surface-container-low text-on-surface placeholder:text-outline text-body-md font-body-md focus:outline-none focus:ring-2 focus:ring-primary/20 w-full"
-                      />
-                      <span className="font-body-sm text-body-sm text-outline mt-1">
-                        Volunteers will see this link on the Volunteers page.
-                      </span>
+                    {/* Loading state */}
+                    {formLoading && (
+                      <div className="py-4 flex items-center justify-center gap-2 text-outline">
+                        <div className="w-5 h-5 rounded-full border-2 border-primary/20 border-t-primary animate-spin" />
+                        <span className="font-body-sm text-body-sm">Checking registration form...</span>
+                      </div>
+                    )}
 
-                      {/* Inline Error Message */}
-                      {formError && (
-                        <p className="font-body-sm text-body-sm text-error mt-1 flex items-center gap-1">
-                          <span className="material-symbols-outlined text-[16px]">error</span>
-                          <span>{formError}</span>
-                        </p>
-                      )}
+                    {/* Error state */}
+                    {!formLoading && formError && (
+                      <div className="p-3.5 rounded-xl bg-error-container text-error flex flex-col gap-2">
+                        <span className="font-body-sm text-body-sm font-medium">Failed to load registration status.</span>
+                        <button
+                          type="button"
+                          onClick={() => reloadForm()}
+                          className="self-start text-label-sm font-semibold underline cursor-pointer"
+                        >
+                          Retry
+                        </button>
+                      </div>
+                    )}
 
-                      {/* Saved Confirmation */}
-                      {formSaveStatus === 'saved' && (
-                        <p className="font-body-sm text-body-sm text-secondary font-medium mt-1 flex items-center gap-1">
-                          <span className="material-symbols-outlined text-[16px]">check_circle</span>
-                          <span>Saved successfully</span>
+                    {/* Empty state: No form yet */}
+                    {!formLoading && !formError && !regForm && (
+                      <div className="flex flex-col gap-3">
+                        <p className="font-body-sm text-body-sm text-on-surface-variant">
+                          No registration form has been configured for this event yet.
                         </p>
-                      )}
-                      {formSaveStatus === 'cleared' && (
-                        <p className="font-body-sm text-body-sm text-outline font-medium mt-1 flex items-center gap-1">
-                          <span className="material-symbols-outlined text-[16px]">info</span>
-                          <span>Link cleared</span>
-                        </p>
-                      )}
-                    </div>
+                        <Link
+                          to="/registration-form"
+                          className="inline-flex items-center gap-1.5 text-primary hover:underline font-label-md text-label-md font-semibold"
+                        >
+                          <span>Create registration form</span>
+                          <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
+                        </Link>
+                      </div>
+                    )}
 
-                    <div className="flex items-center gap-space-sm pt-1">
-                      <button
-                        type="button"
-                        onClick={handleSaveFormUrl}
-                        disabled={isSavingForm}
-                        className="flex items-center justify-center px-space-md h-9 rounded-lg bg-primary-container text-on-primary hover:opacity-95 shadow-sm active:scale-[0.99] transition-all font-label-md text-label-md cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        {isSavingForm ? 'Saving...' : 'Save'}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={handleClearFormUrl}
-                        disabled={isSavingForm}
-                        className="flex items-center justify-center px-space-md h-9 rounded-lg bg-surface-container-low hover:bg-surface-container text-on-surface-variant hover:text-on-surface transition-colors font-label-md text-label-md cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        Clear
-                      </button>
-                    </div>
+                    {/* Normal Form Status Content */}
+                    {!formLoading && !formError && regForm && (
+                      <div className="flex flex-col gap-3.5">
+                        <div className="grid grid-cols-2 gap-3">
+                          <div className="p-3 rounded-xl bg-surface-container-low flex flex-col gap-0.5">
+                            <span className="font-label-sm text-label-sm text-outline uppercase tracking-wider">Responses</span>
+                            <span className="font-headline-sm text-headline-sm font-bold text-on-surface">
+                              {regForm.responseCount || 0}
+                              {regForm.maxResponses ? ` / ${regForm.maxResponses}` : ''}
+                            </span>
+                          </div>
+
+                          <div className="p-3 rounded-xl bg-surface-container-low flex flex-col gap-0.5">
+                            <span className="font-label-sm text-label-sm text-outline uppercase tracking-wider">Closes At</span>
+                            <span className="font-label-md text-label-md font-semibold text-on-surface truncate">
+                              {regForm.closesAt ? new Date(regForm.closesAt).toLocaleDateString() : 'No close date'}
+                            </span>
+                          </div>
+                        </div>
+
+                        <Link
+                          to="/registration-form"
+                          className="w-full flex items-center justify-center gap-1.5 px-4 h-9 rounded-lg bg-surface-container-low hover:bg-surface-container text-on-surface font-label-md text-label-md font-semibold transition-colors"
+                        >
+                          <span>Manage Registration Form</span>
+                          <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
+                        </Link>
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -633,26 +604,26 @@ export default function DashboardPage() {
                         </span>
                       </div>
 
-                      {/* Row 3: Registration form link set */}
+                      {/* Row 3: Registration open */}
                       <div className="flex items-center justify-between p-3 rounded-lg bg-surface-container-low">
                         <div className="flex items-center gap-space-sm">
                           <span
                             className={`material-symbols-outlined text-[18px] ${
-                              isFormLinkSet ? 'text-secondary' : 'text-outline'
+                              isRegistrationConfigured ? 'text-secondary' : 'text-outline'
                             }`}
                           >
-                            {isFormLinkSet ? 'check_circle' : 'radio_button_unchecked'}
+                            {isRegistrationConfigured ? 'check_circle' : 'radio_button_unchecked'}
                           </span>
                           <span className="font-body-md text-body-md text-on-surface">
-                            Registration form link set
+                            Registration form active
                           </span>
                         </div>
                         <span
                           className={`font-label-md text-label-md ${
-                            isFormLinkSet ? 'text-secondary font-medium' : 'text-outline'
+                            isRegistrationConfigured ? 'text-secondary font-medium' : 'text-outline'
                           }`}
                         >
-                          {isFormLinkSet ? 'Configured' : '--'}
+                          {isRegistrationConfigured ? 'Configured' : '--'}
                         </span>
                       </div>
 

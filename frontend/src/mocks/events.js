@@ -15,7 +15,6 @@ export const initialEvents = [
     endDate: '2025-03-17',
     description: 'Annual inter-collegiate technical festival featuring hackathons, robotics, and coding arenas.',
     status: 'live',
-    registrationFormUrl: 'https://forms.google.com/eventra-technosphere-2025',
     certificateTemplate: { ...defaultCertificateTemplate },
   },
   {
@@ -26,7 +25,6 @@ export const initialEvents = [
     endDate: '2025-04-04',
     description: 'State-level music, dance, and fine arts symposium across collegiate departments.',
     status: 'planning',
-    registrationFormUrl: '',
     certificateTemplate: { ...defaultCertificateTemplate },
   },
   {
@@ -37,7 +35,6 @@ export const initialEvents = [
     endDate: '2025-02-12',
     description: 'Track and field tournaments, football league, and basketball championships.',
     status: 'done',
-    registrationFormUrl: '',
     certificateTemplate: { ...defaultCertificateTemplate },
   },
   {
@@ -48,7 +45,6 @@ export const initialEvents = [
     endDate: '2025-05-21',
     description: 'Peer-reviewed paper presentations and guest keynotes from industry pioneers.',
     status: 'draft',
-    registrationFormUrl: '',
     certificateTemplate: { ...defaultCertificateTemplate },
   },
 ]

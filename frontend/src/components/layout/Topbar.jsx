@@ -9,6 +9,7 @@ const EVENT_PICKER_ROUTES = [
   '/events',
   '/tasks',
   '/volunteers',
+  '/registration-form',
   '/assignment-plan',
   '/ai-assistant',
   '/feedback',

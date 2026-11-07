@@ -8,6 +8,7 @@ const ORGANISER_NAV_ITEMS = [
   { path: '/events', label: 'Events', icon: 'calendar_month' },
   { path: '/tasks', label: 'Tasks', icon: 'task_alt' },
   { path: '/volunteers', label: 'Volunteers', icon: 'group' },
+  { path: '/registration-form', label: 'Registration Form', icon: 'how_to_reg' },
   { path: '/assignment-plan', label: 'Assignment Plan', icon: 'assignment_ind' },
   { path: '/ai-assistant', label: 'AI Assistant', icon: 'auto_awesome' },
   { path: '/feedback', label: 'Feedback', icon: 'rate_review' },
@@ -17,6 +18,7 @@ const ORGANISER_NAV_ITEMS = [
 
 const VOLUNTEER_NAV_ITEMS = [
   { path: '/my-duties', label: 'My Duties', icon: 'task_alt' },
+  { path: '/available-event-forms', label: 'Available Event Forms', icon: 'how_to_reg' },
   { path: '/my-profile', label: 'My Profile', icon: 'person' },
   { path: '/my-certificates', label: 'My Certificates', icon: 'workspace_premium' },
 ]

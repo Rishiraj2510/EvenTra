@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { APP_NAME } from '../../config'
 import StarRating from '../common/StarRating'
+import { useAuth } from '../../context/AuthContext'
 
 const DAYS_OF_WEEK = [
   { key: 'Monday', label: 'Mon' },
@@ -26,6 +27,9 @@ export default function VolunteerProfileView({
   isEditable = false,
   onSave = null,
 }) {
+  const { role } = useAuth()
+  const isOrganiser = role === 'organiser'
+
   // Edit mode state for editable profile
   const [isEditing, setIsEditing] = useState(false)
   const [formData, setFormData] = useState({
@@ -733,6 +737,30 @@ export default function VolunteerProfileView({
                 <p className="font-body-md text-body-md text-outline">No specific interests indicated.</p>
               )}
             </section>
+
+            {/* Organiser-only Extra Answers View */}
+            {isOrganiser && volunteer.extraAnswers && volunteer.extraAnswers.length > 0 && (
+              <section className="bg-surface-container-lowest rounded-2xl shadow-sm border border-outline-variant/20 p-6 flex flex-col gap-4">
+                <div className="flex items-center gap-space-sm pb-3 border-b border-outline-variant/20">
+                  <span className="material-symbols-outlined text-primary text-[22px]">quiz</span>
+                  <h3 className="font-headline-sm text-headline-sm text-on-surface font-semibold">
+                    Registration Question Responses
+                  </h3>
+                </div>
+                <div className="flex flex-col gap-3">
+                  {volunteer.extraAnswers.map((ans, idx) => (
+                    <div key={idx} className="flex flex-col gap-1 p-3.5 rounded-xl bg-surface-container-low/60 border border-outline-variant/25">
+                      <span className="font-label-sm text-label-sm text-on-surface font-semibold">
+                        {ans.questionLabel || `Question ${idx + 1}`}
+                      </span>
+                      <p className="font-body-md text-body-md text-on-surface-variant">
+                        {ans.answer || <span className="italic text-outline">No answer provided</span>}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
           </div>
         </div>
 
