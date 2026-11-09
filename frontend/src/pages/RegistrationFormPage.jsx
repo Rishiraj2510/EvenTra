@@ -11,6 +11,8 @@ import {
   getPlan,
 } from '../services/api'
 import { useFetch } from '../hooks/useFetch'
+import SkillMultiSelect from '../components/common/SkillMultiSelect'
+import { PREDEFINED_SKILLS, MAX_SKILL_LENGTH, MAX_OFFERED_SKILLS } from '../constants/skills'
 
 export default function RegistrationFormPage() {
   const { role } = useAuth()
@@ -185,56 +187,65 @@ function toDateTimeLocal(isoStr) {
 }
 
 function RegistrationFormEditor({ selectedEventId, formData, tasks, isPlanPublished, reloadForm }) {
-  // Local form state initialized directly from props
-  const [formState, setFormState] = useState(() => ({
-    opensAt: toDateTimeLocal(formData?.opensAt),
-    closesAt: toDateTimeLocal(formData?.closesAt),
-    maxResponses: formData?.maxResponses ? String(formData.maxResponses) : '',
-    offeredSkills: Array.isArray(formData?.offeredSkills) ? [...formData.offeredSkills] : [],
-    extraQuestions: Array.isArray(formData?.extraQuestions)
-      ? formData.extraQuestions.map((q) => ({ ...q }))
-      : [],
-  }))
+  // Local form state initialized directly from props.
+  // offeredSkills: start from formData, then merge task skills (mandatory+preferred)
+  // using case-insensitive deduplication; canonical spelling from PREDEFINED_SKILLS wins.
+  const [formState, setFormState] = useState(() => {
+    // Resolve a skill name to its canonical PREDEFINED_SKILLS spelling (if any)
+    const toCanonical = (name) => {
+      const lower = name.toLowerCase()
+      return PREDEFINED_SKILLS.find((p) => p.toLowerCase() === lower) || name
+    }
 
-  const [newSkillInput, setNewSkillInput] = useState('')
+    // Gather existing offered skills (canonical)
+    const existing = Array.isArray(formData?.offeredSkills)
+      ? formData.offeredSkills.map(toCanonical)
+      : []
+
+    // Merge task skills using case-insensitive deduplication
+    const seen = new Set(existing.map((s) => s.toLowerCase()))
+    const merged = [...existing]
+    ;(tasks || []).forEach((t) => {
+      ;[...(t.mandatorySkills || []), ...(t.preferredSkills || [])].forEach((s) => {
+        const canonical = toCanonical(s)
+        const lower = canonical.toLowerCase()
+        if (!seen.has(lower)) {
+          seen.add(lower)
+          merged.push(canonical)
+        }
+      })
+    })
+
+    return {
+      opensAt: toDateTimeLocal(formData?.opensAt),
+      closesAt: toDateTimeLocal(formData?.closesAt),
+      maxResponses: formData?.maxResponses ? String(formData.maxResponses) : '',
+      offeredSkills: merged,
+      extraQuestions: Array.isArray(formData?.extraQuestions)
+        ? formData.extraQuestions.map((q) => ({ ...q }))
+        : [],
+    }
+  })
+
   const [validationErrors, setValidationErrors] = useState({})
   const [saveSuccessMessage, setSaveSuccessMessage] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  // Derive all task skill names for suggestions/prefill
-  const taskSkills = useMemo(() => {
-    if (!tasks) return []
-    const set = new Set()
+  // Derive skill options: PREDEFINED_SKILLS + any task skills that aren't
+  // already represented (case-insensitive), keeping canonical PREDEFINED_SKILLS spelling
+  const skillOptions = useMemo(() => {
+    if (!tasks) return PREDEFINED_SKILLS
+    const extra = []
     tasks.forEach((t) => {
-      ;(t.mandatorySkills || []).forEach((s) => set.add(s))
-      ;(t.preferredSkills || []).forEach((s) => set.add(s))
+      ;[...(t.mandatorySkills || []), ...(t.preferredSkills || [])].forEach((s) => {
+        const lower = s.toLowerCase()
+        const inPredefined = PREDEFINED_SKILLS.some((p) => p.toLowerCase() === lower)
+        const inExtra = extra.some((e) => e.toLowerCase() === lower)
+        if (!inPredefined && !inExtra) extra.push(s)
+      })
     })
-    return Array.from(set).sort()
+    return [...PREDEFINED_SKILLS, ...extra.sort()]
   }, [tasks])
-
-  // Add skill chip
-  const handleAddSkill = (skillToAdd) => {
-    const trimmed = (skillToAdd || newSkillInput).trim()
-    if (!trimmed) return
-    if (formState.offeredSkills.includes(trimmed)) {
-      setNewSkillInput('')
-      return
-    }
-    setFormState((prev) => ({
-      ...prev,
-      offeredSkills: [...prev.offeredSkills, trimmed],
-    }))
-    setNewSkillInput('')
-  }
-
-  // Remove skill chip
-  const handleRemoveSkill = (skillToRemove) => {
-    if (isPlanPublished) return
-    setFormState((prev) => ({
-      ...prev,
-      offeredSkills: prev.offeredSkills.filter((s) => s !== skillToRemove),
-    }))
-  }
 
   // Extra questions management (max 2)
   const handleAddQuestion = () => {
@@ -430,90 +441,21 @@ function RegistrationFormEditor({ selectedEventId, formData, tasks, isPlanPublis
             </p>
           </div>
 
-          {/* Current Selected Skills Chips */}
-          <div className="flex flex-wrap items-center gap-2 p-3 min-h-[52px] rounded-xl bg-surface-container-low/60 border border-outline-variant/30">
-            {formState.offeredSkills.length === 0 ? (
-              <span className="font-body-sm text-body-sm text-outline italic">
-                No skills offered yet. Add skills below or pick from event tasks.
-              </span>
-            ) : (
-              formState.offeredSkills.map((skill) => (
-                <span
-                  key={skill}
-                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary-fixed text-on-primary-fixed-variant font-label-md text-label-md shadow-2xs"
-                >
-                  <span>{skill}</span>
-                  {!isPlanPublished && (
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveSkill(skill)}
-                      className="hover:opacity-75 cursor-pointer flex items-center justify-center"
-                      title={`Remove ${skill}`}
-                    >
-                      <span className="material-symbols-outlined text-[16px]">close</span>
-                    </button>
-                  )}
-                </span>
-              ))
-            )}
-          </div>
+          <SkillMultiSelect
+            value={formState.offeredSkills}
+            onChange={(skills) =>
+              setFormState((prev) => ({ ...prev, offeredSkills: skills }))
+            }
+            options={skillOptions}
+            disabled={isPlanPublished}
+            maxItems={MAX_OFFERED_SKILLS}
+            maxLength={MAX_SKILL_LENGTH}
+          />
 
-          {/* Add custom skill input and task suggestions */}
-          {!isPlanPublished && (
-            <div className="flex flex-col gap-space-sm pt-1">
-              <div className="flex items-center gap-2 max-w-md">
-                <input
-                  type="text"
-                  value={newSkillInput}
-                  onChange={(e) => setNewSkillInput(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault()
-                      handleAddSkill()
-                    }
-                  }}
-                  placeholder="Add a custom skill..."
-                  className="flex-1 h-9 px-space-md rounded-lg bg-surface-container-low text-on-surface font-body-md text-body-md border border-outline-variant/30 focus:outline-none focus:ring-2 focus:ring-primary/20"
-                />
-                <button
-                  type="button"
-                  onClick={() => handleAddSkill()}
-                  disabled={!newSkillInput.trim()}
-                  className="px-space-md h-9 rounded-lg bg-surface-container-high hover:bg-surface-container-highest text-on-surface font-label-md text-label-md transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
-                >
-                  Add Skill
-                </button>
-              </div>
-
-              {/* Task skill suggestion chips */}
-              {taskSkills.length > 0 && (
-                <div className="flex flex-col gap-1.5 mt-2">
-                  <span className="font-label-sm text-label-sm text-outline">
-                    Quick add from event tasks:
-                  </span>
-                  <div className="flex flex-wrap gap-1.5">
-                    {taskSkills.map((sk) => {
-                      const alreadyAdded = formState.offeredSkills.includes(sk)
-                      return (
-                        <button
-                          key={sk}
-                          type="button"
-                          onClick={() => handleAddSkill(sk)}
-                          disabled={alreadyAdded}
-                          className={`text-[12px] font-medium px-2.5 py-1 rounded-lg border transition-all ${
-                            alreadyAdded
-                              ? 'bg-surface-container-low text-outline border-outline-variant/20 opacity-50 cursor-default'
-                              : 'bg-surface-container-lowest hover:bg-surface-container text-on-surface border-outline-variant/40 hover:border-primary/50 cursor-pointer shadow-2xs'
-                          }`}
-                        >
-                          + {sk}
-                        </button>
-                      )
-                    })}
-                  </div>
-                </div>
-              )}
-            </div>
+          {formState.offeredSkills.length === 0 && (
+            <span className="font-body-sm text-body-sm text-outline italic">
+              No skills offered yet.
+            </span>
           )}
         </div>
 
