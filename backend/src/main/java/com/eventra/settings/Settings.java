@@ -9,7 +9,7 @@ public class Settings {
 
     @Id
     @Column(name = "only_row")
-    private boolean onlyRow = true;
+    private Boolean onlyRow = true;
 
     @Column(name = "weight_skill", nullable = false)
     private int weightSkill;
@@ -35,11 +35,15 @@ public class Settings {
     public Settings() {
     }
 
-    public boolean isOnlyRow() {
+    public Boolean isOnlyRow() {
         return onlyRow;
     }
 
-    public void setOnlyRow(boolean onlyRow) {
+    public Boolean getOnlyRow() {
+        return onlyRow;
+    }
+
+    public void setOnlyRow(Boolean onlyRow) {
         this.onlyRow = onlyRow;
     }
 
@@ -104,7 +108,7 @@ public class Settings {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Settings settings = (Settings) o;
-        return onlyRow == settings.onlyRow;
+        return Objects.equals(onlyRow, settings.onlyRow);
     }
 
     @Override
