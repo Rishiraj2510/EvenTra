@@ -27,7 +27,7 @@ public class CsrfProtectionFilter extends OncePerRequestFilter {
 
         // Except POST /api/auth/login
         if (MUTATING_METHODS.contains(method)) {
-            boolean isLogin = "POST".equalsIgnoreCase(method) && uri.endsWith("/api/auth/login");
+            boolean isLogin = "POST".equalsIgnoreCase(method) && "/api/auth/login".equals(uri);
             if (!isLogin) {
                 String header = request.getHeader(REQUIRED_HEADER);
                 if (!REQUIRED_VALUE.equals(header)) {
