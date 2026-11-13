@@ -32,6 +32,10 @@ jwt:
   secret: ${JWT_SECRET:}
   expiry-minutes: ${JWT_EXPIRY_MINUTES:30}
 
+app:
+  signup:
+    allowed-email-domains: ${ALLOWED_EMAIL_DOMAINS:acropolis.in}
+
 ---
 spring:
   config:

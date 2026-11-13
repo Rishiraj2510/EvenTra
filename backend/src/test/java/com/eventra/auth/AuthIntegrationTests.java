@@ -225,7 +225,7 @@ class AuthIntegrationTests {
     }
 
     // -------------------------------------------------------------------------
-    // 6. POST without X-Requested-With returns 403; with it passes
+    // 6. POST without X-Requested-With returns 403; with it passes; login is exempted
     // -------------------------------------------------------------------------
     @Test
     void mutatingRequestsRequireCsrfHeader() throws Exception {
@@ -249,6 +249,25 @@ class AuthIntegrationTests {
                         .cookie(new Cookie("eventra_token", token))
                         .header("X-Requested-With", "EvenTra"))
                 .andExpect(status().isOk());
+
+        // POST /api/auth/login without X-Requested-With is exempted (does not return 403)
+        LoginRequest loginReq = new LoginRequest(user.getEmail(), "Pass12345!");
+        mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(loginReq)))
+                .andExpect(status().isOk());
+
+        // POST /x/api/auth/login without header -> 403 (exact match check)
+        mockMvc.perform(post("/x/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(loginReq)))
+                .andExpect(status().isForbidden());
+
+        // POST /api/auth/register without header -> 403
+        mockMvc.perform(post("/api/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isForbidden());
     }
 
     // -------------------------------------------------------------------------
@@ -293,6 +312,40 @@ class AuthIntegrationTests {
 
         // 6th attempt -> 429
         mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(badRequest)))
+                .andExpect(status().isTooManyRequests())
+                .andExpect(jsonPath("$.error").exists());
+    }
+
+    // -------------------------------------------------------------------------
+    // 8b. Login ignores spoofed X-Forwarded-For: 5 failed logins with different X-Forwarded-For still trigger 429
+    // -------------------------------------------------------------------------
+    @Test
+    void loginIgnoresSpoofedXForwardedFor() throws Exception {
+        User user = createUser("volunteer", "CorrectPassword123!");
+        LoginRequest badRequest = new LoginRequest(user.getEmail(), "WrongPassword!");
+
+        // 5 failed attempts with different X-Forwarded-For headers from same remoteAddr ("127.0.0.1")
+        for (int i = 1; i <= 5; i++) {
+            mockMvc.perform(post("/api/auth/login")
+                            .header("X-Forwarded-For", "10.0.0." + i)
+                            .with(request -> {
+                                request.setRemoteAddr("192.0.2.1");
+                                return request;
+                            })
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(badRequest)))
+                    .andExpect(status().isUnauthorized());
+        }
+
+        // 6th attempt with another spoofed IP from the same remoteAddr -> 429
+        mockMvc.perform(post("/api/auth/login")
+                        .header("X-Forwarded-For", "10.0.0.99")
+                        .with(request -> {
+                            request.setRemoteAddr("192.0.2.1");
+                            return request;
+                        })
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(badRequest)))
                 .andExpect(status().isTooManyRequests())

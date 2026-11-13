@@ -1,10 +1,10 @@
 package com.eventra.auth;
 
 import com.eventra.auth.dto.LoginRequest;
+import com.eventra.auth.dto.RegisterRequest;
 import com.eventra.auth.dto.UserResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
-import org.springframework.core.env.Environment;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
@@ -13,7 +13,6 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Arrays;
 import java.util.Map;
 
 @RestController
@@ -24,7 +23,9 @@ public class AuthController {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final LoginRateLimiter rateLimiter;
-    private final Environment environment;
+    private final SignupRateLimiter signupRateLimiter;
+    private final SignupService signupService;
+    private final AuthCookieHelper cookieHelper;
 
     // Fixed dummy hash to ensure constant-time response for unknown email
     // BCrypt for dummy password "dummy_password_for_timing_protection"
@@ -34,12 +35,16 @@ public class AuthController {
                           PasswordEncoder passwordEncoder,
                           JwtService jwtService,
                           LoginRateLimiter rateLimiter,
-                          Environment environment) {
+                          SignupRateLimiter signupRateLimiter,
+                          SignupService signupService,
+                          AuthCookieHelper cookieHelper) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
         this.rateLimiter = rateLimiter;
-        this.environment = environment;
+        this.signupRateLimiter = signupRateLimiter;
+        this.signupService = signupService;
+        this.cookieHelper = cookieHelper;
     }
 
     @PostMapping("/login")
@@ -76,17 +81,7 @@ public class AuthController {
 
         // Generate token
         String token = jwtService.generateToken(user.getId(), user.getRole(), user.getTokenVersion());
-
-        boolean isDev = Arrays.asList(environment.getActiveProfiles()).contains("dev");
-        boolean secure = !isDev;
-
-        ResponseCookie cookie = ResponseCookie.from(JwtAuthenticationFilter.COOKIE_NAME, token)
-                .httpOnly(true)
-                .secure(secure)
-                .path("/")
-                .sameSite("Strict")
-                .maxAge(jwtService.getExpirySeconds())
-                .build();
+        ResponseCookie cookie = cookieHelper.createAuthCookie(token);
 
         UserResponse response = new UserResponse(user.getId(), user.getFullName(), user.getEmail(), user.getRole());
 
@@ -98,21 +93,35 @@ public class AuthController {
 
     @PostMapping("/logout")
     public ResponseEntity<?> logout() {
-        boolean isDev = Arrays.asList(environment.getActiveProfiles()).contains("dev");
-        boolean secure = !isDev;
-
-        ResponseCookie cookie = ResponseCookie.from(JwtAuthenticationFilter.COOKIE_NAME, "")
-                .httpOnly(true)
-                .secure(secure)
-                .path("/")
-                .sameSite("Strict")
-                .maxAge(0)
-                .build();
+        ResponseCookie cookie = cookieHelper.createLogoutCookie();
 
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, cookie.toString())
                 .header(HttpHeaders.CACHE_CONTROL, "no-store")
                 .body(Map.of("message", "Logged out successfully"));
+    }
+
+    @PostMapping("/register")
+    public ResponseEntity<?> register(@Valid @RequestBody RegisterRequest request, HttpServletRequest httpRequest) {
+        String clientIp = httpRequest.getRemoteAddr();
+
+        if (!signupRateLimiter.tryAcquire(clientIp)) {
+            return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+                    .header(HttpHeaders.CACHE_CONTROL, "no-store")
+                    .body(Map.of("error", "Too many attempts. Try again later."));
+        }
+
+        User user = signupService.registerVolunteer(request);
+
+        String token = jwtService.generateToken(user.getId(), user.getRole(), user.getTokenVersion());
+        ResponseCookie cookie = cookieHelper.createAuthCookie(token);
+
+        UserResponse response = new UserResponse(user.getId(), user.getFullName(), user.getEmail(), user.getRole());
+
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .header(HttpHeaders.SET_COOKIE, cookie.toString())
+                .header(HttpHeaders.CACHE_CONTROL, "no-store")
+                .body(response);
     }
 
     @GetMapping("/me")
@@ -136,10 +145,6 @@ public class AuthController {
     }
 
     private String getClientIp(HttpServletRequest request) {
-        String xf = request.getHeader("X-Forwarded-For");
-        if (xf != null && !xf.isBlank()) {
-            return xf.split(",")[0].trim();
-        }
         return request.getRemoteAddr();
     }
 }
