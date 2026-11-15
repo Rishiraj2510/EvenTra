@@ -84,7 +84,7 @@ public class VolunteerFieldValidator {
         if (rawSkills == null) {
             return null;
         }
-        if (rawSkills.size() > 30) {
+        if (rawSkills.size() > ModelValues.MAX_SKILLS) {
             throw new ValidationException("skills must not exceed 30 items");
         }
 
@@ -129,7 +129,7 @@ public class VolunteerFieldValidator {
         if (rawSlots == null) {
             return null;
         }
-        if (rawSlots.size() > 21) {
+        if (rawSlots.size() > ModelValues.MAX_AVAILABILITY_SLOTS) {
             throw new ValidationException("availability must not exceed 21 entries");
         }
 
@@ -182,7 +182,7 @@ public class VolunteerFieldValidator {
         if (rawInterests == null) {
             return null;
         }
-        if (rawInterests.size() > 20) {
+        if (rawInterests.size() > ModelValues.MAX_INTERESTS) {
             throw new ValidationException("interests must not exceed 20 items");
         }
 

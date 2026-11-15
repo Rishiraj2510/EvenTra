@@ -10,5 +10,6 @@ import java.util.UUID;
 public interface TaskRepository extends JpaRepository<Task, UUID> {
     List<Task> findByEventId(UUID eventId);
     long countByEventId(UUID eventId);
+    List<Task> findByEventIdOrderByTaskDateAscStartTimeAscIdAsc(UUID eventId);
 }
 
