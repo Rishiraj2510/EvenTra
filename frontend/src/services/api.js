@@ -17,8 +17,37 @@ import {
   resetMockRegistrations as resetMockRegs,
 } from '../mocks/registrationForms.js'
 import { isRegistrationOpen } from '../utils/registration.js'
+import { ALLOWED_EMAIL_DOMAIN } from '../config.js'
 
 export const USE_MOCKS = true
+
+const MOCK_VOLUNTEERS_STORAGE_KEY = 'eventra_mock_volunteers_v1'
+
+function getMockRegisteredVolunteers() {
+  try {
+    const raw = localStorage.getItem(MOCK_VOLUNTEERS_STORAGE_KEY)
+    if (raw) return JSON.parse(raw)
+  } catch {
+    // ignore
+  }
+  return []
+}
+
+function saveMockRegisteredVolunteers(volunteers) {
+  try {
+    localStorage.setItem(MOCK_VOLUNTEERS_STORAGE_KEY, JSON.stringify(volunteers))
+  } catch {
+    // ignore
+  }
+}
+
+export function resetMockRegisteredVolunteers() {
+  try {
+    localStorage.removeItem(MOCK_VOLUNTEERS_STORAGE_KEY)
+  } catch {
+    // ignore
+  }
+}
 
 // In-memory store for mocks during session
 let mockTasksStore = [...initialTasks]
@@ -60,6 +89,21 @@ export async function login(email, password) {
   if (USE_MOCKS) {
     await new Promise((resolve) => setTimeout(resolve, 350))
     const trimmed = email.trim().toLowerCase()
+
+    // Check if the user is a registered mock volunteer
+    const mockVolunteers = getMockRegisteredVolunteers()
+    const registeredUser = mockVolunteers.find((u) => u.email.toLowerCase() === trimmed)
+    if (registeredUser) {
+      return {
+        id: registeredUser.id,
+        name: registeredUser.name,
+        email: registeredUser.email,
+        role: 'volunteer',
+        displayRole: 'Student Volunteer',
+        volunteerId: registeredUser.volunteerId,
+      }
+    }
+
     // If logging in with volunteer credentials or volunteer email, return demoVolunteerUser
     if (trimmed.includes('volunteer') || trimmed === demoVolunteerUser.email.toLowerCase()) {
       return {
@@ -86,11 +130,98 @@ export async function login(email, password) {
     let errorMsg = `Login failed: ${response.statusText}`
     try {
       const errorData = await response.json()
-      if (errorData?.message) errorMsg = errorData.message
+      if (errorData?.error) errorMsg = errorData.error
+      else if (errorData?.message) errorMsg = errorData.message
     } catch {
       // Use fallback errorMsg
     }
     throw new Error(errorMsg)
+  }
+
+  return response.json()
+}
+
+export async function registerVolunteer({ fullName, email, password }) {
+  if (USE_MOCKS) {
+    await new Promise((resolve) => setTimeout(resolve, 350))
+
+    const cleanEmail = (email || '').trim().toLowerCase()
+    const cleanName = (fullName || '').trim()
+
+    const domain = `@${ALLOWED_EMAIL_DOMAIN.toLowerCase()}`
+    if (!cleanEmail.endsWith(domain)) {
+      const err = new Error('Sign-up is limited to college email addresses')
+      err.status = 400
+      throw err
+    }
+
+    // Check against demo accounts
+    if (
+      cleanEmail === demoUser.email.toLowerCase() ||
+      cleanEmail === demoVolunteerUser.email.toLowerCase()
+    ) {
+      const err = new Error('Email already registered')
+      err.status = 409
+      throw err
+    }
+
+    // Check against stored mock registered volunteers
+    const registered = getMockRegisteredVolunteers()
+    const exists = registered.some((u) => u.email.toLowerCase() === cleanEmail)
+    if (exists) {
+      const err = new Error('Email already registered')
+      err.status = 409
+      throw err
+    }
+
+    const newUser = {
+      id: `usr-vol-${Date.now()}`,
+      name: cleanName,
+      email: cleanEmail,
+      role: 'volunteer',
+      displayRole: 'Student Volunteer',
+      volunteerId: `vol-${Date.now()}`,
+    }
+
+    // Save to versioned mock storage (WITHOUT password)
+    registered.push({
+      id: newUser.id,
+      name: newUser.name,
+      email: newUser.email,
+      role: newUser.role,
+      volunteerId: newUser.volunteerId,
+      createdAt: new Date().toISOString(),
+    })
+    saveMockRegisteredVolunteers(registered)
+
+    return newUser
+  }
+
+  const response = await fetch('/api/auth/register', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Requested-With': 'EvenTra',
+    },
+    body: JSON.stringify({
+      fullName: (fullName || '').trim(),
+      email: (email || '').trim(),
+      password,
+    }),
+  })
+
+  if (!response.ok) {
+    let errorMsg = `Registration failed: ${response.statusText}`
+    try {
+      const errorData = await response.json()
+      if (errorData?.error) errorMsg = errorData.error
+      else if (errorData?.message) errorMsg = errorData.message
+    } catch {
+      // Use fallback errorMsg
+    }
+    const err = new Error(errorMsg)
+    err.status = response.status
+    throw err
   }
 
   return response.json()

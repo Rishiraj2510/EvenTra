@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate, Navigate } from 'react-router-dom'
+import { useNavigate, Navigate, Link } from 'react-router-dom'
 import { useAuth, getHomeRoute } from '../context/AuthContext'
 import { login, USE_MOCKS } from '../services/api'
 import { demoUser, demoVolunteerUser } from '../mocks/users'
@@ -295,6 +295,18 @@ export default function LoginPage() {
                     </>
                   )}
                 </button>
+              </div>
+
+              <div className="text-center pt-2">
+                <p className="font-body-sm text-body-sm text-on-surface-variant">
+                  Don't have an account?{' '}
+                  <Link
+                    to="/signup"
+                    className="font-medium text-primary hover:underline cursor-pointer"
+                  >
+                    Create an account
+                  </Link>
+                </p>
               </div>
             </form>
 

@@ -3,6 +3,7 @@ import { useAuth, getHomeRoute } from './context/AuthContext'
 import AppLayout from './components/layout/AppLayout'
 import ProtectedRoute from './components/layout/ProtectedRoute'
 import LoginPage from './pages/LoginPage'
+import SignUpPage from './pages/SignUpPage'
 import EventsPage from './pages/EventsPage'
 import TasksPage from './pages/TasksPage'
 import VolunteersPage from './pages/VolunteersPage'
@@ -24,8 +25,9 @@ export default function App() {
 
   return (
     <Routes>
-      {/* Public Login Route (outside AppLayout) */}
+      {/* Public Routes (outside AppLayout) */}
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/signup" element={<SignUpPage />} />
 
       {/* Protected AppLayout Routes */}
       <Route element={<ProtectedRoute />}>
