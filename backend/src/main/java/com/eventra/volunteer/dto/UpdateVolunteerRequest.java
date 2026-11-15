@@ -1,6 +1,7 @@
 package com.eventra.volunteer.dto;
 
 import com.eventra.model.AvailabilitySlot;
+import com.eventra.model.ModelValues;
 import com.eventra.model.SkillLevel;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -19,8 +20,8 @@ public class UpdateVolunteerRequest {
     @Size(max = 100, message = "department must not exceed 100 characters")
     private String department;
 
-    @Min(value = 1, message = "yearOfStudy must be between 1 and 6")
-    @Max(value = 6, message = "yearOfStudy must be between 1 and 6")
+    @Min(value = ModelValues.MIN_YEAR_OF_STUDY, message = "yearOfStudy must be between 1 and 4")
+    @Max(value = ModelValues.MAX_YEAR_OF_STUDY, message = "yearOfStudy must be between 1 and 4")
     private Integer yearOfStudy;
 
     private List<SkillLevel> skills;

@@ -588,7 +588,7 @@ class TaskAndVolunteerEndpointTests {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.error").exists());
 
-        // 4. yearOfStudy 0 and 7 -> 400
+        // 4. yearOfStudy 0 and 5 -> 400 (yearOfStudy must be between 1 and 4)
         UpdateVolunteerRequest badYear0 = new UpdateVolunteerRequest();
         badYear0.setYearOfStudy(0);
         mockMvc.perform(put("/api/volunteers/" + saved.getId())
@@ -596,16 +596,39 @@ class TaskAndVolunteerEndpointTests {
                         .header(CSRF_HEADER, CSRF_VALUE)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(badYear0)))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("yearOfStudy must be between 1 and 4"));
 
-        UpdateVolunteerRequest badYear7 = new UpdateVolunteerRequest();
-        badYear7.setYearOfStudy(7);
+        UpdateVolunteerRequest badYear5 = new UpdateVolunteerRequest();
+        badYear5.setYearOfStudy(5);
         mockMvc.perform(put("/api/volunteers/" + saved.getId())
                         .cookie(new Cookie("eventra_token", organiserToken))
                         .header(CSRF_HEADER, CSRF_VALUE)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(badYear7)))
-                .andExpect(status().isBadRequest());
+                        .content(objectMapper.writeValueAsString(badYear5)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("yearOfStudy must be between 1 and 4"));
+
+        // yearOfStudy 1 and 4 accepted
+        UpdateVolunteerRequest okYear1 = new UpdateVolunteerRequest();
+        okYear1.setYearOfStudy(1);
+        mockMvc.perform(put("/api/volunteers/" + saved.getId())
+                        .cookie(new Cookie("eventra_token", organiserToken))
+                        .header(CSRF_HEADER, CSRF_VALUE)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(okYear1)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.yearOfStudy").value(1));
+
+        UpdateVolunteerRequest okYear4 = new UpdateVolunteerRequest();
+        okYear4.setYearOfStudy(4);
+        mockMvc.perform(put("/api/volunteers/" + saved.getId())
+                        .cookie(new Cookie("eventra_token", organiserToken))
+                        .header(CSRF_HEADER, CSRF_VALUE)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(okYear4)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.yearOfStudy").value(4));
 
         // 5. maxHoursPerEvent 0 and 25 -> 400
         UpdateVolunteerRequest badHours0 = new UpdateVolunteerRequest();

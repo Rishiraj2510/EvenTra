@@ -3,6 +3,7 @@ package com.eventra.volunteer;
 import com.eventra.common.ValidationException;
 import com.eventra.event.EventNotFoundException;
 import com.eventra.event.EventRepository;
+import com.eventra.model.ModelValues;
 import com.eventra.volunteer.dto.UpdateVolunteerRequest;
 import com.eventra.volunteer.dto.VolunteerResponse;
 import org.springframework.stereotype.Service;
@@ -62,8 +63,8 @@ public class VolunteerService {
 
         // yearOfStudy
         if (req.getYearOfStudy() != null) {
-            if (req.getYearOfStudy() < 1 || req.getYearOfStudy() > 6) {
-                throw new ValidationException("yearOfStudy must be between 1 and 6");
+            if (req.getYearOfStudy() < ModelValues.MIN_YEAR_OF_STUDY || req.getYearOfStudy() > ModelValues.MAX_YEAR_OF_STUDY) {
+                throw new ValidationException("yearOfStudy must be between 1 and 4");
             }
             volunteer.setYearOfStudy(req.getYearOfStudy());
         }
