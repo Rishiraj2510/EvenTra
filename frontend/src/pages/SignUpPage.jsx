@@ -1,0 +1,443 @@
+import { useState } from 'react'
+import { Navigate, Link } from 'react-router-dom'
+import { useAuth, getHomeRoute } from '../context/AuthContext'
+import { registerVolunteer } from '../services/api'
+import { APP_NAME, ALLOWED_EMAIL_DOMAIN } from '../config'
+import logoMark from '../assets/logo-mark.svg'
+
+function getUtf8ByteLength(str) {
+  return new TextEncoder().encode(str).length
+}
+
+export default function SignUpPage() {
+  const { user, register } = useAuth()
+
+  const [fullName, setFullName] = useState('')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+
+  const [fieldErrors, setFieldErrors] = useState({
+    fullName: '',
+    email: '',
+    password: '',
+    confirmPassword: '',
+  })
+  const [submitError, setSubmitError] = useState('')
+  const [loading, setLoading] = useState(false)
+
+  // Route protection: if already logged in, redirect based on role
+  if (user) {
+    return <Navigate to={getHomeRoute(user.role)} replace />
+  }
+
+  const validate = () => {
+    const errors = { fullName: '', email: '', password: '', confirmPassword: '' }
+    let isValid = true
+
+    // Full name 2-100 characters
+    const trimmedName = fullName.trim()
+    if (!trimmedName) {
+      errors.fullName = 'Full name is required'
+      isValid = false
+    } else if (trimmedName.length < 2 || trimmedName.length > 100) {
+      errors.fullName = 'Full name must be between 2 and 100 characters'
+      isValid = false
+    }
+
+    // Email must end exactly with @acropolis.in (case-insensitive, trimmed)
+    const trimmedEmail = email.trim()
+    const requiredSuffix = `@${ALLOWED_EMAIL_DOMAIN.toLowerCase()}`
+    if (!trimmedEmail) {
+      errors.email = 'College email address is required'
+      isValid = false
+    } else if (
+      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail) ||
+      !trimmedEmail.toLowerCase().endsWith(requiredSuffix)
+    ) {
+      errors.email = `Email must be a valid college address ending with @${ALLOWED_EMAIL_DOMAIN}`
+      isValid = false
+    }
+
+    // Password at least 10 chars, at most 72 bytes in UTF-8
+    if (!password) {
+      errors.password = 'Password is required'
+      isValid = false
+    } else if (password.length < 10) {
+      errors.password = 'Password must be at least 10 characters'
+      isValid = false
+    } else if (getUtf8ByteLength(password) > 72) {
+      errors.password = 'Password must not exceed 72 bytes'
+      isValid = false
+    }
+
+    // Confirm password must match
+    if (!confirmPassword) {
+      errors.confirmPassword = 'Confirm your password'
+      isValid = false
+    } else if (password !== confirmPassword) {
+      errors.confirmPassword = 'Passwords do not match'
+      isValid = false
+    }
+
+    setFieldErrors(errors)
+    return isValid
+  }
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    setSubmitError('')
+
+    if (!validate()) {
+      return
+    }
+
+    setLoading(true)
+    try {
+      const newUser = await registerVolunteer({
+        fullName: fullName.trim(),
+        email: email.trim(),
+        password,
+      })
+      register(newUser)
+    } catch (err) {
+      const message =
+        err?.message ||
+        'Registration failed. Please check your information and try again.'
+      setSubmitError(message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <main className="min-h-screen w-full flex flex-col justify-center items-center p-0 bg-surface font-body-md text-body-md text-on-surface antialiased selection:bg-primary-container selection:text-on-primary">
+      <div className="flex flex-col w-full items-center justify-center p-4 md:p-8">
+        <div className="w-full max-w-6xl grid grid-cols-1 lg:grid-cols-12 rounded-xl shadow-xl overflow-hidden bg-surface-container-lowest">
+          {/* Left Branded Panel (5 cols on lg) */}
+          <div className="lg:col-span-5 bg-gradient-to-br from-primary via-primary-container to-on-primary-fixed-variant p-8 md:p-12 flex flex-col justify-between relative overflow-hidden text-on-primary">
+            {/* Decorative Backdrop Geometry */}
+            <div className="absolute -right-20 -top-20 w-80 h-80 rounded-full bg-white/5 blur-2xl pointer-events-none" />
+            <div className="absolute -left-20 -bottom-20 w-96 h-96 rounded-full bg-primary/30 blur-3xl pointer-events-none" />
+
+            {/* Header & Brand Mark */}
+            <div className="relative z-10">
+              <div className="flex items-center gap-3">
+                <img
+                  src={logoMark}
+                  alt={APP_NAME}
+                  className="w-10 h-10 rounded-lg shadow-sm"
+                />
+                <div className="flex flex-col">
+                  <span className="font-headline-md text-headline-md tracking-tight font-bold text-white leading-none">
+                    {APP_NAME}
+                  </span>
+                  <span className="font-label-sm text-label-sm text-primary-fixed-dim uppercase tracking-wider mt-1">
+                    Coordination Grid
+                  </span>
+                </div>
+              </div>
+
+              <div className="mt-14">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md text-secondary-fixed text-label-sm font-label-sm mb-4">
+                  <span className="material-symbols-outlined text-sm">volunteer_activism</span>
+                  <span>Student Volunteer Portal</span>
+                </div>
+                <h1 className="font-headline-xl text-headline-xl text-white tracking-tight leading-tight">
+                  Join the team.<br />Make an impact.
+                </h1>
+                <p className="font-body-md text-body-md text-primary-fixed-dim mt-4 leading-relaxed max-w-md">
+                  Register with your collegiate email address to join campus event rosters and receive smart duty allocations.
+                </p>
+              </div>
+            </div>
+
+            {/* Mesh Graphic */}
+            <div className="relative z-10 my-8 py-4 flex justify-center items-center">
+              <svg
+                className="w-full max-w-xs h-48 drop-shadow-md"
+                fill="none"
+                viewBox="0 0 320 200"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M50 100 L120 45 M50 100 L120 155 M120 45 L200 70 M120 155 L200 130 M200 70 L270 100 M200 130 L270 100 M120 45 L120 155 M200 70 L200 130"
+                  stroke="rgba(255,255,255,0.22)"
+                  strokeDasharray="4 4"
+                  strokeWidth="2"
+                />
+                <path d="M50 100 Q160 100 270 100" stroke="rgba(111,251,190,0.6)" strokeWidth="2" />
+                <circle cx="50" cy="100" fill="rgba(255,255,255,0.12)" r="18" />
+                <circle cx="50" cy="100" fill="#c3c0ff" r="10" />
+                <circle cx="120" cy="45" fill="rgba(255,255,255,0.15)" r="14" />
+                <circle cx="120" cy="45" fill="#6ffbbe" r="7" />
+                <circle cx="120" cy="155" fill="rgba(255,255,255,0.15)" r="14" />
+                <circle cx="120" cy="155" fill="#dad7ff" r="7" />
+                <circle cx="160" cy="100" fill="rgba(255,255,255,0.1)" r="24" />
+                <circle cx="160" cy="100" fill="#4f46e5" r="16" stroke="rgba(255,255,255,0.8)" strokeWidth="2" />
+                <text
+                  fill="#ffffff"
+                  fontFamily="Inter, sans-serif"
+                  fontSize="10"
+                  fontWeight="700"
+                  textAnchor="middle"
+                  x="160"
+                  y="104"
+                >
+                  AI
+                </text>
+                <circle cx="200" cy="70" fill="rgba(255,255,255,0.15)" r="14" />
+                <circle cx="200" cy="70" fill="#dad7ff" r="7" />
+                <circle cx="200" cy="130" fill="rgba(255,255,255,0.15)" r="14" />
+                <circle cx="200" cy="130" fill="#6ffbbe" r="7" />
+                <circle cx="270" cy="100" fill="rgba(255,255,255,0.12)" r="18" />
+                <circle cx="270" cy="100" fill="#6ffbbe" r="10" />
+              </svg>
+            </div>
+          </div>
+
+          {/* Right Panel: Sign Up Form Container (7 cols on lg) */}
+          <div className="lg:col-span-7 p-6 sm:p-10 md:p-12 flex flex-col justify-center bg-surface-container-lowest">
+            {/* Top Header & Context */}
+            <div className="flex items-center justify-between mb-8">
+              <div className="flex items-center gap-2.5">
+                <img
+                  alt={APP_NAME}
+                  className="h-8 w-8 object-contain"
+                  src={logoMark}
+                />
+                <span className="font-semibold text-lg tracking-tight text-on-surface">
+                  {APP_NAME}
+                </span>
+              </div>
+              <div className="flex items-center gap-2 text-on-surface-variant font-label-sm text-label-sm bg-surface-container-low px-3 py-1.5 rounded-full">
+                <span className="w-2 h-2 rounded-full bg-secondary" />
+                <span>Collegiate Portal Online</span>
+              </div>
+            </div>
+
+            <div className="mb-6">
+              <h2 className="font-headline-lg text-headline-lg font-bold text-on-surface tracking-tight" id="signupHeading">
+                Create an account
+              </h2>
+              <p className="font-body-md text-body-md text-on-surface-variant mt-1" id="signupSubheading">
+                Sign up as a student volunteer using your college email address.
+              </p>
+            </div>
+
+            {/* SIGN UP FORM */}
+            <form className="flex flex-col space-y-4" id="signupForm" onSubmit={handleSubmit} noValidate>
+              {/* Full Name */}
+              <div>
+                <label className="block font-label-md text-label-md font-medium text-on-surface mb-1" htmlFor="signupFullName">
+                  Full Name
+                </label>
+                <div className="relative">
+                  <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-on-surface-variant">
+                    <span className="material-symbols-outlined text-xl">person</span>
+                  </span>
+                  <input
+                    id="signupFullName"
+                    type="text"
+                    value={fullName}
+                    onChange={(e) => {
+                      setFullName(e.target.value)
+                      if (fieldErrors.fullName) setFieldErrors((prev) => ({ ...prev, fullName: '' }))
+                    }}
+                    placeholder="e.g. John Doe"
+                    disabled={loading}
+                    className={`w-full h-10 pl-11 pr-4 rounded-lg bg-surface-container-lowest text-on-surface placeholder:text-outline font-body-md text-body-md shadow-sm outline-none transition-colors ${
+                      fieldErrors.fullName
+                        ? 'border border-error focus:border-error'
+                        : 'border border-outline-variant/40 focus:bg-surface-container-low'
+                    }`}
+                  />
+                </div>
+                {fieldErrors.fullName && (
+                  <p className="font-body-sm text-body-sm text-error mt-1">{fieldErrors.fullName}</p>
+                )}
+              </div>
+
+              {/* College Email */}
+              <div>
+                <label className="block font-label-md text-label-md font-medium text-on-surface mb-1" htmlFor="signupEmail">
+                  College Email Address
+                </label>
+                <div className="relative">
+                  <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-on-surface-variant">
+                    <span className="material-symbols-outlined text-xl">alternate_email</span>
+                  </span>
+                  <input
+                    id="signupEmail"
+                    type="email"
+                    value={email}
+                    onChange={(e) => {
+                      setEmail(e.target.value)
+                      if (fieldErrors.email) setFieldErrors((prev) => ({ ...prev, email: '' }))
+                    }}
+                    placeholder={`username@${ALLOWED_EMAIL_DOMAIN}`}
+                    disabled={loading}
+                    className={`w-full h-10 pl-11 pr-4 rounded-lg bg-surface-container-lowest text-on-surface placeholder:text-outline font-body-md text-body-md shadow-sm outline-none transition-colors ${
+                      fieldErrors.email
+                        ? 'border border-error focus:border-error'
+                        : 'border border-outline-variant/40 focus:bg-surface-container-low'
+                    }`}
+                  />
+                </div>
+                {fieldErrors.email ? (
+                  <p className="font-body-sm text-body-sm text-error mt-1">{fieldErrors.email}</p>
+                ) : (
+                  <p className="font-label-sm text-label-sm text-outline mt-1">
+                    Must end with @{ALLOWED_EMAIL_DOMAIN}
+                  </p>
+                )}
+              </div>
+
+              {/* Password */}
+              <div>
+                <label className="block font-label-md text-label-md font-medium text-on-surface mb-1" htmlFor="signupPassword">
+                  Password
+                </label>
+                <div className="relative">
+                  <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-on-surface-variant">
+                    <span className="material-symbols-outlined text-xl">lock</span>
+                  </span>
+                  <input
+                    id="signupPassword"
+                    type={showPassword ? 'text' : 'password'}
+                    value={password}
+                    onChange={(e) => {
+                      setPassword(e.target.value)
+                      if (fieldErrors.password) setFieldErrors((prev) => ({ ...prev, password: '' }))
+                    }}
+                    placeholder="At least 10 characters"
+                    disabled={loading}
+                    className={`w-full h-10 pl-11 pr-11 rounded-lg bg-surface-container-lowest text-on-surface placeholder:text-outline font-body-md text-body-md shadow-sm outline-none transition-colors ${
+                      fieldErrors.password
+                        ? 'border border-error focus:border-error'
+                        : 'border border-outline-variant/40 focus:bg-surface-container-low'
+                    }`}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((prev) => !prev)}
+                    className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-on-surface-variant hover:text-on-surface cursor-pointer"
+                    aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  >
+                    <span className="material-symbols-outlined text-xl">
+                      {showPassword ? 'visibility_off' : 'visibility'}
+                    </span>
+                  </button>
+                </div>
+                {fieldErrors.password && (
+                  <p className="font-body-sm text-body-sm text-error mt-1">{fieldErrors.password}</p>
+                )}
+              </div>
+
+              {/* Confirm Password */}
+              <div>
+                <label className="block font-label-md text-label-md font-medium text-on-surface mb-1" htmlFor="signupConfirmPassword">
+                  Confirm Password
+                </label>
+                <div className="relative">
+                  <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-on-surface-variant">
+                    <span className="material-symbols-outlined text-xl">lock_reset</span>
+                  </span>
+                  <input
+                    id="signupConfirmPassword"
+                    type={showConfirmPassword ? 'text' : 'password'}
+                    value={confirmPassword}
+                    onChange={(e) => {
+                      setConfirmPassword(e.target.value)
+                      if (fieldErrors.confirmPassword) setFieldErrors((prev) => ({ ...prev, confirmPassword: '' }))
+                    }}
+                    placeholder="Re-enter your password"
+                    disabled={loading}
+                    className={`w-full h-10 pl-11 pr-11 rounded-lg bg-surface-container-lowest text-on-surface placeholder:text-outline font-body-md text-body-md shadow-sm outline-none transition-colors ${
+                      fieldErrors.confirmPassword
+                        ? 'border border-error focus:border-error'
+                        : 'border border-outline-variant/40 focus:bg-surface-container-low'
+                    }`}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword((prev) => !prev)}
+                    className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-on-surface-variant hover:text-on-surface cursor-pointer"
+                    aria-label={showConfirmPassword ? 'Hide confirm password' : 'Show confirm password'}
+                  >
+                    <span className="material-symbols-outlined text-xl">
+                      {showConfirmPassword ? 'visibility_off' : 'visibility'}
+                    </span>
+                  </button>
+                </div>
+                {fieldErrors.confirmPassword && (
+                  <p className="font-body-sm text-body-sm text-error mt-1">{fieldErrors.confirmPassword}</p>
+                )}
+              </div>
+
+              {/* Inline Error Notice Banner */}
+              {submitError && (
+                <div
+                  className="flex items-start gap-3 p-3.5 rounded-xl bg-error-container text-on-error-container"
+                  id="signupAlert"
+                >
+                  <span className="material-symbols-outlined text-xl flex-shrink-0 text-error">error</span>
+                  <div className="flex-1">
+                    <p className="font-label-md text-label-md font-semibold text-error">Registration failed</p>
+                    <p className="font-body-sm text-body-sm mt-0.5 text-on-error-container">{submitError}</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Submit Button */}
+              <div className="pt-2">
+                <button
+                  id="signupSubmitBtn"
+                  type="submit"
+                  disabled={loading}
+                  className="w-full h-10 bg-primary-container text-on-primary rounded-lg font-label-lg text-label-lg font-medium shadow-md hover:bg-primary transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99] disabled:opacity-60 disabled:cursor-not-allowed"
+                >
+                  {loading ? (
+                    <>
+                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path
+                          className="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                        />
+                      </svg>
+                      <span>Creating account...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>Sign up</span>
+                      <span className="material-symbols-outlined text-lg">arrow_forward</span>
+                    </>
+                  )}
+                </button>
+              </div>
+
+              {/* Back to Login link */}
+              <div className="text-center pt-2">
+                <p className="font-body-sm text-body-sm text-on-surface-variant">
+                  Already have an account?{' '}
+                  <Link
+                    to="/login"
+                    className="font-medium text-primary hover:underline cursor-pointer"
+                  >
+                    Log in
+                  </Link>
+                </p>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </main>
+  )
+}
+

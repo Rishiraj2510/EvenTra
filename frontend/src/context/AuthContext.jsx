@@ -18,7 +18,7 @@ export function AuthProvider({ children }) {
     setRole(assignedRole)
     const userObj = {
       id: userData?.id || 'usr-1',
-      name: userData?.name || 'Rishiraj Jhawar',
+      name: userData?.fullName || userData?.name || 'Rishiraj Jhawar',
       email: userData?.email || 'rishiraj@college.edu',
       role: assignedRole,
       displayRole: assignedRole === 'organiser' ? 'Lead Organiser' : 'Student Volunteer',
@@ -31,6 +31,12 @@ export function AuthProvider({ children }) {
     } catch {
       // storage unavailable or quota exceeded
     }
+  }
+
+  const register = (userData) => {
+    loginUser(userData)
+    const targetRole = userData?.role || 'volunteer'
+    navigate(getHomeRoute(targetRole), { replace: true })
   }
 
   const logout = () => {
@@ -81,6 +87,7 @@ export function AuthProvider({ children }) {
         setSelectedEventId,
         setUser,
         loginUser,
+        register,
         logout,
         logoutUser,
         setRole,
