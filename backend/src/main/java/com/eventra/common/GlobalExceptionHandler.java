@@ -3,6 +3,8 @@ package com.eventra.common;
 import com.eventra.event.EventConflictException;
 import com.eventra.event.EventNotFoundException;
 import com.eventra.settings.SettingsNotFoundException;
+import com.eventra.task.TaskNotFoundException;
+import com.eventra.volunteer.VolunteerNotFoundException;
 import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,6 +39,18 @@ public class GlobalExceptionHandler {
                 .body(Map.of("error", ex.getMessage()));
     }
 
+    @ExceptionHandler(TaskNotFoundException.class)
+    public ResponseEntity<Map<String, String>> handleTaskNotFound(TaskNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(Map.of("error", ex.getMessage()));
+    }
+
+    @ExceptionHandler(VolunteerNotFoundException.class)
+    public ResponseEntity<Map<String, String>> handleVolunteerNotFound(VolunteerNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(Map.of("error", ex.getMessage()));
+    }
+
     @ExceptionHandler(SettingsNotFoundException.class)
     public ResponseEntity<Map<String, String>> handleSettingsNotFound(SettingsNotFoundException ex) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
@@ -61,8 +75,8 @@ public class GlobalExceptionHandler {
                 .body(Map.of("error", "Conflict with existing data"));
     }
 
-    @ExceptionHandler(EventValidationException.class)
-    public ResponseEntity<Map<String, String>> handleEventValidation(EventValidationException ex) {
+    @ExceptionHandler({EventValidationException.class, ValidationException.class})
+    public ResponseEntity<Map<String, String>> handleEventValidation(RuntimeException ex) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(Map.of("error", ex.getMessage()));
     }
