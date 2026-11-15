@@ -1,6 +1,7 @@
 package com.eventra.scoring;
 
 import com.eventra.model.AvailabilitySlot;
+import com.eventra.model.ModelValues;
 import com.eventra.model.SkillLevel;
 import com.eventra.scoring.model.FitBreakdown;
 import com.eventra.scoring.model.FitResult;
@@ -14,6 +15,7 @@ import org.junit.jupiter.api.Test;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 import java.util.UUID;
@@ -40,7 +42,7 @@ class ScoringServiceTest {
         SolverVolunteer volunteer = new SolverVolunteer(
                 UUID.randomUUID(),
                 "Alice Perfect",
-                List.of(new SkillLevel("Sound", "expert")),
+                List.of(new SkillLevel("Sound", "Advanced")),
                 5, // pastEventsCount: min(5 / 5.0, 1.0) = 1.0
                 5.0, // averageRating: 5.0 / 5.0 = 1.0
                 List.of(new AvailabilitySlot("Monday", "Morning")),
@@ -98,7 +100,7 @@ class ScoringServiceTest {
         SolverVolunteer volunteer = new SolverVolunteer(
                 UUID.randomUUID(),
                 "Bob Partial",
-                List.of(new SkillLevel("Java", "intermediate")), // intermediate = 0.50
+                List.of(new SkillLevel("Java", "Intermediate")), // Intermediate = 2/3
                 2, // pastEventsCount: min(2 / 5.0, 1.0) = 0.4
                 null, // null rating -> performance = 0.5
                 List.of(new AvailabilitySlot("Monday", "Morning")),
@@ -125,23 +127,23 @@ class ScoringServiceTest {
 
         // Arithmetic hand calculation:
         // - Task skills: mandatory ["Java"], preferred ["Docker"] -> 2 skills total
-        //   Volunteer has "Java" at intermediate (0.50) and lacks "Docker" (0.0)
-        //   skillFactor = (0.50 + 0.0) / 2 = 0.25
+        //   Volunteer has "Java" at Intermediate (2/3) and lacks "Docker" (0.0)
+        //   skillFactor = (2/3 + 0.0) / 2 = 1/3
         // - pastEventsCount = 2 -> experienceFactor = 2 / 5.0 = 0.4
         // - averageRating = null -> performanceFactor = 0.5
         // - loadFactor = 1.0
-        // - interest "Music" matches neither skills ("Java", "Docker") nor title words ("Backend", "Architecture", "Workshop")
+        // - interest "Music" matches neither skills ("Java", "Docker") nor title words
         //   -> interestFactor = 0.0
         // Base weights: wS=45, wE=15, wP=15, wL=15, wI=10
-        // fit = (45 * 0.25) + (15 * 0.4) + (15 * 0.5) + (15 * 1.0) + (10 * 0.0)
-        //     = 11.25 + 6.0 + 7.5 + 15.0 + 0.0
-        //     = 39.75
+        // fit = (45 * (1/3)) + (15 * 0.4) + (15 * 0.5) + (15 * 1.0) + (10 * 0.0)
+        //     = 15.0 + 6.0 + 7.5 + 15.0 + 0.0
+        //     = 43.5
         // pastEventsCount = 2 != 0 -> firstTimerBonus = 0
-        // Total expected fit = 39.75
-        assertEquals(39.75, result.fit(), 1e-9);
+        // Total expected fit = 43.5
+        assertEquals(43.5, result.fit(), 1e-9);
 
         assertNotNull(result.breakdown());
-        assertEquals(0.25, result.breakdown().skill(), 1e-9);
+        assertEquals(1.0 / 3.0, result.breakdown().skill(), 1e-9);
         assertEquals(0.4, result.breakdown().experience(), 1e-9);
         assertEquals(0.5, result.breakdown().performance(), 1e-9);
         assertEquals(1.0, result.breakdown().load(), 1e-9);
@@ -156,7 +158,7 @@ class ScoringServiceTest {
         SolverVolunteer volunteer = new SolverVolunteer(
                 UUID.randomUUID(),
                 "Charlie",
-                List.of(new SkillLevel("Lighting", "advanced")),
+                List.of(new SkillLevel("Lighting", "Advanced")),
                 3,
                 4.0,
                 List.of(new AvailabilitySlot("Monday", "Morning")),
@@ -280,7 +282,7 @@ class ScoringServiceTest {
         );
         assertTrue(ScoringService.score(volunteer, exactTask, DEFAULT_CONFIG).feasible());
 
-        // 4 hours and 1 minute: 08:00 to 12:01 -> 241 / 60.0 = 4.016666667 hours > 4 -> infeasible
+        // 4 hours and 1 minute: 08:00 to 12:01 -> 241 minutes > 4 hours -> infeasible
         SolverTask oneMinuteMoreTask = new SolverTask(
                 UUID.randomUUID(), "4h 1m Task", monday,
                 LocalTime.of(8, 0), LocalTime.of(12, 1), 1, List.of(), List.of(), false
@@ -317,7 +319,7 @@ class ScoringServiceTest {
         // Volunteer has strong experience and performance, but weak skill
         SolverVolunteer volunteer = new SolverVolunteer(
                 UUID.randomUUID(), "Emma",
-                List.of(new SkillLevel("Audio", "beginner")), // beginner = 0.25
+                List.of(new SkillLevel("Audio", "Beginner")), // Beginner = 1/3
                 5, // pastEventsCount = 5 -> experienceFactor = 1.0
                 5.0, // averageRating = 5.0 -> performanceFactor = 1.0
                 List.of(new AvailabilitySlot("Monday", "Morning")),
@@ -341,10 +343,10 @@ class ScoringServiceTest {
         FitResult criticalResult = ScoringService.score(volunteer, criticalTask, DEFAULT_CONFIG);
 
         // Arithmetic hand calculation for base weights (45 / 15 / 15 / 15 / 10):
-        // skillFactor = 0.25, expFactor = 1.0, perfFactor = 1.0, loadFactor = 1.0, interestFactor = 0.0
-        // nonCritical fit = (45 * 0.25) + (15 * 1.0) + (15 * 1.0) + (15 * 1.0) + (10 * 0.0)
-        //                 = 11.25 + 15.0 + 15.0 + 15.0 + 0.0 = 56.25
-        assertEquals(56.25, nonCriticalResult.fit(), 1e-9);
+        // skillFactor = 1/3, expFactor = 1.0, perfFactor = 1.0, loadFactor = 1.0, interestFactor = 0.0
+        // nonCritical fit = (45 * (1/3)) + (15 * 1.0) + (15 * 1.0) + (15 * 1.0) + (10 * 0.0)
+        //                 = 15.0 + 15.0 + 15.0 + 15.0 + 0.0 = 60.0
+        assertEquals(60.0, nonCriticalResult.fit(), 1e-9);
 
         // Arithmetic hand calculation for critical task:
         // Base weights: wS = 45, wE = 15, wP = 15, wL = 15, wI = 10
@@ -353,23 +355,23 @@ class ScoringServiceTest {
         // wP' = 15 * 1.5 = 22.5
         // Sum of unnormalized weights = 45 + 22.5 + 22.5 + 15 + 10 = 115.0
         // Rescaled weights (each multiplied by 100 / 115.0):
-        // wS_rescaled = (45 / 115.0) * 100.0 = 4500.0 / 115.0 = 900.0 / 23.0 ≈ 39.1304347826
-        // wE_rescaled = (22.5 / 115.0) * 100.0 = 2250.0 / 115.0 = 450.0 / 23.0 ≈ 19.5652173913
-        // wP_rescaled = (22.5 / 115.0) * 100.0 = 2250.0 / 115.0 = 450.0 / 23.0 ≈ 19.5652173913
-        // wL_rescaled = (15 / 115.0) * 100.0 = 1500.0 / 115.0 = 300.0 / 23.0 ≈ 13.0434782608
-        // wI_rescaled = (10 / 115.0) * 100.0 = 1000.0 / 115.0 = 200.0 / 23.0 ≈ 8.6956521739
+        // wS_rescaled = (45 / 115.0) * 100.0 = 4500.0 / 115.0 = 900.0 / 23.0 ~ 39.1304347826
+        // wE_rescaled = (22.5 / 115.0) * 100.0 = 2250.0 / 115.0 = 450.0 / 23.0 ~ 19.5652173913
+        // wP_rescaled = (22.5 / 115.0) * 100.0 = 2250.0 / 115.0 = 450.0 / 23.0 ~ 19.5652173913
+        // wL_rescaled = (15 / 115.0) * 100.0 = 1500.0 / 115.0 = 300.0 / 23.0 ~ 13.0434782608
+        // wI_rescaled = (10 / 115.0) * 100.0 = 1000.0 / 115.0 = 200.0 / 23.0 ~ 8.6956521739
         // Sum check: (900 + 450 + 450 + 300 + 200) / 23.0 = 2300.0 / 23.0 = 100.0 exactly!
         double rescaledSum = (900.0 / 23.0) + (450.0 / 23.0) + (450.0 / 23.0) + (300.0 / 23.0) + (200.0 / 23.0);
         assertEquals(100.0, rescaledSum, 1e-9);
 
-        // Critical fit = (900.0 / 23.0) * 0.25 + (450.0 / 23.0) * 1.0 + (450.0 / 23.0) * 1.0
+        // Critical fit = (900.0 / 23.0) * (1/3) + (450.0 / 23.0) * 1.0 + (450.0 / 23.0) * 1.0
         //              + (300.0 / 23.0) * 1.0 + (200.0 / 23.0) * 0.0
-        //              = (225.0 + 450.0 + 450.0 + 300.0 + 0.0) / 23.0
-        //              = 1425.0 / 23.0 ≈ 61.95652173913044
-        double expectedCriticalFit = 1425.0 / 23.0;
+        //              = (300.0 + 450.0 + 450.0 + 300.0) / 23.0
+        //              = 1500.0 / 23.0 ~ 65.2173913
+        double expectedCriticalFit = 1500.0 / 23.0;
         assertEquals(expectedCriticalFit, criticalResult.fit(), 1e-9);
 
-        // Verification of expected direction: 61.9565... > 56.25 (increased due to higher exp & perf weighting)
+        // Verification of expected direction: 65.217... > 60.0 (increased due to higher exp & perf weighting)
         assertTrue(criticalResult.fit() > nonCriticalResult.fit());
         assertTrue(criticalResult.flags().contains("Critical task"));
     }
@@ -383,7 +385,7 @@ class ScoringServiceTest {
         // First timer volunteer (pastEventsCount == 0)
         SolverVolunteer firstTimer = new SolverVolunteer(
                 UUID.randomUUID(), "Frank FirstTimer",
-                List.of(new SkillLevel("Java", "intermediate")), // intermediate = 0.50
+                List.of(new SkillLevel("Java", "Intermediate")), // Intermediate = 2/3
                 0, // pastEventsCount = 0 -> experienceFactor = 0.0
                 null, // null rating -> performanceFactor = 0.5
                 List.of(new AvailabilitySlot("Monday", "Morning")),
@@ -400,11 +402,11 @@ class ScoringServiceTest {
         FitResult nonCriticalResult = ScoringService.score(firstTimer, nonCriticalTask, configWithBonus);
 
         // Arithmetic hand calculation:
-        // skillFactor = 0.50, expFactor = 0.0, perfFactor = 0.5, loadFactor = 1.0, interestFactor = 0.0
-        // Base fit = (45 * 0.50) + (15 * 0.0) + (15 * 0.5) + (15 * 1.0) + (10 * 0.0)
-        //          = 22.5 + 0.0 + 7.5 + 15.0 + 0.0 = 45.0
-        // firstTimerBonus = 15 -> fit with bonus = 45.0 + 15.0 = 60.0
-        assertEquals(60.0, nonCriticalResult.fit(), 1e-9);
+        // skillFactor = 2/3, expFactor = 0.0, perfFactor = 0.5, loadFactor = 1.0, interestFactor = 0.0
+        // Base fit = (45 * (2/3)) + (15 * 0.0) + (15 * 0.5) + (15 * 1.0) + (10 * 0.0)
+        //          = 30.0 + 0.0 + 7.5 + 15.0 + 0.0 = 52.5
+        // firstTimerBonus = 15 -> fit with bonus = 52.5 + 15.0 = 67.5
+        assertEquals(67.5, nonCriticalResult.fit(), 1e-9);
         assertTrue(nonCriticalResult.flags().contains("First-timer"));
 
         // Critical task: first-timer bonus must NOT apply
@@ -416,19 +418,19 @@ class ScoringServiceTest {
         FitResult criticalResult = ScoringService.score(firstTimer, criticalTask, configWithBonus);
 
         // Arithmetic hand calculation for critical task (weights: 900/23, 450/23, 450/23, 300/23, 200/23):
-        // fit = (900/23 * 0.50) + (450/23 * 0.0) + (450/23 * 0.5) + (300/23 * 1.0) + 0.0
-        //     = (450.0 + 0.0 + 225.0 + 300.0) / 23.0
-        //     = 975.0 / 23.0 ≈ 42.3913043478
+        // fit = (900/23 * (2/3)) + (450/23 * 0.0) + (450/23 * 0.5) + (300/23 * 1.0) + 0.0
+        //     = (600.0 + 0.0 + 225.0 + 300.0) / 23.0
+        //     = 1125.0 / 23.0 ~ 48.913043478
         // No bonus applied because task is critical!
-        double expectedCriticalFit = 975.0 / 23.0;
+        double expectedCriticalFit = 1125.0 / 23.0;
         assertEquals(expectedCriticalFit, criticalResult.fit(), 1e-9);
         assertTrue(criticalResult.flags().contains("Critical task"));
         assertFalse(criticalResult.flags().contains("First-timer"));
 
-        // Cap at 100: perfect non-critical volunteer (base fit = 97.5) + bonus 15 = 112.5 -> capped to 100.0
+        // Cap test: uses Java Advanced, base 85.0, bonus 20, capped 100.0
         SolverVolunteer nearPerfectFirstTimer = new SolverVolunteer(
                 UUID.randomUUID(), "Grace",
-                List.of(new SkillLevel("Java", "expert")), // expert = 1.0
+                List.of(new SkillLevel("Java", "Advanced")), // Advanced = 1.0
                 0, // pastEventsCount = 0 -> exp = 0.0
                 5.0, // averageRating = 5.0 -> perf = 1.0
                 List.of(new AvailabilitySlot("Monday", "Morning")),
@@ -452,7 +454,7 @@ class ScoringServiceTest {
 
         SolverVolunteer volunteer = new SolverVolunteer(
                 UUID.randomUUID(), "Hannah",
-                List.of(new SkillLevel("  pYtHon  ", "  AdVaNcEd  ")), // advanced = 0.75
+                List.of(new SkillLevel("  pYtHon  ", "  InTeRmEdIaTe  ")), // Intermediate = 2/3
                 5, // exp = 1.0
                 5.0, // perf = 1.0
                 List.of(new AvailabilitySlot("  Monday  ", "  Morning  ")),
@@ -470,12 +472,12 @@ class ScoringServiceTest {
         assertTrue(result.feasible());
 
         // Arithmetic hand calculation:
-        // skillFactor = 0.75, expFactor = 1.0, perfFactor = 1.0, loadFactor = 1.0, interestFactor = 1.0
+        // skillFactor = 2/3, expFactor = 1.0, perfFactor = 1.0, loadFactor = 1.0, interestFactor = 1.0
         // Base weights: 45 / 15 / 15 / 15 / 10
-        // fit = (45 * 0.75) + (15 * 1.0) + (15 * 1.0) + (15 * 1.0) + (10 * 1.0)
-        //     = 33.75 + 15.0 + 15.0 + 15.0 + 10.0 = 88.75
-        assertEquals(88.75, result.fit(), 1e-9);
-        assertEquals(0.75, result.breakdown().skill(), 1e-9);
+        // fit = (45 * (2/3)) + (15 * 1.0) + (15 * 1.0) + (15 * 1.0) + (10 * 1.0)
+        //     = 30.0 + 15.0 + 15.0 + 15.0 + 10.0 = 85.0
+        assertEquals(85.0, result.fit(), 1e-9);
+        assertEquals(2.0 / 3.0, result.breakdown().skill(), 1e-9);
         assertEquals(1.0, result.breakdown().interest(), 1e-9);
     }
 
@@ -542,7 +544,7 @@ class ScoringServiceTest {
         LocalDate monday = LocalDate.of(2026, 11, 16);
         SolverVolunteer volunteer = new SolverVolunteer(
                 UUID.randomUUID(), "Deterministic Volunteer",
-                List.of(new SkillLevel("Java", "advanced")),
+                List.of(new SkillLevel("Java", "Advanced")),
                 3, 4.2,
                 List.of(new AvailabilitySlot("Monday", "Morning")),
                 6, List.of("Java")
@@ -559,13 +561,13 @@ class ScoringServiceTest {
             FitResult run = ScoringService.score(volunteer, task, DEFAULT_CONFIG);
             assertEquals(baseline.feasible(), run.feasible());
             assertEquals(baseline.infeasibleReason(), run.infeasibleReason());
-            // Arithmetic hand calculation: identical runs must match exactly with 1e-9 tolerance
-            assertEquals(baseline.fit(), run.fit(), 1e-9);
-            assertEquals(baseline.breakdown().skill(), run.breakdown().skill(), 1e-9);
-            assertEquals(baseline.breakdown().experience(), run.breakdown().experience(), 1e-9);
-            assertEquals(baseline.breakdown().performance(), run.breakdown().performance(), 1e-9);
-            assertEquals(baseline.breakdown().load(), run.breakdown().load(), 1e-9);
-            assertEquals(baseline.breakdown().interest(), run.breakdown().interest(), 1e-9);
+            // Exact equality on doubles with no delta
+            assertEquals(baseline.fit(), run.fit());
+            assertEquals(baseline.breakdown().skill(), run.breakdown().skill());
+            assertEquals(baseline.breakdown().experience(), run.breakdown().experience());
+            assertEquals(baseline.breakdown().performance(), run.breakdown().performance());
+            assertEquals(baseline.breakdown().load(), run.breakdown().load());
+            assertEquals(baseline.breakdown().interest(), run.breakdown().interest());
             assertEquals(baseline.flags(), run.flags());
         }
     }
@@ -575,7 +577,7 @@ class ScoringServiceTest {
     void inputsNotMutated() {
         LocalDate monday = LocalDate.of(2026, 11, 16);
         UUID vId = UUID.randomUUID();
-        List<SkillLevel> skills = List.of(new SkillLevel("Java", "expert"));
+        List<SkillLevel> skills = List.of(new SkillLevel("Java", "Advanced"));
         List<AvailabilitySlot> avail = List.of(new AvailabilitySlot("Monday", "Morning"));
         List<String> interests = List.of("Backend");
 
@@ -620,30 +622,239 @@ class ScoringServiceTest {
     }
 
     @Test
+    @DisplayName("Level mapping: Beginner=1/3, Intermediate=2/3, Advanced=1.0; Expert and null give 0.0 (feasible)")
+    void levelMapping_exactValues() {
+        LocalDate date = LocalDate.of(2026, 11, 16); // Monday
+        LocalTime start = LocalTime.of(9, 0);
+        LocalTime end = LocalTime.of(11, 0);
+        List<AvailabilitySlot> avail = List.of(new AvailabilitySlot("Monday", "Morning"));
+        SolverTask task = new SolverTask(
+                UUID.randomUUID(), "Task", date, start, end, 1,
+                List.of("SkillA"), List.of(), false
+        );
+
+        // Beginner -> 1/3
+        SolverVolunteer vBeginner = new SolverVolunteer(
+                UUID.randomUUID(), "V1", List.of(new SkillLevel("SkillA", "Beginner")),
+                0, null, avail, 8, List.of()
+        );
+        FitResult rBeginner = ScoringService.score(vBeginner, task, DEFAULT_CONFIG);
+        assertTrue(rBeginner.feasible());
+        assertEquals(1.0 / 3.0, rBeginner.breakdown().skill(), 1e-9);
+
+        // Intermediate -> 2/3
+        SolverVolunteer vInter = new SolverVolunteer(
+                UUID.randomUUID(), "V2", List.of(new SkillLevel("SkillA", "Intermediate")),
+                0, null, avail, 8, List.of()
+        );
+        FitResult rInter = ScoringService.score(vInter, task, DEFAULT_CONFIG);
+        assertTrue(rInter.feasible());
+        assertEquals(2.0 / 3.0, rInter.breakdown().skill(), 1e-9);
+
+        // Advanced -> 1.0
+        SolverVolunteer vAdv = new SolverVolunteer(
+                UUID.randomUUID(), "V3", List.of(new SkillLevel("SkillA", "Advanced")),
+                0, null, avail, 8, List.of()
+        );
+        FitResult rAdv = ScoringService.score(vAdv, task, DEFAULT_CONFIG);
+        assertTrue(rAdv.feasible());
+        assertEquals(1.0, rAdv.breakdown().skill(), 1e-9);
+
+        // Expert -> 0.0 and still feasible
+        SolverVolunteer vExpert = new SolverVolunteer(
+                UUID.randomUUID(), "V4", List.of(new SkillLevel("SkillA", "Expert")),
+                0, null, avail, 8, List.of()
+        );
+        FitResult rExpert = ScoringService.score(vExpert, task, DEFAULT_CONFIG);
+        assertTrue(rExpert.feasible());
+        assertEquals(0.0, rExpert.breakdown().skill(), 1e-9);
+
+        // null level -> 0.0 and still feasible
+        SolverVolunteer vNullLevel = new SolverVolunteer(
+                UUID.randomUUID(), "V5", List.of(new SkillLevel("SkillA", null)),
+                0, null, avail, 8, List.of()
+        );
+        FitResult rNullLevel = ScoringService.score(vNullLevel, task, DEFAULT_CONFIG);
+        assertTrue(rNullLevel.feasible());
+        assertEquals(0.0, rNullLevel.breakdown().skill(), 1e-9);
+    }
+
+    @Test
+    @DisplayName("Overnight: Monday Evening availability, task 22:00-02:00 (4 hours): feasible with maxHours 4, infeasible with maxHours 3")
+    void overnight_durationCheck() {
+        LocalDate monday = LocalDate.of(2026, 11, 16);
+        LocalTime start = LocalTime.of(22, 0); // 22:00 is Evening
+        LocalTime end = LocalTime.of(2, 0);    // runs overnight, 4 hours (240 minutes)
+
+        SolverTask task = new SolverTask(
+                UUID.randomUUID(), "Night Shift", monday, start, end, 1,
+                List.of(), List.of(), false
+        );
+
+        // Volunteer with maxHours 4 -> feasible
+        SolverVolunteer v4h = new SolverVolunteer(
+                UUID.randomUUID(), "Vol4h", List.of(), 1, 4.0,
+                List.of(new AvailabilitySlot("Monday", "Evening")), 4, List.of()
+        );
+        FitResult r4h = ScoringService.score(v4h, task, DEFAULT_CONFIG);
+        assertTrue(r4h.feasible());
+
+        // Volunteer with maxHours 3 -> infeasible
+        SolverVolunteer v3h = new SolverVolunteer(
+                UUID.randomUUID(), "Vol3h", List.of(), 1, 4.0,
+                List.of(new AvailabilitySlot("Monday", "Evening")), 3, List.of()
+        );
+        FitResult r3h = ScoringService.score(v3h, task, DEFAULT_CONFIG);
+        assertFalse(r3h.feasible());
+        assertEquals("Over hours: task duration 240 min exceeds max 3 h", r3h.infeasibleReason());
+    }
+
+    @Test
+    @DisplayName("Zero duration: task 09:00-09:00 is feasible with maxHours 1")
+    void zeroDuration_feasible() {
+        LocalDate monday = LocalDate.of(2026, 11, 16);
+        LocalTime time = LocalTime.of(9, 0); // Morning
+        SolverTask task = new SolverTask(
+                UUID.randomUUID(), "Instant Task", monday, time, time, 1,
+                List.of(), List.of(), false
+        );
+        SolverVolunteer volunteer = new SolverVolunteer(
+                UUID.randomUUID(), "Vol1h", List.of(), 1, 4.0,
+                List.of(new AvailabilitySlot("Monday", "Morning")), 1, List.of()
+        );
+        FitResult result = ScoringService.score(volunteer, task, DEFAULT_CONFIG);
+        assertTrue(result.feasible());
+        assertNull(result.infeasibleReason());
+    }
+
+    @Test
+    @DisplayName("Priority: volunteer missing mandatory skill AND unavailable gets missing-skill reason; critical infeasible carries flag")
+    void priority_andCriticalInfeasibleFlag() {
+        LocalDate monday = LocalDate.of(2026, 11, 16);
+        // Volunteer is available on Tuesday Morning, but task is Monday Morning.
+        // Volunteer has no skills, but task requires mandatory "Security".
+        SolverVolunteer volunteer = new SolverVolunteer(
+                UUID.randomUUID(), "MissingAndUnavailable", List.of(), 1, 4.0,
+                List.of(new AvailabilitySlot("Tuesday", "Morning")), 8, List.of()
+        );
+
+        // Non-critical task: priority check gives missing-skill reason
+        SolverTask nonCriticalTask = new SolverTask(
+                UUID.randomUUID(), "Security Duty", monday,
+                LocalTime.of(9, 0), LocalTime.of(11, 0), 1,
+                List.of("Security"), List.of(), false
+        );
+        FitResult rNonCritical = ScoringService.score(volunteer, nonCriticalTask, DEFAULT_CONFIG);
+        assertFalse(rNonCritical.feasible());
+        assertEquals("Missing mandatory skill: Security", rNonCritical.infeasibleReason());
+        assertFalse(rNonCritical.flags().contains("Critical task"));
+
+        // Critical task: infeasible result carries the flag "Critical task"
+        SolverTask criticalTask = new SolverTask(
+                UUID.randomUUID(), "Critical Security Duty", monday,
+                LocalTime.of(9, 0), LocalTime.of(11, 0), 1,
+                List.of("Security"), List.of(), true
+        );
+        FitResult rCritical = ScoringService.score(volunteer, criticalTask, DEFAULT_CONFIG);
+        assertFalse(rCritical.feasible());
+        assertEquals("Missing mandatory skill: Security", rCritical.infeasibleReason());
+        assertTrue(rCritical.flags().contains("Critical task"));
+    }
+
+    @Test
+    @DisplayName("Duplicates: mandatory [Java], preferred [java, Docker], volunteer Java Advanced gives skill 0.5")
+    void duplicates_mandatoryAndPreferred() {
+        LocalDate monday = LocalDate.of(2026, 11, 16);
+        SolverTask task = new SolverTask(
+                UUID.randomUUID(), "Coding Task", monday,
+                LocalTime.of(9, 0), LocalTime.of(11, 0), 1,
+                List.of("Java"), List.of("java", "Docker"), false
+        );
+        SolverVolunteer volunteer = new SolverVolunteer(
+                UUID.randomUUID(), "Java Pro",
+                List.of(new SkillLevel("Java", "Advanced")), // 1.0
+                1, 4.0,
+                List.of(new AvailabilitySlot("Monday", "Morning")), 8, List.of()
+        );
+        FitResult result = ScoringService.score(volunteer, task, DEFAULT_CONFIG);
+        assertTrue(result.feasible());
+        // Deduplicated skills are ["Java", "Docker"]. Java=1.0, Docker=0.0 -> average = 0.5
+        assertEquals(0.5, result.breakdown().skill(), 1e-9);
+    }
+
+    @Test
+    @DisplayName("Interest matching ignores punctuation: title 'Setup, Logistics!' with interest 'logistics' gives interest 1.0")
+    void interestMatching_ignoresPunctuation() {
+        LocalDate monday = LocalDate.of(2026, 11, 16);
+        SolverTask task = new SolverTask(
+                UUID.randomUUID(), "Setup, Logistics!", monday,
+                LocalTime.of(9, 0), LocalTime.of(11, 0), 1,
+                List.of(), List.of(), false
+        );
+        SolverVolunteer volunteer = new SolverVolunteer(
+                UUID.randomUUID(), "Logistics Fan", List.of(),
+                1, 4.0,
+                List.of(new AvailabilitySlot("Monday", "Morning")), 8,
+                List.of("logistics")
+        );
+        FitResult result = ScoringService.score(volunteer, task, DEFAULT_CONFIG);
+        assertTrue(result.feasible());
+        assertEquals(1.0, result.breakdown().interest(), 1e-9);
+    }
+
+    @Test
+    @DisplayName("Unicode title stripping: title 'Caf\u00e9, Crew!' with interest 'caf\u00e9' gives interest 1.0")
+    void unicodeTitleStripping_cafeCrew() {
+        LocalDate monday = LocalDate.of(2026, 11, 16);
+        SolverTask task = new SolverTask(
+                UUID.randomUUID(), "Caf\u00e9, Crew!", monday,
+                LocalTime.of(9, 0), LocalTime.of(11, 0), 1,
+                List.of(), List.of(), false
+        );
+        SolverVolunteer volunteer = new SolverVolunteer(
+                UUID.randomUUID(), "Cafe Volunteer", List.of(),
+                1, 4.0,
+                List.of(new AvailabilitySlot("Monday", "Morning")), 8,
+                List.of("caf\u00e9")
+        );
+        FitResult result = ScoringService.score(volunteer, task, DEFAULT_CONFIG);
+        assertTrue(result.feasible());
+        assertEquals(1.0, result.breakdown().interest(), 1e-9);
+    }
+
+    @Test
     @DisplayName("Property test with seeded java.util.Random (fixed seed 42, 2000 random cases)")
     void propertyTest_seededRandom_2000Cases() {
         Random random = new Random(42);
-        String[] possibleSkills = {"Java", "Python", "Docker", "Audio", "Lighting", "Stage", "Security", "Design"};
-        String[] possibleLevels = {"beginner", "intermediate", "advanced", "expert"};
-        String[] days = {"Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"};
-        String[] slots = {"Morning", "Afternoon", "Evening"};
+        String[] possibleSkills = {"Java", "Python", "Docker", "Audio", "Lighting"};
+        List<String> possibleLevels = ModelValues.SKILL_LEVELS;
+        List<String> days = ModelValues.DAYS;
+        List<String> slots = ModelValues.SLOTS;
+
+        int feasibleCount = 0;
+        int infeasibleCount = 0;
+        int[] feasiblePerDay = new int[7];
 
         for (int i = 0; i < 2000; i++) {
-            // Generate random volunteer
-            int numSkills = random.nextInt(4);
+            // Generate random volunteer: 2 to 7 skills
+            int numSkills = 2 + random.nextInt(6);
             List<SkillLevel> vSkills = new ArrayList<>();
             for (int s = 0; s < numSkills; s++) {
                 vSkills.add(new SkillLevel(
                         possibleSkills[random.nextInt(possibleSkills.length)],
-                        possibleLevels[random.nextInt(possibleLevels.length)]
+                        possibleLevels.get(random.nextInt(possibleLevels.size()))
                 ));
             }
             int pastEvents = random.nextInt(20);
             Double rating = random.nextBoolean() ? null : (1.0 + 4.0 * random.nextDouble());
-            int numSlots = 1 + random.nextInt(4);
+            // Availability slots: 4 + nextInt(18) (4 to 21) across all 7 weekdays
+            int numSlots = 4 + random.nextInt(18);
             List<AvailabilitySlot> vSlots = new ArrayList<>();
             for (int sl = 0; sl < numSlots; sl++) {
-                vSlots.add(new AvailabilitySlot(days[random.nextInt(days.length)], slots[random.nextInt(slots.length)]));
+                vSlots.add(new AvailabilitySlot(
+                        days.get(random.nextInt(days.size())),
+                        slots.get(random.nextInt(slots.size()))
+                ));
             }
             int maxHours = random.nextInt(12); // 0 to 11
             int numInterests = random.nextInt(3);
@@ -656,15 +867,17 @@ class ScoringServiceTest {
                     UUID.randomUUID(), "Vol " + i, vSkills, pastEvents, rating, vSlots, maxHours, interests
             );
 
-            // Generate random task
+            // Generate random task across all 7 weekdays
             LocalDate date = LocalDate.of(2026, 11, 16).plusDays(random.nextInt(7));
-            int startHour = random.nextInt(20);
+            int startHour = random.nextInt(24);
             int startMin = random.nextInt(60);
             LocalTime startTime = LocalTime.of(startHour, startMin);
-            int durationMinutes = 30 + random.nextInt(360); // 30m to 6.5h
+            // durationMinutes nextInt(300)
+            int durationMinutes = random.nextInt(300);
             LocalTime endTime = startTime.plusMinutes(durationMinutes);
 
-            int numMandatory = random.nextInt(3);
+            // mandatory skills nextInt(2)
+            int numMandatory = random.nextInt(2);
             List<String> mandatory = new ArrayList<>();
             for (int m = 0; m < numMandatory; m++) {
                 mandatory.add(possibleSkills[random.nextInt(possibleSkills.length)]);
@@ -696,12 +909,15 @@ class ScoringServiceTest {
 
             FitResult result = ScoringService.score(volunteer, task, config);
 
-            // Invariants assertion
-            assertNotNull(result);
-            assertTrue(result.fit() >= 0.0 && result.fit() <= 100.0,
-                    "Fit score must be within [0.0, 100.0], got: " + result.fit());
+            // Independent oracle verification
+            boolean oracleFeasible = computeFeasibilityOracle(volunteer, task, config);
+            assertEquals(oracleFeasible, result.feasible(),
+                    "Oracle and ScoringService feasibility mismatch at iteration " + i);
 
             if (result.feasible()) {
+                feasibleCount++;
+                int dayIndex = task.date().getDayOfWeek().getValue() - 1;
+                feasiblePerDay[dayIndex]++;
                 assertNull(result.infeasibleReason(), "Infeasible reason must be null when feasible");
                 assertNotNull(result.breakdown(), "Breakdown must not be null when feasible");
                 FitBreakdown bd = result.breakdown();
@@ -710,12 +926,117 @@ class ScoringServiceTest {
                 assertTrue(bd.performance() >= 0.0 && bd.performance() <= 1.0, "Performance breakdown within [0, 1]");
                 assertTrue(bd.load() >= 0.0 && bd.load() <= 1.0, "Load breakdown within [0, 1]");
                 assertTrue(bd.interest() >= 0.0 && bd.interest() <= 1.0, "Interest breakdown within [0, 1]");
+
+                // Independent fit recomputation from result.breakdown() and config
+                double wSkill = (double) config.weights().skill();
+                double wExp = (double) config.weights().experience();
+                double wPerf = (double) config.weights().performance();
+                double wLoad = (double) config.weights().load();
+                double wInterest = (double) config.weights().interest();
+
+                if (task.critical()) {
+                    wExp *= 1.5;
+                    wPerf *= 1.5;
+                    double weightSum = wSkill + wExp + wPerf + wLoad + wInterest;
+                    wSkill = (wSkill / weightSum) * 100.0;
+                    wExp = (wExp / weightSum) * 100.0;
+                    wPerf = (wPerf / weightSum) * 100.0;
+                    wLoad = (wLoad / weightSum) * 100.0;
+                    wInterest = (wInterest / weightSum) * 100.0;
+                }
+
+                double expected = (wSkill * bd.skill())
+                        + (wExp * bd.experience())
+                        + (wPerf * bd.performance())
+                        + (wLoad * bd.load())
+                        + (wInterest * bd.interest());
+
+                if (!task.critical() && volunteer.pastEventsCount() == 0) {
+                    expected += config.firstTimerBonus();
+                }
+
+                if (expected > 100.0) {
+                    expected = 100.0;
+                } else if (expected < 0.0) {
+                    expected = 0.0;
+                }
+
+                assertEquals(expected, result.fit(), 1e-9);
             } else {
-                // Arithmetic hand calculation: Infeasible fit is strictly 0.0
+                infeasibleCount++;
                 assertEquals(0.0, result.fit(), 1e-9, "Fit must be 0.0 when infeasible");
                 assertNotNull(result.infeasibleReason(), "Infeasible reason must be non-null when infeasible");
                 assertNull(result.breakdown(), "Breakdown must be null when infeasible");
             }
+
+            // Invariants assertion
+            assertNotNull(result);
+            assertTrue(result.fit() >= 0.0 && result.fit() <= 100.0,
+                    "Fit score must be within [0.0, 100.0], got: " + result.fit());
         }
+
+        System.out.println("Property test counts: feasible=" + feasibleCount + ", infeasible=" + infeasibleCount);
+        System.out.println("Per-day feasible counts: " + Arrays.toString(feasiblePerDay));
+        assertTrue(feasibleCount >= 500, "Feasible count must be at least 500, was: " + feasibleCount);
+        assertTrue(infeasibleCount >= 500, "Infeasible count must be at least 500, was: " + infeasibleCount);
+        for (int d = 0; d < 7; d++) {
+            assertTrue(feasiblePerDay[d] >= 30,
+                    "Feasible count for day index " + d + " (" + ModelValues.DAYS.get(d) + ") must be at least 30, was: " + feasiblePerDay[d]);
+        }
+    }
+
+    /**
+     * Independent oracle that recomputes feasibility without calling ScoringService.
+     */
+    private boolean computeFeasibilityOracle(SolverVolunteer volunteer, SolverTask task, ScoringConfig config) {
+        // 1. Mandatory skills present
+        for (String mandatory : task.mandatorySkills()) {
+            String trimmedMandatory = mandatory.trim();
+            boolean hasSkill = false;
+            for (SkillLevel sl : volunteer.skills()) {
+                if (sl != null && sl.getName() != null && sl.getName().trim().equalsIgnoreCase(trimmedMandatory)) {
+                    hasSkill = true;
+                    break;
+                }
+            }
+            if (!hasSkill) {
+                return false;
+            }
+        }
+
+        // 2. Availability by weekday index and raw seconds slot
+        String expectedDay = task.date().getDayOfWeek().name();
+        int s = task.startTime().toSecondOfDay();
+        String expectedSlot;
+        if (5 * 3600 <= s && s < 12 * 3600) {
+            expectedSlot = "Morning";
+        } else if (12 * 3600 <= s && s < 17 * 3600) {
+            expectedSlot = "Afternoon";
+        } else {
+            expectedSlot = "Evening";
+        }
+
+        boolean available = false;
+        for (AvailabilitySlot slot : volunteer.availability()) {
+            if (slot != null && slot.getDay() != null && slot.getSlot() != null) {
+                if (slot.getDay().trim().equalsIgnoreCase(expectedDay)
+                        && slot.getSlot().trim().equalsIgnoreCase(expectedSlot)) {
+                    available = true;
+                    break;
+                }
+            }
+        }
+        if (!available) {
+            return false;
+        }
+
+        // 3. Duration: raw second arithmetic modulo 86400
+        long durSec = Math.floorMod((long) task.endTime().toSecondOfDay() - task.startTime().toSecondOfDay(), 86400L);
+        long maxHours = volunteer.maxHours() > 0 ? volunteer.maxHours() : config.defaultMaxHours();
+        if (durSec > maxHours * 3600L) {
+            return false;
+        }
+
+        return true;
     }
 }

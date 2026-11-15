@@ -1,6 +1,7 @@
 package com.eventra.scoring;
 
 import com.eventra.model.AvailabilitySlot;
+import com.eventra.model.ModelValues;
 import com.eventra.model.SkillLevel;
 import com.eventra.scoring.model.FitBreakdown;
 import com.eventra.scoring.model.FitResult;
@@ -9,17 +10,14 @@ import com.eventra.scoring.model.ScoringConfig;
 import com.eventra.scoring.model.SolverTask;
 import com.eventra.scoring.model.SolverVolunteer;
 
-import java.time.DayOfWeek;
 import java.time.Duration;
 import java.time.LocalTime;
-import java.time.ZoneId;
-import java.time.format.TextStyle;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 /**
  * Deterministic scoring engine for evaluating volunteer-to-task compatibility.
@@ -29,37 +27,46 @@ import java.util.Set;
  * performance rating, workload, and interest alignment.
  * </p>
  */
-public class ScoringService {
+public final class ScoringService {
 
-    // Slot boundary constants
-    public static final LocalTime MORNING_START = LocalTime.of(5, 0);
-    public static final LocalTime MORNING_END = LocalTime.of(11, 59);
-    public static final LocalTime AFTERNOON_START = LocalTime.of(12, 0);
-    public static final LocalTime AFTERNOON_END = LocalTime.of(16, 59);
-    public static final LocalTime EVENING_START = LocalTime.of(17, 0);
-    public static final LocalTime EVENING_END = LocalTime.of(4, 59);
+    private static final LocalTime MORNING_START = LocalTime.of(5, 0);
+    private static final LocalTime AFTERNOON_START = LocalTime.of(12, 0);
+    private static final LocalTime EVENING_START = LocalTime.of(17, 0);
 
-    public static final String SLOT_MORNING = "Morning";
-    public static final String SLOT_AFTERNOON = "Afternoon";
-    public static final String SLOT_EVENING = "Evening";
+    private static final Pattern TITLE_STRIP_PATTERN = Pattern.compile("^[^\\p{L}\\p{N}]+|[^\\p{L}\\p{N}]+$");
 
-    public static final ZoneId ZONE_KOLKATA = ZoneId.of("Asia/Kolkata");
+    private ScoringService() {
+    }
 
     /**
-     * Skill level to numeric value mapping [0.0, 1.0], strictly increasing with level.
+     * Converts a skill level string to a numeric value in (0.0, 1.0].
+     * Trims the level and finds the index in ModelValues.SKILL_LEVELS ignoring case.
+     * Returns (index + 1) / (double) ModelValues.SKILL_LEVELS.size().
+     * Returns 0.0 for null or unknown level.
+     * (Beginner=1/3, Intermediate=2/3, Advanced=1.0.)
+     *
+     * @param level skill level name
+     * @return numeric level value [0.0, 1.0]
      */
-    public static final Map<String, Double> SKILL_LEVEL_MAP = Map.of(
-            "beginner", 0.25,
-            "intermediate", 0.50,
-            "advanced", 0.75,
-            "expert", 1.0
-    );
+    private static double levelValue(String level) {
+        if (level == null) {
+            return 0.0;
+        }
+        String trimmed = level.trim();
+        for (int i = 0; i < ModelValues.SKILL_LEVELS.size(); i++) {
+            if (ModelValues.SKILL_LEVELS.get(i).equalsIgnoreCase(trimmed)) {
+                return (i + 1) / (double) ModelValues.SKILL_LEVELS.size();
+            }
+        }
+        return 0.0;
+    }
 
     /**
      * Determines the availability slot (Morning, Afternoon, or Evening) for a given start time.
+     * Boundaries: 05:00-11:59 (Morning), 12:00-16:59 (Afternoon), 17:00-04:59 (Evening).
      *
      * @param time task start time
-     * @return slot name ("Morning", "Afternoon", or "Evening")
+     * @return slot name from ModelValues.SLOTS
      */
     public static String determineSlot(LocalTime time) {
         if (time == null) {
@@ -67,24 +74,40 @@ public class ScoringService {
         }
         if (time.isBefore(MORNING_START)) {
             // 00:00 - 04:59 counts as Evening
-            return SLOT_EVENING;
+            return ModelValues.SLOTS.get(2);
         }
         if (time.isBefore(AFTERNOON_START)) {
             // 05:00 - 11:59 counts as Morning
-            return SLOT_MORNING;
+            return ModelValues.SLOTS.get(0);
         }
         if (time.isBefore(EVENING_START)) {
             // 12:00 - 16:59 counts as Afternoon
-            return SLOT_AFTERNOON;
+            return ModelValues.SLOTS.get(1);
         }
         // 17:00 - 23:59 counts as Evening
-        return SLOT_EVENING;
+        return ModelValues.SLOTS.get(2);
     }
 
     /**
      * Calculates the deterministic fit score of a volunteer for a task.
      * Pure function: produces identical output for identical input, has no static mutable state,
      * performs no I/O, and does not mutate any input arguments.
+     * <p>
+     * Hard constraints evaluated in strict priority order:
+     * 1. Missing mandatory skill: volunteer must possess all mandatory skills.
+     * 2. Not available: volunteer availability must cover task date day of week (ModelValues.DAYS)
+     *    and start-time slot (ModelValues.SLOTS).
+     * 3. Over hours: duration is calculated using Duration d = Duration.between(start, end).
+     *    If d.isNegative(), Duration.ofHours(24) is added (overnight task).
+     *    start == end is a 0-minute task (feasible).
+     *    Infeasible if d.compareTo(Duration.ofHours(maxHours)) &gt; 0, with reason text:
+     *    "Over hours: task duration &lt;minutes&gt; min exceeds max &lt;maxHours&gt; h".
+     * </p>
+     * <p>
+     * Skill factor calculation builds the list of task skills from mandatory + preferred,
+     * deduplicated case-insensitively after trim (keeping the first occurrence and preserving order),
+     * and averages the volunteer's highest skill level value for each required task skill.
+     * </p>
      *
      * @param volunteer volunteer candidate, non-null
      * @param task task candidate, non-null
@@ -123,15 +146,14 @@ public class ScoringService {
         }
 
         // Constraint 2: Not available
-        DayOfWeek dayOfWeek = task.date().getDayOfWeek();
+        String requiredDay = ModelValues.DAYS.get(task.date().getDayOfWeek().getValue() - 1);
         String requiredSlot = determineSlot(task.startTime());
         boolean available = false;
         for (AvailabilitySlot slot : volunteer.availability()) {
             if (slot != null && slot.getDay() != null && slot.getSlot() != null) {
                 String slotDay = slot.getDay().trim();
                 String slotName = slot.getSlot().trim();
-                boolean dayMatches = slotDay.equalsIgnoreCase(dayOfWeek.name())
-                        || slotDay.equalsIgnoreCase(dayOfWeek.getDisplayName(TextStyle.FULL, Locale.ENGLISH));
+                boolean dayMatches = slotDay.equalsIgnoreCase(requiredDay);
                 boolean slotMatches = slotName.equalsIgnoreCase(requiredSlot);
                 if (dayMatches && slotMatches) {
                     available = true;
@@ -141,47 +163,54 @@ public class ScoringService {
         }
         if (!available) {
             List<String> flags = task.critical() ? List.of("Critical task") : List.of();
-            return new FitResult(false, "Not available for " + dayOfWeek.name() + " (" + requiredSlot + ")", 0.0, null, flags);
+            return new FitResult(false, "Not available for " + requiredDay + " (" + requiredSlot + ")", 0.0, null, flags);
         }
 
         // Constraint 3: Over hours
-        long minutes;
-        if (task.endTime().isBefore(task.startTime())) {
-            minutes = Duration.between(task.startTime(), LocalTime.MAX).toMinutes() + 1
-                    + Duration.between(LocalTime.MIN, task.endTime()).toMinutes();
-        } else {
-            minutes = Duration.between(task.startTime(), task.endTime()).toMinutes();
+        Duration d = Duration.between(task.startTime(), task.endTime());
+        if (d.isNegative()) {
+            d = d.plus(Duration.ofHours(24));
         }
-        double durationHours = minutes / 60.0;
         int maxHours = volunteer.maxHours() > 0 ? volunteer.maxHours() : config.defaultMaxHours();
-        if (durationHours > maxHours) {
+        if (d.compareTo(Duration.ofHours(maxHours)) > 0) {
             List<String> flags = task.critical() ? List.of("Critical task") : List.of();
-            return new FitResult(false, "Over hours: task duration " + durationHours + "h exceeds max hours " + maxHours + "h", 0.0, null, flags);
+            return new FitResult(false, "Over hours: task duration " + d.toMinutes() + " min exceeds max " + maxHours + " h", 0.0, null, flags);
         }
 
         // ---------------------------------------------------------------------
         // STEP 3: FIT COMPUTATION
         // ---------------------------------------------------------------------
 
-        // 1. Skill factor: average of level values over all mandatory AND preferred skills
-        List<String> allTaskSkills = new ArrayList<>(task.mandatorySkills());
-        allTaskSkills.addAll(task.preferredSkills());
+        // 1. Skill factor: average of level values over distinct task skills (mandatory + preferred)
+        List<String> distinctTaskSkills = new ArrayList<>();
+        Set<String> seenSkills = new HashSet<>();
+        for (String s : task.mandatorySkills()) {
+            if (s != null) {
+                String trimmed = s.trim();
+                if (seenSkills.add(trimmed.toLowerCase(Locale.ROOT))) {
+                    distinctTaskSkills.add(trimmed);
+                }
+            }
+        }
+        for (String s : task.preferredSkills()) {
+            if (s != null) {
+                String trimmed = s.trim();
+                if (seenSkills.add(trimmed.toLowerCase(Locale.ROOT))) {
+                    distinctTaskSkills.add(trimmed);
+                }
+            }
+        }
 
         double skillFactor;
-        if (allTaskSkills.isEmpty()) {
+        if (distinctTaskSkills.isEmpty()) {
             skillFactor = 1.0;
         } else {
             double totalSkillScore = 0.0;
-            for (String taskSkill : allTaskSkills) {
-                String trimmedTaskSkill = taskSkill.trim();
+            for (String taskSkill : distinctTaskSkills) {
                 double volunteerSkillLevelVal = 0.0;
                 for (SkillLevel vSkill : volunteer.skills()) {
-                    if (vSkill != null && vSkill.getName() != null && vSkill.getName().trim().equalsIgnoreCase(trimmedTaskSkill)) {
-                        String level = vSkill.getLevel();
-                        double val = 0.0;
-                        if (level != null) {
-                            val = SKILL_LEVEL_MAP.getOrDefault(level.trim().toLowerCase(Locale.ROOT), 0.0);
-                        }
+                    if (vSkill != null && vSkill.getName() != null && vSkill.getName().trim().equalsIgnoreCase(taskSkill)) {
+                        double val = levelValue(vSkill.getLevel());
                         if (val > volunteerSkillLevelVal) {
                             volunteerSkillLevelVal = val;
                         }
@@ -189,7 +218,7 @@ public class ScoringService {
                 }
                 totalSkillScore += volunteerSkillLevelVal;
             }
-            skillFactor = totalSkillScore / allTaskSkills.size();
+            skillFactor = totalSkillScore / distinctTaskSkills.size();
         }
 
         // 2. Experience factor: min(pastEventsCount / 5.0, 1.0)
@@ -222,7 +251,7 @@ public class ScoringService {
                 String trimmed = token.trim();
                 if (!trimmed.isEmpty()) {
                     matchTargets.add(trimmed.toLowerCase(Locale.ROOT));
-                    String stripped = trimmed.replaceAll("^[^a-zA-Z0-9]+|[^a-zA-Z0-9]+$", "");
+                    String stripped = TITLE_STRIP_PATTERN.matcher(trimmed).replaceAll("");
                     if (!stripped.isEmpty()) {
                         matchTargets.add(stripped.toLowerCase(Locale.ROOT));
                     }

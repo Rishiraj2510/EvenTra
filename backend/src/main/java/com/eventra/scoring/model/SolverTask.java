@@ -7,6 +7,7 @@ import java.util.UUID;
 
 /**
  * Immutable record representing a task candidate for solver assignment.
+ * endTime before startTime means the task runs overnight; endTime equal to startTime means zero duration.
  *
  * @param id task unique identifier, non-null
  * @param title task title, non-null
