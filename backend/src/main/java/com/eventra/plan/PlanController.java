@@ -1,0 +1,28 @@
+package com.eventra.plan;
+
+import com.eventra.plan.dto.PlanResponse;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.util.UUID;
+
+@RestController
+@RequestMapping("/api/events/{eventId}/plan")
+public class PlanController {
+
+    private final PlanService planService;
+
+    public PlanController(PlanService planService) {
+        this.planService = planService;
+    }
+
+    @GetMapping
+    @PreAuthorize("hasRole('ORGANISER')")
+    public ResponseEntity<PlanResponse> getPlan(@PathVariable UUID eventId) {
+        return ResponseEntity.ok(planService.getPlan(eventId));
+    }
+}
