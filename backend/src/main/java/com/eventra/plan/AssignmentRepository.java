@@ -19,4 +19,8 @@ public interface AssignmentRepository extends JpaRepository<Assignment, UUID> {
     List<Assignment> findByPlanIdWithDetailsOrderByTaskDetails(@Param("planId") UUID planId);
 
     List<Assignment> findByPlanId(UUID planId);
+
+    @org.springframework.data.jpa.repository.Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query("DELETE FROM Assignment a WHERE a.plan.id = :planId")
+    void deleteByPlanId(@Param("planId") UUID planId);
 }

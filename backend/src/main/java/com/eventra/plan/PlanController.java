@@ -27,6 +27,13 @@ public class PlanController {
         return ResponseEntity.ok(planService.getPlan(eventId));
     }
 
+    @PostMapping("/generate")
+    @PreAuthorize("hasRole('ORGANISER')")
+    public ResponseEntity<PlanResponse> generatePlan(@PathVariable UUID eventId) {
+        planService.generate(eventId);
+        return ResponseEntity.ok(planService.getPlan(eventId));
+    }
+
     @PostMapping("/approve")
     @PreAuthorize("hasRole('ORGANISER')")
     public ResponseEntity<PlanResponse> approvePlan(@PathVariable UUID eventId) {
