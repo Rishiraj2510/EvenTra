@@ -21,7 +21,9 @@ import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.UUID;
 
@@ -42,11 +44,12 @@ class AssignmentSolverTest {
     // TEST (b): Brute Force Cross-Check (seed 7, 300 cases)
     // -------------------------------------------------------------------------
     @Test
-    @DisplayName("b) Brute force cross-check: 300 cases (seed 7) match optimal (assignment count, totalCost)")
+    @DisplayName("b) Brute force cross-check: 300 cases (seed 7) match optimal (assignment count, critical slots, totalCost)")
     void bruteForceCrossCheck_300Cases() {
         Random rng = new Random(7);
         int casesWithAtLeast2Assignments = 0;
         int casesWithAtLeast1Unfilled = 0;
+        int shortVolunteerCriticalCases = 0;
 
         for (int c = 0; c < 300; c++) {
             int numVolunteers = 1 + rng.nextInt(6); // 1..6
@@ -68,10 +71,20 @@ class AssignmentSolverTest {
             SolverResult solverResult = AssignmentSolver.solve(volunteers, tasks, DEFAULT_CONFIG);
             BruteForceResult bfResult = runBruteForce(volunteers, tasks, DEFAULT_CONFIG);
 
+            int solverCriticalFilled = countCriticalAssignments(solverResult, tasks);
+
             assertEquals(bfResult.count, solverResult.assignments().size(),
                     "Case " + c + ": Assignment count mismatch between solver and brute force");
+            assertEquals(bfResult.criticalCount, solverCriticalFilled,
+                    "Case " + c + ": Critical filled count mismatch between solver and brute force");
             assertEquals(bfResult.totalCost, solverResult.totalCost(),
                     "Case " + c + ": Total cost mismatch between solver and brute force");
+
+            int totalSlots = tasks.stream().mapToInt(SolverTask::headcount).sum();
+            boolean hasCriticalTask = tasks.stream().anyMatch(SolverTask::critical);
+            if (numVolunteers < totalSlots && hasCriticalTask) {
+                shortVolunteerCriticalCases++;
+            }
 
             if (solverResult.assignments().size() >= 2) {
                 casesWithAtLeast2Assignments++;
@@ -83,11 +96,14 @@ class AssignmentSolverTest {
 
         System.out.println("Cases with at least 2 assignments: " + casesWithAtLeast2Assignments);
         System.out.println("Cases with at least 1 unfilled slot: " + casesWithAtLeast1Unfilled);
+        System.out.println("Short volunteer cases with critical tasks: " + shortVolunteerCriticalCases);
 
         assertTrue(casesWithAtLeast2Assignments >= 60,
                 "Expected at least 60 cases with >= 2 assignments, got: " + casesWithAtLeast2Assignments);
         assertTrue(casesWithAtLeast1Unfilled >= 60,
                 "Expected at least 60 cases with >= 1 unfilled slot, got: " + casesWithAtLeast1Unfilled);
+        assertTrue(shortVolunteerCriticalCases >= 30,
+                "Expected at least 30 short-volunteer cases with critical tasks, got: " + shortVolunteerCriticalCases);
     }
 
     // -------------------------------------------------------------------------
@@ -198,15 +214,26 @@ class AssignmentSolverTest {
             int solverCount = solverResult.assignments().size();
             int greedyCount = greedyResult.assignments().size();
 
+            // Compare lexicographically: first assignment count, then critical slots filled, then total cost
+            int solverCritical = countCriticalAssignments(solverResult, tasks);
+            int greedyCritical = countCriticalAssignments(greedyResult, tasks);
+
             if (solverCount > greedyCount) {
                 strictlyBetterCount++;
             } else if (solverCount == greedyCount) {
-                if (solverResult.totalCost() < greedyResult.totalCost()) {
+                if (solverCritical > greedyCritical) {
                     strictlyBetterCount++;
+                } else if (solverCritical == greedyCritical) {
+                    if (solverResult.totalCost() < greedyResult.totalCost()) {
+                        strictlyBetterCount++;
+                    }
+                    assertTrue(solverResult.totalCost() <= greedyResult.totalCost(),
+                            "Case " + c + ": Solver cost (" + solverResult.totalCost()
+                                    + ") should be <= greedy cost (" + greedyResult.totalCost() + ")");
+                } else {
+                    fail("Case " + c + ": Solver filled fewer critical slots (" + solverCritical
+                            + ") than greedy (" + greedyCritical + ")");
                 }
-                assertTrue(solverResult.totalCost() <= greedyResult.totalCost(),
-                        "Case " + c + ": Solver cost (" + solverResult.totalCost()
-                                + ") should be <= greedy cost (" + greedyResult.totalCost() + ")");
             } else {
                 fail("Case " + c + ": Solver assigned fewer pairs (" + solverCount
                         + ") than greedy (" + greedyCount + ")");
@@ -271,6 +298,201 @@ class AssignmentSolverTest {
         assertEquals(volunteerB.id(), p1.volunteerId());
         assertEquals(task2.id(), p2.taskId());
         assertEquals(volunteerA.id(), p2.volunteerId());
+    }
+
+    // -------------------------------------------------------------------------
+    // TEST (d2): Critical Task Priority Tests
+    // -------------------------------------------------------------------------
+    @Test
+    @DisplayName("d2) 1 volunteer, critical and normal task, volunteer fits normal better -> assigned to critical")
+    void criticalFilledBeforeNormalWhenShort() {
+        LocalDate monday = LocalDate.of(2026, 11, 16);
+        // Critical task requires Audio (Beginner)
+        SolverTask criticalTask = new SolverTask(
+                UUID.randomUUID(), "Critical Audio", monday,
+                LocalTime.of(9, 0), LocalTime.of(11, 0), 1,
+                List.of("Audio"), List.of(), true
+        );
+        // Normal task requires Java (Advanced)
+        SolverTask normalTask = new SolverTask(
+                UUID.randomUUID(), "Normal Java", monday,
+                LocalTime.of(9, 0), LocalTime.of(11, 0), 1,
+                List.of("Java"), List.of(), false
+        );
+
+        // Volunteer has Java (Advanced) and Audio (Beginner) -> fits normal task much better
+        SolverVolunteer volunteer = new SolverVolunteer(
+                UUID.randomUUID(), "MultiSkilled",
+                List.of(new SkillLevel("Java", "Advanced"), new SkillLevel("Audio", "Beginner")),
+                5, 5.0,
+                List.of(new AvailabilitySlot("Monday", "Morning")),
+                8, List.of()
+        );
+
+        SolverResult result = AssignmentSolver.solve(List.of(volunteer), List.of(criticalTask, normalTask), DEFAULT_CONFIG);
+        assertEquals(1, result.assignments().size());
+        assertEquals(criticalTask.id(), result.assignments().get(0).taskId());
+        assertEquals(volunteer.id(), result.assignments().get(0).volunteerId());
+        assertEquals(1, result.unfilled().size());
+        assertEquals(normalTask.id(), result.unfilled().get(0).taskId());
+    }
+
+    @Test
+    @DisplayName("d2) 2 volunteers (one infeasible), critical and normal task -> feasible takes critical")
+    void criticalSlotFilledWhenOtherVolunteerInfeasible() {
+        LocalDate monday = LocalDate.of(2026, 11, 16);
+        SolverTask criticalTask = new SolverTask(
+                UUID.randomUUID(), "Critical Task", monday,
+                LocalTime.of(9, 0), LocalTime.of(11, 0), 1,
+                List.of("Audio"), List.of(), true
+        );
+        SolverTask normalTask = new SolverTask(
+                UUID.randomUUID(), "Normal Task", monday,
+                LocalTime.of(9, 0), LocalTime.of(11, 0), 1,
+                List.of("Audio"), List.of(), false
+        );
+
+        // Volunteer 1: feasible for both tasks
+        SolverVolunteer feasibleVol = new SolverVolunteer(
+                UUID.randomUUID(), "FeasibleVol",
+                List.of(new SkillLevel("Audio", "Intermediate")),
+                3, 4.0,
+                List.of(new AvailabilitySlot("Monday", "Morning")),
+                8, List.of()
+        );
+        // Volunteer 2: infeasible for both tasks (missing Audio skill)
+        SolverVolunteer infeasibleVol = new SolverVolunteer(
+                UUID.randomUUID(), "InfeasibleVol",
+                List.of(new SkillLevel("Lighting", "Intermediate")),
+                3, 4.0,
+                List.of(new AvailabilitySlot("Monday", "Morning")),
+                8, List.of()
+        );
+
+        SolverResult result = AssignmentSolver.solve(
+                List.of(feasibleVol, infeasibleVol),
+                List.of(criticalTask, normalTask),
+                DEFAULT_CONFIG
+        );
+        assertEquals(1, result.assignments().size());
+        assertEquals(criticalTask.id(), result.assignments().get(0).taskId());
+        assertEquals(feasibleVol.id(), result.assignments().get(0).volunteerId());
+        assertEquals(1, result.unfilled().size());
+        assertEquals(normalTask.id(), result.unfilled().get(0).taskId());
+    }
+
+    @Test
+    @DisplayName("d2) Critical task headcount 2, normal task headcount 2, 2 volunteers qualified for both -> both critical slots filled")
+    void criticalHeadcountSlotsFilledFirst() {
+        LocalDate monday = LocalDate.of(2026, 11, 16);
+        SolverTask criticalTask = new SolverTask(
+                UUID.randomUUID(), "Critical MultiSlot", monday,
+                LocalTime.of(9, 0), LocalTime.of(11, 0), 2,
+                List.of("Java"), List.of(), true
+        );
+        SolverTask normalTask = new SolverTask(
+                UUID.randomUUID(), "Normal MultiSlot", monday,
+                LocalTime.of(9, 0), LocalTime.of(11, 0), 2,
+                List.of("Java"), List.of(), false
+        );
+
+        SolverVolunteer v1 = new SolverVolunteer(
+                UUID.randomUUID(), "V1",
+                List.of(new SkillLevel("Java", "Advanced")),
+                3, 4.0,
+                List.of(new AvailabilitySlot("Monday", "Morning")),
+                8, List.of()
+        );
+        SolverVolunteer v2 = new SolverVolunteer(
+                UUID.randomUUID(), "V2",
+                List.of(new SkillLevel("Java", "Intermediate")),
+                2, 4.0,
+                List.of(new AvailabilitySlot("Monday", "Morning")),
+                8, List.of()
+        );
+
+        SolverResult result = AssignmentSolver.solve(List.of(v1, v2), List.of(criticalTask, normalTask), DEFAULT_CONFIG);
+        assertEquals(2, result.assignments().size());
+        for (AssignedPair pair : result.assignments()) {
+            assertEquals(criticalTask.id(), pair.taskId(), "Every assignment must be for the critical task");
+        }
+        assertEquals(1, result.unfilled().size());
+        assertEquals(normalTask.id(), result.unfilled().get(0).taskId());
+        assertEquals(2, result.unfilled().get(0).slotsUnfilled());
+    }
+
+    @Test
+    @DisplayName("d2) Hand-built case with no critical tasks gives the same assignments and totalCost as before")
+    void noCriticalTasksBehaviourUnchanged() {
+        LocalDate date = LocalDate.of(2026, 11, 16);
+        SolverTask task1 = new SolverTask(
+                UUID.randomUUID(), "Task 1 Morning", date,
+                LocalTime.of(9, 0), LocalTime.of(11, 0), 1,
+                List.of("Java"), List.of(), false
+        );
+        SolverTask task2 = new SolverTask(
+                UUID.randomUUID(), "Task 2 Afternoon", date,
+                LocalTime.of(13, 0), LocalTime.of(15, 0), 1,
+                List.of("Docker"), List.of(), false
+        );
+
+        SolverVolunteer volunteerA = new SolverVolunteer(
+                UUID.randomUUID(), "Volunteer A",
+                List.of(new SkillLevel("Java", "Advanced"), new SkillLevel("Docker", "Advanced")),
+                5, 5.0,
+                List.of(new AvailabilitySlot("Monday", "Morning"), new AvailabilitySlot("Monday", "Afternoon")),
+                8, List.of()
+        );
+        SolverVolunteer volunteerB = new SolverVolunteer(
+                UUID.randomUUID(), "Volunteer B",
+                List.of(new SkillLevel("Java", "Beginner")),
+                1, 3.0,
+                List.of(new AvailabilitySlot("Monday", "Morning")),
+                8, List.of()
+        );
+
+        SolverResult result = AssignmentSolver.solve(List.of(volunteerA, volunteerB), List.of(task1, task2), DEFAULT_CONFIG);
+        assertEquals(2, result.assignments().size());
+        assertEquals(0, result.unfilled().size());
+        assertEquals(task1.id(), result.assignments().get(0).taskId());
+        assertEquals(volunteerB.id(), result.assignments().get(0).volunteerId());
+        assertEquals(task2.id(), result.assignments().get(1).taskId());
+        assertEquals(volunteerA.id(), result.assignments().get(1).volunteerId());
+
+        long expectedCost = SolverSupport.cost(result.assignments().get(0).fit())
+                + SolverSupport.cost(result.assignments().get(1).fit());
+        assertEquals(expectedCost, result.totalCost());
+    }
+
+    @Test
+    @DisplayName("d2) totalCost excludes penalties and equals SolverSupport.cost of single assigned fit")
+    void totalCostExcludesPenalties() {
+        LocalDate monday = LocalDate.of(2026, 11, 16);
+        SolverTask criticalTask = new SolverTask(
+                UUID.randomUUID(), "Critical Audio", monday,
+                LocalTime.of(9, 0), LocalTime.of(11, 0), 1,
+                List.of("Audio"), List.of(), true
+        );
+        SolverTask normalTask = new SolverTask(
+                UUID.randomUUID(), "Normal Java", monday,
+                LocalTime.of(9, 0), LocalTime.of(11, 0), 1,
+                List.of("Java"), List.of(), false
+        );
+
+        SolverVolunteer volunteer = new SolverVolunteer(
+                UUID.randomUUID(), "MultiSkilled",
+                List.of(new SkillLevel("Java", "Advanced"), new SkillLevel("Audio", "Beginner")),
+                5, 5.0,
+                List.of(new AvailabilitySlot("Monday", "Morning")),
+                8, List.of()
+        );
+
+        SolverResult result = AssignmentSolver.solve(List.of(volunteer), List.of(criticalTask, normalTask), DEFAULT_CONFIG);
+        assertEquals(1, result.assignments().size());
+        long singleAssignedFitCost = SolverSupport.cost(result.assignments().get(0).fit());
+        assertEquals(singleAssignedFitCost, result.totalCost());
+        assertTrue(result.totalCost() < AssignmentSolver.CRITICAL_UNFILLED_PENALTY,
+                "totalCost must never include penalties");
     }
 
     // -------------------------------------------------------------------------
@@ -535,8 +757,24 @@ class AssignmentSolverTest {
     // -------------------------------------------------------------------------
     // Helper Methods & Independent Brute Force
     // -------------------------------------------------------------------------
-    private record BruteForceResult(int count, long totalCost) {
+    private record BruteForceResult(int count, int criticalCount, long totalCost) {
     }
+
+    private static int countCriticalAssignments(SolverResult result, List<SolverTask> tasks) {
+        Map<UUID, Boolean> taskCriticalMap = new HashMap<>();
+        for (SolverTask t : tasks) {
+            taskCriticalMap.put(t.id(), t.critical());
+        }
+        int count = 0;
+        for (AssignedPair pair : result.assignments()) {
+            if (Boolean.TRUE.equals(taskCriticalMap.get(pair.taskId()))) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    private record SlotRef(SolverTask task, int slotNumber) {}
 
     private static BruteForceResult runBruteForce(
             List<SolverVolunteer> volunteers,
@@ -551,7 +789,6 @@ class AssignmentSolverTest {
                 .thenComparing(SolverTask::startTime)
                 .thenComparing(SolverTask::id));
 
-        record SlotRef(SolverTask task, int slotNumber) {}
         List<SlotRef> slots = new ArrayList<>();
         for (SolverTask t : sortedTasks) {
             for (int s = 1; s <= t.headcount(); s++) {
@@ -562,7 +799,7 @@ class AssignmentSolverTest {
         int V = sortedVolunteers.size();
         int S = slots.size();
         if (V == 0 || S == 0) {
-            return new BruteForceResult(0, 0L);
+            return new BruteForceResult(0, 0, 0L);
         }
 
         boolean[][] feasible = new boolean[V][S];
@@ -580,26 +817,34 @@ class AssignmentSolverTest {
         }
 
         int[] bestCount = new int[]{-1};
+        int[] bestCritical = new int[]{-1};
         long[] bestCost = new long[]{Long.MAX_VALUE};
         boolean[] usedSlots = new boolean[S];
 
-        searchBruteForce(0, V, S, feasible, realCost, 0, 0L, usedSlots, bestCount, bestCost);
-        return new BruteForceResult(bestCount[0], bestCount[0] > 0 ? bestCost[0] : 0L);
+        searchBruteForce(0, V, S, slots, feasible, realCost, 0, 0, 0L, usedSlots, bestCount, bestCritical, bestCost);
+        return new BruteForceResult(bestCount[0], bestCritical[0], bestCount[0] > 0 ? bestCost[0] : 0L);
     }
 
     private static void searchBruteForce(
             int v, int V, int S,
+            List<SlotRef> slots,
             boolean[][] feasible, long[][] realCost,
-            int curCount, long curCost,
+            int curCount, int curCritical, long curCost,
             boolean[] usedSlots,
-            int[] bestCount, long[] bestCost
+            int[] bestCount, int[] bestCritical, long[] bestCost
     ) {
         if (v == V) {
             if (curCount > bestCount[0]) {
                 bestCount[0] = curCount;
+                bestCritical[0] = curCritical;
                 bestCost[0] = curCost;
-            } else if (curCount == bestCount[0] && curCost < bestCost[0]) {
-                bestCost[0] = curCost;
+            } else if (curCount == bestCount[0]) {
+                if (curCritical > bestCritical[0]) {
+                    bestCritical[0] = curCritical;
+                    bestCost[0] = curCost;
+                } else if (curCritical == bestCritical[0] && curCost < bestCost[0]) {
+                    bestCost[0] = curCost;
+                }
             }
             return;
         }
@@ -612,13 +857,18 @@ class AssignmentSolverTest {
         for (int s = 0; s < S; s++) {
             if (!usedSlots[s] && feasible[v][s]) {
                 usedSlots[s] = true;
-                searchBruteForce(v + 1, V, S, feasible, realCost, curCount + 1, curCost + realCost[v][s], usedSlots, bestCount, bestCost);
+                boolean isCrit = slots.get(s).task().critical();
+                searchBruteForce(v + 1, V, S, slots, feasible, realCost,
+                        curCount + 1, curCritical + (isCrit ? 1 : 0), curCost + realCost[v][s],
+                        usedSlots, bestCount, bestCritical, bestCost);
                 usedSlots[s] = false;
             }
         }
 
         // Branch 2: do not assign volunteer v
-        searchBruteForce(v + 1, V, S, feasible, realCost, curCount, curCost, usedSlots, bestCount, bestCost);
+        searchBruteForce(v + 1, V, S, slots, feasible, realCost,
+                curCount, curCritical, curCost,
+                usedSlots, bestCount, bestCritical, bestCost);
     }
 
     private static SolverVolunteer generateRandomVolunteer(Random rng, String name, int minSlots, int maxSlots) {

@@ -25,31 +25,30 @@ import java.util.UUID;
  * feasible pairs,
  * the integer cost is {@code Math.round((100.0 - fit) * 1000)}, which lies in
  * [0, 100,000].</li>
- * <li>For infeasible pairs, an artificial penalty of
- * {@code BIG_M = 1_000_000_000_000L} (10^12) is used.
- * Because the problem size is at most 500, any valid sum of real costs cannot
- * exceed
- * 500 * 100,000 = 50,000,000. Since BIG_M is 20,000 times larger than the
- * theoretical maximum
- * sum of all real costs, minimizing total matching cost strictly minimizes the
- * number of infeasible
- * pairs first before minimizing real costs.</li>
- * <li>Padding the cost matrix with zero-cost dummy rows or columns expands the
- * rectangular problem
- * into an N x N square matrix. This preserves feasibility, allows the Hungarian
- * algorithm to find
- * a minimum-weight perfect matching in O(N^3) time, and ensures unassigned
- * slots or surplus volunteers
- * are matched to dummy nodes at zero cost without distorting real
- * assignments.</li>
- * <li>SlotNumber values of assignments may have gaps (e.g. slots 1 and 3
- * filled, 2 unfilled).</li>
+ * <li>The solver optimizes a three-level hierarchical objective in lexicographic order:
+ * <ol>
+ *   <li>Fewest infeasible pairs (maximum number of feasible assignments)</li>
+ *   <li>Most critical slots filled</li>
+ *   <li>Minimum total fit cost</li>
+ * </ol>
+ * </li>
+ * <li>This hierarchy is achieved using stratified penalties and bounds on problem size (N &le; 500):
+ * <ul>
+ *   <li>Maximum real cost sum: 500 &times; 100,000 = 5 &times; 10^7 &lt; {@code CRITICAL_UNFILLED_PENALTY} (10^9 = 1,000,000,000L).</li>
+ *   <li>Maximum critical penalty sum: 500 &times; {@code CRITICAL_UNFILLED_PENALTY} = 5 &times; 10^11 &lt; {@code BIG_M} (10^12 = 1,000,000,000,000L).</li>
+ * </ul>
+ * Because each layer's maximum total penalty is strictly less than a single penalty of the higher layer,
+ * minimizing Hungarian matching cost strictly optimizes objective (1) first, objective (2) second, and objective (3) third.</li>
+ * <li>Padding the cost matrix with dummy rows (with critical penalties for critical slots when volunteers &lt; slots)
+ * or dummy columns (at zero cost when volunteers &gt; slots) expands the rectangular problem into an N x N square matrix.</li>
+ * <li>SlotNumber values of assignments may have gaps (e.g. slots 1 and 3 filled, 2 unfilled).</li>
  * </ul>
  */
 public final class AssignmentSolver {
 
     public static final int MAX_SIZE = 500;
     public static final long BIG_M = 1_000_000_000_000L;
+    public static final long CRITICAL_UNFILLED_PENALTY = 1_000_000_000L;
 
     private AssignmentSolver() {
     }
@@ -101,9 +100,22 @@ public final class AssignmentSolver {
                 if (fit.feasible()) {
                     cost[i][j] = SolverSupport.cost(fit);
                 } else {
-                    cost[i][j] = BIG_M;
+                    cost[i][j] = BIG_M + (ts.task().critical() ? CRITICAL_UNFILLED_PENALTY : 0L);
                 }
             }
+        }
+
+        // Dummy volunteer rows (padding when volunteers < slots)
+        for (int i = vCount; i < n; i++) {
+            for (int j = 0; j < sCount; j++) {
+                SolverSupport.TaskSlot ts = slots.get(j);
+                if (ts.task().critical()) {
+                    cost[i][j] = CRITICAL_UNFILLED_PENALTY;
+                } else {
+                    cost[i][j] = 0L;
+                }
+            }
+            // dummy slot columns (j >= sCount) remain 0L by default
         }
 
         int[] rowToCol = HungarianAlgorithm.solve(cost);
@@ -121,13 +133,13 @@ public final class AssignmentSolver {
         // number)
         for (int j = 0; j < sCount; j++) {
             int i = colToRow[j];
-            if (i < vCount && cost[i][j] != BIG_M) {
+            if (i < vCount && cost[i][j] < BIG_M) {
                 SolverSupport.TaskSlot ts = slots.get(j);
                 SolverVolunteer v = sortedVolunteers.get(i);
                 FitResult fit = ScoringService.score(v, ts.task(), config);
                 assignments.add(new AssignedPair(v.id(), ts.task().id(), ts.slotNumber(), fit));
                 taskFilledCount.put(ts.task().id(), taskFilledCount.getOrDefault(ts.task().id(), 0) + 1);
-                totalCost += cost[i][j];
+                totalCost += SolverSupport.cost(fit);
             }
         }
 
