@@ -1,5 +1,6 @@
 package com.eventra.plan;
 
+import com.eventra.event.EventConflictException;
 import com.eventra.event.EventNotFoundException;
 import com.eventra.event.EventRepository;
 import com.eventra.plan.dto.AssignmentDto;
@@ -13,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.Instant;
 import java.util.*;
 
 @Service
@@ -33,6 +35,42 @@ public class PlanService {
         this.planRepository = planRepository;
         this.assignmentRepository = assignmentRepository;
         this.taskRepository = taskRepository;
+    }
+
+    @Transactional
+    public void approve(UUID eventId) {
+        eventRepository.findWithLockById(eventId)
+                .orElseThrow(() -> new EventNotFoundException("Event not found"));
+
+        Plan plan = planRepository.findByEventId(eventId)
+                .orElseThrow(() -> new EventConflictException("Plan must be a draft to approve"));
+
+        if (!PlanStatus.DRAFT.equalsIgnoreCase(plan.getStatus())) {
+            throw new EventConflictException("Plan must be a draft to approve");
+        }
+
+        plan.setStatus(PlanStatus.APPROVED);
+        plan.setApprovedAt(Instant.now());
+        plan.touch();
+        planRepository.save(plan);
+    }
+
+    @Transactional
+    public void publish(UUID eventId) {
+        eventRepository.findWithLockById(eventId)
+                .orElseThrow(() -> new EventNotFoundException("Event not found"));
+
+        Plan plan = planRepository.findByEventId(eventId)
+                .orElseThrow(() -> new EventConflictException("Plan must be approved to publish"));
+
+        if (!PlanStatus.APPROVED.equalsIgnoreCase(plan.getStatus())) {
+            throw new EventConflictException("Plan must be approved to publish");
+        }
+
+        plan.setStatus(PlanStatus.PUBLISHED);
+        plan.setPublishedAt(Instant.now());
+        plan.touch();
+        planRepository.save(plan);
     }
 
     @Transactional(readOnly = true)
