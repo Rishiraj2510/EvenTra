@@ -164,7 +164,7 @@ public final class PlanValidator {
 
                 // Duration check
                 long durSec = Math.floorMod((long) t.endTime().toSecondOfDay() - t.startTime().toSecondOfDay(), 86400L);
-                int defaultMaxHours = (config.defaultMaxHours() > 0) ? config.defaultMaxHours() : 8;
+                int defaultMaxHours = config.defaultMaxHours();
                 long maxHours = v.maxHours() > 0 ? v.maxHours() : defaultMaxHours;
                 if (durSec > maxHours * 3600L) {
                     violations.add("Volunteer over hours for task: " + t.id());

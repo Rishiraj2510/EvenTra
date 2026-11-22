@@ -274,11 +274,43 @@ class AssignmentSolverTest {
     }
 
     // -------------------------------------------------------------------------
-    // TEST (e): Edge Cases & Validation
+    // TEST (e): Edge Cases & Validation (split into focused methods 1 to 10)
     // -------------------------------------------------------------------------
     @Test
-    @DisplayName("e) Edge cases: empty volunteers, empty tasks, more slots than volunteers, rarest missing skill")
-    void edgeCases() {
+    @DisplayName("e1) Edge case: empty tasks returns empty assignments and unfilled")
+    void emptyTasks() {
+        SolverVolunteer volunteer = new SolverVolunteer(
+                UUID.randomUUID(), "Solo",
+                List.of(new SkillLevel("Audio", "Advanced")),
+                3, 4.5,
+                List.of(new AvailabilitySlot("Monday", "Morning")),
+                8, List.of()
+        );
+        SolverResult rEmptyTasks = AssignmentSolver.solve(List.of(volunteer), List.of(), DEFAULT_CONFIG);
+        assertTrue(rEmptyTasks.assignments().isEmpty());
+        assertTrue(rEmptyTasks.unfilled().isEmpty());
+        assertEquals(0L, rEmptyTasks.totalCost());
+    }
+
+    @Test
+    @DisplayName("e2) Edge case: empty volunteers returns all tasks unfilled")
+    void emptyVolunteers() {
+        LocalDate monday = LocalDate.of(2026, 11, 16);
+        SolverTask task = new SolverTask(
+                UUID.randomUUID(), "Setup", monday,
+                LocalTime.of(9, 0), LocalTime.of(11, 0), 2,
+                List.of("Audio"), List.of(), false
+        );
+        SolverResult rEmptyVolunteers = AssignmentSolver.solve(List.of(), List.of(task), DEFAULT_CONFIG);
+        assertTrue(rEmptyVolunteers.assignments().isEmpty());
+        assertEquals(1, rEmptyVolunteers.unfilled().size());
+        assertEquals(2, rEmptyVolunteers.unfilled().get(0).slotsUnfilled());
+        assertEquals(0L, rEmptyVolunteers.totalCost());
+    }
+
+    @Test
+    @DisplayName("e3) Edge case: more slots than volunteers gives exact unfilled count")
+    void moreSlotsThanVolunteers() {
         LocalDate monday = LocalDate.of(2026, 11, 16);
         SolverTask task = new SolverTask(
                 UUID.randomUUID(), "Setup", monday,
@@ -292,27 +324,28 @@ class AssignmentSolverTest {
                 List.of(new AvailabilitySlot("Monday", "Morning")),
                 8, List.of()
         );
-
-        // 1. Empty tasks
-        SolverResult rEmptyTasks = AssignmentSolver.solve(List.of(volunteer), List.of(), DEFAULT_CONFIG);
-        assertTrue(rEmptyTasks.assignments().isEmpty());
-        assertTrue(rEmptyTasks.unfilled().isEmpty());
-        assertEquals(0L, rEmptyTasks.totalCost());
-
-        // 2. Empty volunteers
-        SolverResult rEmptyVolunteers = AssignmentSolver.solve(List.of(), List.of(task), DEFAULT_CONFIG);
-        assertTrue(rEmptyVolunteers.assignments().isEmpty());
-        assertEquals(1, rEmptyVolunteers.unfilled().size());
-        assertEquals(2, rEmptyVolunteers.unfilled().get(0).slotsUnfilled());
-        assertEquals(0L, rEmptyVolunteers.totalCost());
-
-        // 3. More slots than volunteers (exact unfilled count)
         SolverResult rMoreSlots = AssignmentSolver.solve(List.of(volunteer), List.of(task), DEFAULT_CONFIG);
         assertEquals(1, rMoreSlots.assignments().size());
         assertEquals(1, rMoreSlots.unfilled().size());
         assertEquals(1, rMoreSlots.unfilled().get(0).slotsUnfilled());
+    }
 
-        // 4. One volunteer and two overlapping tasks: volunteer used at most once
+    @Test
+    @DisplayName("e4) Edge case: overlapping tasks volunteer used at most once")
+    void overlappingTasksVolunteerUsedOnce() {
+        LocalDate monday = LocalDate.of(2026, 11, 16);
+        SolverTask task = new SolverTask(
+                UUID.randomUUID(), "Setup", monday,
+                LocalTime.of(9, 0), LocalTime.of(11, 0), 2,
+                List.of("Audio"), List.of(), false
+        );
+        SolverVolunteer volunteer = new SolverVolunteer(
+                UUID.randomUUID(), "Solo",
+                List.of(new SkillLevel("Audio", "Advanced")),
+                3, 4.5,
+                List.of(new AvailabilitySlot("Monday", "Morning")),
+                8, List.of()
+        );
         SolverTask taskOverlap = new SolverTask(
                 UUID.randomUUID(), "Overlap", monday,
                 LocalTime.of(9, 30), LocalTime.of(11, 30), 1,
@@ -321,8 +354,17 @@ class AssignmentSolverTest {
         SolverResult rOverlap = AssignmentSolver.solve(List.of(volunteer), List.of(task, taskOverlap), DEFAULT_CONFIG);
         assertEquals(1, rOverlap.assignments().size());
         assertEquals(volunteer.id(), rOverlap.assignments().get(0).volunteerId());
+    }
 
-        // 5. Every pair infeasible -> zero assignments and everything unfilled
+    @Test
+    @DisplayName("e5) Edge case: all pairs infeasible returns zero assignments and everything unfilled")
+    void allPairsInfeasible() {
+        LocalDate monday = LocalDate.of(2026, 11, 16);
+        SolverTask task = new SolverTask(
+                UUID.randomUUID(), "Setup", monday,
+                LocalTime.of(9, 0), LocalTime.of(11, 0), 2,
+                List.of("Audio"), List.of(), false
+        );
         SolverVolunteer missingSkillVol = new SolverVolunteer(
                 UUID.randomUUID(), "WrongSkill",
                 List.of(new SkillLevel("Lighting", "Advanced")),
@@ -336,8 +378,12 @@ class AssignmentSolverTest {
         assertEquals(2, rAllInfeasible.unfilled().get(0).slotsUnfilled());
         assertEquals(0L, rAllInfeasible.totalCost());
         assertEquals("Audio", rAllInfeasible.unfilled().get(0).missingSkill());
+    }
 
-        // 6. missingSkill picks the rarest mandatory skill; ties alphabetical; null if all held
+    @Test
+    @DisplayName("e6) Edge case: missingSkill rarest, tie-break alphabetical, and null if all held")
+    void missingSkillRarestAndTieBreakAndNull() {
+        LocalDate monday = LocalDate.of(2026, 11, 16);
         SolverTask multiSkillTask = new SolverTask(
                 UUID.randomUUID(), "Multi", monday,
                 LocalTime.of(9, 0), LocalTime.of(11, 0), 1,
@@ -369,8 +415,12 @@ class AssignmentSolverTest {
                 8, List.of()
         );
         assertEquals(null, AssignmentSolver.computeMissingSkill(multiSkillTask, List.of(vRustAudio, vDocker)));
+    }
 
-        // 7. Validation: null arguments and duplicate ids throw IllegalArgumentException
+    @Test
+    @DisplayName("e7) Validation: null arguments and duplicate ids throw IllegalArgumentException")
+    void nullArgumentsAndDuplicateIdsThrow() {
+        LocalDate monday = LocalDate.of(2026, 11, 16);
         assertThrows(IllegalArgumentException.class, () -> AssignmentSolver.solve(null, List.of(), DEFAULT_CONFIG));
         assertThrows(IllegalArgumentException.class, () -> AssignmentSolver.solve(List.of(), null, DEFAULT_CONFIG));
         assertThrows(IllegalArgumentException.class, () -> AssignmentSolver.solve(List.of(), List.of(), null));
@@ -383,8 +433,25 @@ class AssignmentSolverTest {
         SolverTask tDup1 = new SolverTask(dupId, "T1", monday, LocalTime.of(9, 0), LocalTime.of(10, 0), 1, List.of(), List.of(), false);
         SolverTask tDup2 = new SolverTask(dupId, "T2", monday, LocalTime.of(9, 0), LocalTime.of(10, 0), 1, List.of(), List.of(), false);
         assertThrows(IllegalArgumentException.class, () -> AssignmentSolver.solve(List.of(), List.of(tDup1, tDup2), DEFAULT_CONFIG));
+    }
 
-        // 8. Null volunteer element and null task element throw IllegalArgumentException
+    @Test
+    @DisplayName("e8) Validation: null volunteer element and null task element throw IllegalArgumentException")
+    void nullElementsThrow() {
+        LocalDate monday = LocalDate.of(2026, 11, 16);
+        SolverTask task = new SolverTask(
+                UUID.randomUUID(), "Setup", monday,
+                LocalTime.of(9, 0), LocalTime.of(11, 0), 2,
+                List.of("Audio"), List.of(), false
+        );
+        SolverVolunteer volunteer = new SolverVolunteer(
+                UUID.randomUUID(), "Solo",
+                List.of(new SkillLevel("Audio", "Advanced")),
+                3, 4.5,
+                List.of(new AvailabilitySlot("Monday", "Morning")),
+                8, List.of()
+        );
+
         List<SolverVolunteer> volWithNull = new ArrayList<>();
         volWithNull.add(null);
         assertThrows(IllegalArgumentException.class, () -> AssignmentSolver.solve(volWithNull, List.of(task), DEFAULT_CONFIG));
@@ -392,8 +459,11 @@ class AssignmentSolverTest {
         List<SolverTask> taskWithNull = new ArrayList<>();
         taskWithNull.add(null);
         assertThrows(IllegalArgumentException.class, () -> AssignmentSolver.solve(List.of(volunteer), taskWithNull, DEFAULT_CONFIG));
+    }
 
-        // 9. 501 volunteers throws IllegalArgumentException("max(volunteers, slots) exceeds 500")
+    @Test
+    @DisplayName("e9) Validation: over 500 volunteers throws IllegalArgumentException")
+    void over500Throws() {
         List<SolverVolunteer> vol501 = new ArrayList<>();
         for (int i = 0; i < 501; i++) {
             vol501.add(new SolverVolunteer(UUID.randomUUID(), "V" + i, List.of(), 0, null, List.of(), 8, List.of()));
@@ -401,8 +471,11 @@ class AssignmentSolverTest {
         IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
                 () -> AssignmentSolver.solve(vol501, List.of(), DEFAULT_CONFIG));
         assertEquals("max(volunteers, slots) exceeds 500", ex.getMessage());
+    }
 
-        // 10. 150 volunteers x 150 slots solve completes and returns result that PlanValidator accepts
+    @Test
+    @DisplayName("e10) Scale: 150 volunteers x 150 slots solve completes and passes PlanValidator")
+    void large150x150PassesValidator() {
         Random largeRng = new Random(123);
         List<SolverVolunteer> largeVolunteers = new ArrayList<>();
         for (int i = 0; i < 150; i++) {

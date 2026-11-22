@@ -188,16 +188,13 @@ class ScoringServiceTest {
         assertNull(result.breakdown());
     }
 
+    // -------------------------------------------------------------------------
+    // Availability boundaries and weekday tests
+    // -------------------------------------------------------------------------
     @Test
-    @DisplayName("Availability: boundary times 11:59 vs 12:00, 16:59 vs 17:00, 00:30 start as Evening, Sunday vs Monday")
-    void availabilityBoundaries_andWeekday() {
-        // Fixed dates:
-        // 2026-11-15 is a Sunday
-        LocalDate sunday = LocalDate.of(2026, 11, 15);
-        // 2026-11-16 is a Monday
+    @DisplayName("Availability: boundary morning 11:59 vs afternoon 12:00")
+    void availabilityBoundary_morningVsAfternoon() {
         LocalDate monday = LocalDate.of(2026, 11, 16);
-
-        // 1. Boundary 11:59 (Morning) vs 12:00 (Afternoon)
         SolverVolunteer morningOnlyVolunteer = new SolverVolunteer(
                 UUID.randomUUID(), "Morning Volunteer", List.of(), 1, 4.0,
                 List.of(new AvailabilitySlot("Monday", "Morning")), 8, List.of()
@@ -215,8 +212,12 @@ class ScoringServiceTest {
         FitResult rAfternoon = ScoringService.score(morningOnlyVolunteer, afternoonBoundaryTask, DEFAULT_CONFIG);
         assertFalse(rAfternoon.feasible());
         assertTrue(rAfternoon.infeasibleReason().contains("Not available"));
+    }
 
-        // 2. Boundary 16:59 (Afternoon) vs 17:00 (Evening)
+    @Test
+    @DisplayName("Availability: boundary afternoon 16:59 vs evening 17:00")
+    void availabilityBoundary_afternoonVsEvening() {
+        LocalDate monday = LocalDate.of(2026, 11, 16);
         SolverVolunteer afternoonOnlyVolunteer = new SolverVolunteer(
                 UUID.randomUUID(), "Afternoon Volunteer", List.of(), 1, 4.0,
                 List.of(new AvailabilitySlot("Monday", "Afternoon")), 8, List.of()
@@ -234,8 +235,12 @@ class ScoringServiceTest {
         FitResult rEvening = ScoringService.score(afternoonOnlyVolunteer, eveningBoundaryTask, DEFAULT_CONFIG);
         assertFalse(rEvening.feasible());
         assertTrue(rEvening.infeasibleReason().contains("Not available"));
+    }
 
-        // 3. 00:30 start counted as Evening
+    @Test
+    @DisplayName("Availability: 00:30 start counted as Evening")
+    void availability_00_30IsEvening() {
+        LocalDate monday = LocalDate.of(2026, 11, 16);
         SolverVolunteer eveningVolunteer = new SolverVolunteer(
                 UUID.randomUUID(), "Evening Volunteer", List.of(), 1, 4.0,
                 List.of(new AvailabilitySlot("Monday", "Evening")), 8, List.of()
@@ -245,24 +250,94 @@ class ScoringServiceTest {
                 LocalTime.of(0, 30), LocalTime.of(2, 30), 1, List.of(), List.of(), false
         );
         assertTrue(ScoringService.score(eveningVolunteer, midnightTask, DEFAULT_CONFIG).feasible());
+    }
 
-        // 4. Sunday vs Monday (Fixed dates)
+    @Test
+    @DisplayName("Availability: Sunday vs Monday weekday matching")
+    void availability_sundayVsMonday() {
+        LocalDate sunday = LocalDate.of(2026, 11, 15);
+        LocalDate monday = LocalDate.of(2026, 11, 16);
+
         SolverVolunteer sundayVolunteer = new SolverVolunteer(
                 UUID.randomUUID(), "Sunday Volunteer", List.of(), 1, 4.0,
                 List.of(new AvailabilitySlot("Sunday", "Morning")), 8, List.of()
         );
         SolverTask sundayTask = new SolverTask(
-                UUID.randomUUID(), "Sunday Task", sunday, // 2026-11-15 is Sunday
+                UUID.randomUUID(), "Sunday Task", sunday,
                 LocalTime.of(9, 0), LocalTime.of(11, 0), 1, List.of(), List.of(), false
         );
         SolverTask mondayTask = new SolverTask(
-                UUID.randomUUID(), "Monday Task", monday, // 2026-11-16 is Monday
+                UUID.randomUUID(), "Monday Task", monday,
                 LocalTime.of(9, 0), LocalTime.of(11, 0), 1, List.of(), List.of(), false
         );
         assertTrue(ScoringService.score(sundayVolunteer, sundayTask, DEFAULT_CONFIG).feasible());
         FitResult rMondayFail = ScoringService.score(sundayVolunteer, mondayTask, DEFAULT_CONFIG);
         assertFalse(rMondayFail.feasible());
         assertTrue(rMondayFail.infeasibleReason().contains("Not available"));
+    }
+
+    @Test
+    @DisplayName("Availability: slot 04:59 is Evening and 05:00 is Morning")
+    void slot04_59IsEveningAnd05_00IsMorning() {
+        LocalDate monday = LocalDate.of(2026, 11, 16);
+        SolverVolunteer mondayEveningVol = new SolverVolunteer(
+                UUID.randomUUID(), "Monday Evening Volunteer", List.of(), 1, 4.0,
+                List.of(new AvailabilitySlot("Monday", "Evening")), 8, List.of()
+        );
+        SolverVolunteer mondayMorningVol = new SolverVolunteer(
+                UUID.randomUUID(), "Monday Morning Volunteer", List.of(), 1, 4.0,
+                List.of(new AvailabilitySlot("Monday", "Morning")), 8, List.of()
+        );
+
+        SolverTask task04_59 = new SolverTask(
+                UUID.randomUUID(), "Task 04:59", monday,
+                LocalTime.of(4, 59), LocalTime.of(6, 0), 1, List.of(), List.of(), false
+        );
+        SolverTask task05_00 = new SolverTask(
+                UUID.randomUUID(), "Task 05:00", monday,
+                LocalTime.of(5, 0), LocalTime.of(7, 0), 1, List.of(), List.of(), false
+        );
+
+        // 04:59 is Evening:
+        assertTrue(ScoringService.score(mondayEveningVol, task04_59, DEFAULT_CONFIG).feasible());
+        FitResult r04_59Fail = ScoringService.score(mondayMorningVol, task04_59, DEFAULT_CONFIG);
+        assertFalse(r04_59Fail.feasible());
+        assertTrue(r04_59Fail.infeasibleReason().contains("Not available"));
+
+        // 05:00 is Morning:
+        assertTrue(ScoringService.score(mondayMorningVol, task05_00, DEFAULT_CONFIG).feasible());
+        FitResult r05_00Fail = ScoringService.score(mondayEveningVol, task05_00, DEFAULT_CONFIG);
+        assertFalse(r05_00Fail.feasible());
+        assertTrue(r05_00Fail.infeasibleReason().contains("Not available"));
+    }
+
+    @Test
+    @DisplayName("Availability: slot 17:00 is Evening")
+    void slot17_00IsEvening() {
+        LocalDate monday = LocalDate.of(2026, 11, 16);
+        SolverVolunteer mondayEveningVol = new SolverVolunteer(
+                UUID.randomUUID(), "Monday Evening Volunteer", List.of(), 1, 4.0,
+                List.of(new AvailabilitySlot("Monday", "Evening")), 8, List.of()
+        );
+        SolverTask task17_00 = new SolverTask(
+                UUID.randomUUID(), "Task 17:00", monday,
+                LocalTime.of(17, 0), LocalTime.of(19, 0), 1, List.of(), List.of(), false
+        );
+
+        assertTrue(ScoringService.score(mondayEveningVol, task17_00, DEFAULT_CONFIG).feasible());
+    }
+
+    @Test
+    @DisplayName("determineSlot direct assertions for 00:00, 04:59, 05:00, 11:59, 12:00, 16:59, 17:00, 23:59")
+    void determineSlot_boundaryAssertions() {
+        assertEquals("Evening", ScoringService.determineSlot(LocalTime.of(0, 0)));
+        assertEquals("Evening", ScoringService.determineSlot(LocalTime.of(4, 59)));
+        assertEquals("Morning", ScoringService.determineSlot(LocalTime.of(5, 0)));
+        assertEquals("Morning", ScoringService.determineSlot(LocalTime.of(11, 59)));
+        assertEquals("Afternoon", ScoringService.determineSlot(LocalTime.of(12, 0)));
+        assertEquals("Afternoon", ScoringService.determineSlot(LocalTime.of(16, 59)));
+        assertEquals("Evening", ScoringService.determineSlot(LocalTime.of(17, 0)));
+        assertEquals("Evening", ScoringService.determineSlot(LocalTime.of(23, 59)));
     }
 
     @Test
