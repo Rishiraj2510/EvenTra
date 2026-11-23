@@ -20,6 +20,16 @@ public interface AssignmentRepository extends JpaRepository<Assignment, UUID> {
 
     List<Assignment> findByPlanId(UUID planId);
 
+    @Query("SELECT a FROM Assignment a " +
+           "JOIN FETCH a.task t " +
+           "WHERE a.plan.id = :planId AND a.volunteer.id = :volunteerId " +
+           "ORDER BY t.taskDate ASC, t.startTime ASC, t.title ASC, a.slotNumber ASC, a.id ASC")
+    List<Assignment> findByPlanIdAndVolunteerIdWithTask(@Param("planId") UUID planId, @Param("volunteerId") UUID volunteerId);
+
+    boolean existsByVolunteerId(UUID volunteerId);
+
+    boolean existsByTaskId(UUID taskId);
+
     @org.springframework.data.jpa.repository.Modifying(flushAutomatically = true, clearAutomatically = true)
     @Query("DELETE FROM Assignment a WHERE a.plan.id = :planId")
     void deleteByPlanId(@Param("planId") UUID planId);

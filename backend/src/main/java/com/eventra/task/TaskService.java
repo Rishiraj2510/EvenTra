@@ -2,8 +2,12 @@ package com.eventra.task;
 
 import com.eventra.common.TextRules;
 import com.eventra.common.ValidationException;
+import com.eventra.event.EventConflictException;
 import com.eventra.event.EventNotFoundException;
 import com.eventra.event.EventRepository;
+import com.eventra.plan.AssignmentRepository;
+import com.eventra.plan.Plan;
+import com.eventra.plan.PlanRepository;
 import com.eventra.task.dto.CreateTaskRequest;
 import com.eventra.task.dto.TaskResponse;
 import com.eventra.task.dto.UpdateTaskRequest;
@@ -17,10 +21,17 @@ public class TaskService {
 
     private final TaskRepository taskRepository;
     private final EventRepository eventRepository;
+    private final AssignmentRepository assignmentRepository;
+    private final PlanRepository planRepository;
 
-    public TaskService(TaskRepository taskRepository, EventRepository eventRepository) {
+    public TaskService(TaskRepository taskRepository,
+                       EventRepository eventRepository,
+                       AssignmentRepository assignmentRepository,
+                       PlanRepository planRepository) {
         this.taskRepository = taskRepository;
         this.eventRepository = eventRepository;
+        this.assignmentRepository = assignmentRepository;
+        this.planRepository = planRepository;
     }
 
     public List<TaskResponse> listByEventId(UUID eventId) {
@@ -90,9 +101,11 @@ public class TaskService {
 
     @Transactional
     public TaskResponse update(UUID id, UpdateTaskRequest req) {
-        // NOTE: Run 8 must mark an existing plan stale when time, headcount or skills change.
         Task task = taskRepository.findById(id)
                 .orElseThrow(() -> new TaskNotFoundException("Task not found: " + id));
+
+        eventRepository.findWithLockById(task.getEventId())
+                .orElseThrow(() -> new EventNotFoundException("Event not found"));
 
         // Validate text rules
         TextRules.rejectControlChars(req.getTitle(), "title");
@@ -118,6 +131,13 @@ public class TaskService {
             throw new ValidationException("Invalid status");
         }
 
+        boolean timeChanged = !Objects.equals(task.getTaskDate(), req.getDate())
+                || !Objects.equals(task.getStartTime(), req.getStartTime())
+                || !Objects.equals(task.getEndTime(), req.getEndTime());
+        boolean headcountChanged = !Objects.equals(task.getHeadcount(), req.getHeadcount());
+        boolean skillsChanged = !Objects.equals(task.getMandatorySkills(), mandatory)
+                || !Objects.equals(task.getPreferredSkills(), preferred);
+
         task.setTitle(req.getTitle().trim());
         task.setDescription(req.getDescription());
         task.setTaskDate(req.getDate());
@@ -130,14 +150,31 @@ public class TaskService {
         task.setLocation(req.getLocation());
         task.setStatus(status.value());
 
-        return toResponse(taskRepository.save(task));
+        Task saved = taskRepository.save(task);
+
+        if (timeChanged || headcountChanged || skillsChanged) {
+            planRepository.findByEventId(saved.getEventId()).ifPresent(plan -> {
+                plan.setStale(true);
+                plan.touch();
+                planRepository.save(plan);
+            });
+        }
+
+        return toResponse(saved);
     }
 
     @Transactional
     public void delete(UUID id) {
         Task task = taskRepository.findById(id)
                 .orElseThrow(() -> new TaskNotFoundException("Task not found: " + id));
-        // NOTE: Run 8 must refuse the delete when the task has plan assignments.
+
+        eventRepository.findWithLockById(task.getEventId())
+                .orElseThrow(() -> new EventNotFoundException("Event not found"));
+
+        if (assignmentRepository.existsByTaskId(id)) {
+            throw new EventConflictException("Task has assignments and cannot be deleted");
+        }
+
         taskRepository.delete(task);
     }
 

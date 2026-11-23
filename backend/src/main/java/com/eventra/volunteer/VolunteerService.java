@@ -1,9 +1,11 @@
 package com.eventra.volunteer;
 
 import com.eventra.common.ValidationException;
+import com.eventra.event.EventConflictException;
 import com.eventra.event.EventNotFoundException;
 import com.eventra.event.EventRepository;
 import com.eventra.model.ModelValues;
+import com.eventra.plan.AssignmentRepository;
 import com.eventra.volunteer.dto.UpdateVolunteerRequest;
 import com.eventra.volunteer.dto.VolunteerResponse;
 import org.springframework.stereotype.Service;
@@ -16,13 +18,16 @@ public class VolunteerService {
 
     private final VolunteerRepository volunteerRepository;
     private final EventRepository eventRepository;
+    private final AssignmentRepository assignmentRepository;
     private final VolunteerFieldValidator fieldValidator;
 
     public VolunteerService(VolunteerRepository volunteerRepository,
                             EventRepository eventRepository,
+                            AssignmentRepository assignmentRepository,
                             VolunteerFieldValidator fieldValidator) {
         this.volunteerRepository = volunteerRepository;
         this.eventRepository = eventRepository;
+        this.assignmentRepository = assignmentRepository;
         this.fieldValidator = fieldValidator;
     }
 
@@ -118,7 +123,13 @@ public class VolunteerService {
         Volunteer volunteer = volunteerRepository.findById(id)
                 .orElseThrow(() -> new VolunteerNotFoundException("Volunteer not found: " + id));
 
-        // NOTE: Run 8 must refuse the delete when the volunteer has plan assignments.
+        eventRepository.findWithLockById(volunteer.getEventId())
+                .orElseThrow(() -> new EventNotFoundException("Event not found"));
+
+        if (assignmentRepository.existsByVolunteerId(id)) {
+            throw new EventConflictException("Volunteer has assignments and cannot be deleted");
+        }
+
         volunteerRepository.delete(volunteer);
     }
 
