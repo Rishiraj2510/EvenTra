@@ -2,6 +2,10 @@ server:
   port: 8080
 
 spring:
+  servlet:
+    multipart:
+      max-file-size: 6MB
+      max-request-size: 6MB
   jackson:
     deserialization:
       fail-on-unknown-properties: true
@@ -35,6 +39,10 @@ jwt:
 app:
   signup:
     allowed-email-domains: ${ALLOWED_EMAIL_DOMAINS:acropolis.in}
+
+eventra:
+  certificates:
+    dir: ${CERTIFICATE_DIR:${java.io.tmpdir}/eventra-certificates}
 
 ---
 spring:
