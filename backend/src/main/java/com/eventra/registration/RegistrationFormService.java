@@ -6,6 +6,9 @@ import com.eventra.event.EventConflictException;
 import com.eventra.event.EventNotFoundException;
 import com.eventra.event.EventRepository;
 import com.eventra.model.ExtraQuestion;
+import com.eventra.plan.Plan;
+import com.eventra.plan.PlanRepository;
+import com.eventra.plan.PlanStatus;
 import com.eventra.registration.dto.ExtraQuestionDto;
 import com.eventra.registration.dto.RegistrationFormResponse;
 import com.eventra.registration.dto.UpdateRegistrationFormRequest;
@@ -25,13 +28,16 @@ public class RegistrationFormService {
     private final RegistrationFormRepository registrationFormRepository;
     private final EventRepository eventRepository;
     private final VolunteerRepository volunteerRepository;
+    private final PlanRepository planRepository;
 
     public RegistrationFormService(RegistrationFormRepository registrationFormRepository,
                                    EventRepository eventRepository,
-                                   VolunteerRepository volunteerRepository) {
+                                   VolunteerRepository volunteerRepository,
+                                   PlanRepository planRepository) {
         this.registrationFormRepository = registrationFormRepository;
         this.eventRepository = eventRepository;
         this.volunteerRepository = volunteerRepository;
+        this.planRepository = planRepository;
     }
 
     public RegistrationFormResponse getForm(UUID eventId) {
@@ -97,7 +103,10 @@ public class RegistrationFormService {
         eventRepository.findWithLockById(eventId)
                 .orElseThrow(() -> new EventNotFoundException("Event not found: " + eventId));
 
-        // NOTE: Run 8 must refuse opening when the event's plan is published.
+        Optional<Plan> planOpt = planRepository.findByEventId(eventId);
+        if (planOpt.isPresent() && PlanStatus.PUBLISHED.equals(planOpt.get().getStatus())) {
+            throw new EventConflictException("Plan is published; registration cannot be reopened");
+        }
 
         long responseCount = volunteerRepository.countByEventId(eventId);
         RegistrationForm form = registrationFormRepository.findByEventId(eventId)

@@ -9,6 +9,7 @@ import com.eventra.event.EventRepository;
 import com.eventra.model.AvailabilitySlot;
 import com.eventra.model.ExtraQuestion;
 import com.eventra.model.SkillLevel;
+import com.eventra.plan.AssignmentRepository;
 import com.eventra.registration.dto.*;
 import com.eventra.volunteer.Volunteer;
 import com.eventra.volunteer.VolunteerFieldValidator;
@@ -27,15 +28,18 @@ public class VolunteerRegistrationService {
     private final EventRepository eventRepository;
     private final RegistrationFormRepository registrationFormRepository;
     private final VolunteerRepository volunteerRepository;
+    private final AssignmentRepository assignmentRepository;
     private final VolunteerFieldValidator volunteerFieldValidator;
 
     public VolunteerRegistrationService(EventRepository eventRepository,
                                       RegistrationFormRepository registrationFormRepository,
                                       VolunteerRepository volunteerRepository,
+                                      AssignmentRepository assignmentRepository,
                                       VolunteerFieldValidator volunteerFieldValidator) {
         this.eventRepository = eventRepository;
         this.registrationFormRepository = registrationFormRepository;
         this.volunteerRepository = volunteerRepository;
+        this.assignmentRepository = assignmentRepository;
         this.volunteerFieldValidator = volunteerFieldValidator;
     }
 
@@ -222,7 +226,9 @@ public class VolunteerRegistrationService {
             throw new EventConflictException("Registration is closed");
         }
 
-        // NOTE: Run 8 must refuse cancel when the volunteer has plan assignments.
+        if (assignmentRepository.existsByVolunteerId(volunteer.getId())) {
+            throw new EventConflictException("Volunteer has assignments; cancellation not allowed");
+        }
 
         volunteerRepository.delete(volunteer);
     }

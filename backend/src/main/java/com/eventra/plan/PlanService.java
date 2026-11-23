@@ -7,6 +7,7 @@ import com.eventra.model.AvailabilitySlot;
 import com.eventra.model.SkillLevel;
 import com.eventra.plan.dto.AssignmentDto;
 import com.eventra.plan.dto.BreakdownDto;
+import com.eventra.plan.dto.MyAssignmentResponse;
 import com.eventra.plan.dto.PlanResponse;
 import com.eventra.plan.dto.PlanSummaryDto;
 import com.eventra.plan.dto.SkillGapDto;
@@ -472,5 +473,32 @@ public class PlanService {
             }
         }
         return null;
+    }
+
+    public List<MyAssignmentResponse> getMyAssignments(UUID eventId, UUID userId) {
+        if (!eventRepository.existsById(eventId)) {
+            throw new EventNotFoundException("Not found");
+        }
+
+        Volunteer volunteer = volunteerRepository.findByEventIdAndUserId(eventId, userId)
+                .orElseThrow(() -> new EventNotFoundException("Not found"));
+
+        Plan plan = planRepository.findByEventId(eventId)
+                .orElseThrow(() -> new EventNotFoundException("Not found"));
+
+        if (!PlanStatus.PUBLISHED.equals(plan.getStatus())) {
+            throw new EventNotFoundException("Not found");
+        }
+
+        List<Assignment> assignments = assignmentRepository.findByPlanIdAndVolunteerIdWithTask(plan.getId(), volunteer.getId());
+        return assignments.stream()
+                .map(a -> new MyAssignmentResponse(
+                        a.getTask().getId(),
+                        a.getTask().getTitle(),
+                        a.getTask().getTaskDate(),
+                        a.getTask().getStartTime(),
+                        a.getTask().getEndTime()
+                ))
+                .toList();
     }
 }

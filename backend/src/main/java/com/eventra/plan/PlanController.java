@@ -1,14 +1,18 @@
 package com.eventra.plan;
 
+import com.eventra.auth.UserPrincipal;
+import com.eventra.plan.dto.MyAssignmentResponse;
 import com.eventra.plan.dto.PlanResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -46,5 +50,13 @@ public class PlanController {
     public ResponseEntity<PlanResponse> publishPlan(@PathVariable UUID eventId) {
         planService.publish(eventId);
         return ResponseEntity.ok(planService.getPlan(eventId));
+    }
+
+    @GetMapping("/mine")
+    @PreAuthorize("hasRole('VOLUNTEER')")
+    public ResponseEntity<List<MyAssignmentResponse>> getMyPlan(
+            @PathVariable UUID eventId,
+            @AuthenticationPrincipal UserPrincipal principal) {
+        return ResponseEntity.ok(planService.getMyAssignments(eventId, principal.getId()));
     }
 }
