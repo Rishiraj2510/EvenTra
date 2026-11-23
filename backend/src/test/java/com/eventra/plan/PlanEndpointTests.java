@@ -226,12 +226,12 @@ class PlanEndpointTests {
         assertEquals(PlanStatus.NONE, json.path("status").asText());
         assertFalse(json.path("stale").asBoolean());
         assertTrue(json.path("assignments").isEmpty());
-        assertTrue(json.path("skillGaps").isEmpty());
+        assertEquals(2, json.path("skillGaps").size());
 
         JsonNode summary = json.path("summary");
         assertEquals(0.0, summary.path("averageFit").asDouble(), 1e-9);
         assertEquals(0, summary.path("unqualifiedAssignments").asLong());
-        assertEquals(0, summary.path("workloadSpread").asInt());
+        assertEquals("--", summary.path("workloadSpread").asText());
         assertEquals(0, summary.path("headcountFilled").asLong());
         assertEquals(5, summary.path("headcountRequired").asLong()); // 3 + 2 = 5
         assertEquals(0, summary.path("skillGapCount").asLong());
@@ -270,7 +270,7 @@ class PlanEndpointTests {
         // - headcountFilled = 3
         // - headcountRequired = 3 + 2 = 5
         // - averageFit = (92.4 + 81.6 + 74.5) / 3 = 248.5 / 3 = 82.8333... -> rounded to 1 decimal = 82.8
-        // - volunteer assignment counts: Alice = 1, Bob = 1, Charlie = 1 -> max - min = 1 - 1 = 0
+        // - workloadSpread = total hours (2.0 + 2.0 + 2.0 = 6.0) / 3 distinct volunteers = 2.0 hrs / vol
         // - unqualifiedAssignments = 0
         // - skillGapCount = 0
 
@@ -287,7 +287,7 @@ class PlanEndpointTests {
         JsonNode summary = json.path("summary");
         assertEquals(82.8, summary.path("averageFit").asDouble(), 1e-9);
         assertEquals(0, summary.path("unqualifiedAssignments").asLong());
-        assertEquals(0, summary.path("workloadSpread").asInt());
+        assertEquals("2.0 hrs / vol", summary.path("workloadSpread").asText());
         assertEquals(3, summary.path("headcountFilled").asLong());
         assertEquals(5, summary.path("headcountRequired").asLong());
         assertEquals(0, summary.path("skillGapCount").asLong());

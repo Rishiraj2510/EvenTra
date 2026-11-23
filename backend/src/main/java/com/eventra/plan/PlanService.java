@@ -9,6 +9,7 @@ import com.eventra.plan.dto.AssignmentDto;
 import com.eventra.plan.dto.BreakdownDto;
 import com.eventra.plan.dto.PlanResponse;
 import com.eventra.plan.dto.PlanSummaryDto;
+import com.eventra.plan.dto.SkillGapDto;
 import com.eventra.scoring.model.FitBreakdown;
 import com.eventra.scoring.model.FitResult;
 import com.eventra.scoring.model.ScoreWeights;
@@ -31,6 +32,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.*;
 
 @Service
@@ -271,30 +274,43 @@ public class PlanService {
             throw new EventNotFoundException("Event not found");
         }
 
-        long headcountRequired = 0L;
         List<Task> eventTasks = taskRepository.findByEventId(eventId);
+        long headcountRequired = 0L;
         for (Task t : eventTasks) {
             headcountRequired += t.getHeadcount();
         }
 
+        List<Volunteer> eventVolunteers = volunteerRepository.findByEventId(eventId);
+
+        // Sort tasks by task date, then start time, then title (null date or time sorts last)
+        Comparator<Task> taskComparator = Comparator
+                .comparing(Task::getTaskDate, Comparator.nullsLast(LocalDate::compareTo))
+                .thenComparing(Task::getStartTime, Comparator.nullsLast(LocalTime::compareTo))
+                .thenComparing(Task::getTitle, Comparator.nullsLast(String::compareTo))
+                .thenComparing(Task::getId, Comparator.nullsLast(UUID::compareTo));
+        List<Task> sortedTasks = new ArrayList<>(eventTasks);
+        sortedTasks.sort(taskComparator);
+
         Optional<Plan> planOpt = planRepository.findByEventId(eventId);
         if (planOpt.isEmpty()) {
+            List<SkillGapDto> skillGaps = computeSkillGaps(sortedTasks, List.of(), eventVolunteers);
+            long skillGapCount = skillGaps.stream().filter(g -> g.missingSkill() != null).count();
+
             PlanSummaryDto emptySummary = new PlanSummaryDto(
                     0.0,
                     0L,
-                    0,
+                    "--",
                     0L,
                     headcountRequired,
-                    0L
+                    skillGapCount
             );
-            // NOTE: Run 8b computes skill gaps on read. missingSkill null means an availability/hours problem, not a skill gap; skillGapCount counts only non-null missingSkill.
             return new PlanResponse(
                     eventId,
                     PlanStatus.NONE,
                     false,
                     emptySummary,
                     List.of(),
-                    List.of()
+                    skillGaps
             );
         }
 
@@ -302,7 +318,6 @@ public class PlanService {
         List<Assignment> rawAssignments = assignmentRepository.findByPlanIdWithDetailsOrderByTaskDetails(plan.getId());
 
         List<AssignmentDto> assignmentDtos = new ArrayList<>(rawAssignments.size());
-        Map<UUID, Integer> volunteerAssignmentCounts = new HashMap<>();
         long unqualifiedAssignments = 0L;
         BigDecimal sumFit = BigDecimal.ZERO;
 
@@ -311,8 +326,6 @@ public class PlanService {
             UUID taskId = a.getTask().getId();
             String volunteerName = a.getVolunteer().getFullName();
             UUID volunteerId = a.getVolunteer().getId();
-
-            volunteerAssignmentCounts.put(volunteerId, volunteerAssignmentCounts.getOrDefault(volunteerId, 0) + 1);
 
             if (a.getFlags().contains("unqualified")) {
                 unqualifiedAssignments++;
@@ -352,15 +365,9 @@ public class PlanService {
             averageFit = meanFit.doubleValue();
         }
 
-        int workloadSpread = 0;
-        if (!volunteerAssignmentCounts.isEmpty()) {
-            int maxAssignments = Collections.max(volunteerAssignmentCounts.values());
-            int minAssignments = Collections.min(volunteerAssignmentCounts.values());
-            workloadSpread = maxAssignments - minAssignments;
-        }
-
-        // NOTE: Run 8b computes skill gaps on read. missingSkill null means an availability/hours problem, not a skill gap; skillGapCount counts only non-null missingSkill.
-        long skillGapCount = 0L;
+        String workloadSpread = computeWorkloadSpread(rawAssignments);
+        List<SkillGapDto> skillGaps = computeSkillGaps(sortedTasks, rawAssignments, eventVolunteers);
+        long skillGapCount = skillGaps.stream().filter(g -> g.missingSkill() != null).count();
 
         PlanSummaryDto summary = new PlanSummaryDto(
                 averageFit,
@@ -377,7 +384,93 @@ public class PlanService {
                 plan.isStale(),
                 summary,
                 assignmentDtos,
-                List.of()
+                skillGaps
         );
+    }
+
+    private String computeWorkloadSpread(List<Assignment> assignments) {
+        if (assignments == null || assignments.isEmpty()) {
+            return "--";
+        }
+
+        double totalTaskHours = 0.0;
+        Set<UUID> assignedVolunteerIds = new HashSet<>();
+
+        for (Assignment a : assignments) {
+            if (a.getVolunteer() != null && a.getVolunteer().getId() != null) {
+                assignedVolunteerIds.add(a.getVolunteer().getId());
+            }
+            Task t = a.getTask();
+            if (t != null && t.getStartTime() != null && t.getEndTime() != null) {
+                long minutes = java.time.Duration.between(t.getStartTime(), t.getEndTime()).toMinutes();
+                totalTaskHours += minutes / 60.0;
+            }
+        }
+
+        if (assignedVolunteerIds.isEmpty()) {
+            return "--";
+        }
+
+        double avgHoursPerVolunteer = totalTaskHours / (double) assignedVolunteerIds.size();
+        return String.format(Locale.ROOT, "%.1f hrs / vol", avgHoursPerVolunteer);
+    }
+
+    private List<SkillGapDto> computeSkillGaps(
+            List<Task> sortedTasks,
+            List<Assignment> assignments,
+            List<Volunteer> volunteers
+    ) {
+        Set<String> heldSkills = new HashSet<>();
+        if (volunteers != null) {
+            for (Volunteer v : volunteers) {
+                if (v.getSkills() != null) {
+                    for (SkillLevel sl : v.getSkills()) {
+                        if (sl != null && sl.getName() != null && !sl.getName().isBlank()) {
+                            heldSkills.add(sl.getName().trim().toLowerCase(Locale.ROOT));
+                        }
+                    }
+                }
+            }
+        }
+
+        Map<UUID, Long> taskAssignmentCounts = new HashMap<>();
+        if (assignments != null) {
+            for (Assignment a : assignments) {
+                if (a.getTask() != null && a.getTask().getId() != null) {
+                    UUID tid = a.getTask().getId();
+                    taskAssignmentCounts.put(tid, taskAssignmentCounts.getOrDefault(tid, 0L) + 1L);
+                }
+            }
+        }
+
+        List<SkillGapDto> gaps = new ArrayList<>();
+        for (Task t : sortedTasks) {
+            long assigned = taskAssignmentCounts.getOrDefault(t.getId(), 0L);
+            long unfilled = t.getHeadcount() - assigned;
+            if (unfilled > 0) {
+                String missingSkill = findMissingSkill(t, heldSkills);
+                gaps.add(new SkillGapDto(t.getId(), t.getTitle(), missingSkill, unfilled));
+            }
+        }
+        return gaps;
+    }
+
+    private String findMissingSkill(Task task, Set<String> heldSkills) {
+        List<String> mandatory = task.getMandatorySkills();
+        if (mandatory == null || mandatory.isEmpty()) {
+            return null;
+        }
+
+        List<String> sortedMandatory = mandatory.stream()
+                .filter(s -> s != null && !s.isBlank())
+                .sorted(String.CASE_INSENSITIVE_ORDER.thenComparing(String::compareTo))
+                .toList();
+
+        for (String m : sortedMandatory) {
+            if (!heldSkills.contains(m.trim().toLowerCase(Locale.ROOT))) {
+                return m.trim();
+            }
+        }
+        return null;
     }
 }
